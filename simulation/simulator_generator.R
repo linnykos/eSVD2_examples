@@ -45,7 +45,7 @@ generator_pcmf_poisson <- function(nat_mat, dropout_prob = 0.1, ...){
   # 1 means not dropped
   obs_mat[dropout_mat == 0] <- 0
 
-  list(dat = obs_mat, dropout_mat = dropout_mat)
+  obs_mat
 }
 
 
@@ -85,7 +85,7 @@ generator_zinb_nb <- function(nat_mat, r_vec = rep(100, ncol(nat_mat)), ...){
   # 1 means not dropped
   obs_mat[dropout_mat == 0] <- 0
 
-  list(dat = obs_mat, dropout_mat = dropout_mat)
+  obs_mat
 }
 
 generator_esvd_nb <- function(nat_mat, scalar = 100,  ...){
