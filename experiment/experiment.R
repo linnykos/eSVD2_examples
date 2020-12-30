@@ -1,27 +1,34 @@
 rm(list=ls())
-set.seed(5)
-nat_mat <- matrix(-1/5, 100, 5)
-dat <- generate_data(nat_mat, family = "neg_binom", nuisance_param_vec = 10)
+set.seed(20)
+cov_x <- cov(MASS::mvrnorm(n = 10, rep(0, 5), diag(5)))
+cov_y <- cov(MASS::mvrnorm(n = 10, rep(0, 5), toeplitz(5:1)))
 
-res <- initialize_esvd(dat, k = 1, family = "poisson", library_size_vec = 1)
-res2 <- opt_esvd(res$x_mat, res$y_mat, dat, family = eSVD2:::.poisson,
-                 library_size_vec = 1)
+res <- .identification(cov_x, cov_y, check = T)
 
-nuisance_vec <- initialize_nuisance_param(dat, res2$x %*% t(res2$y), family = "neg_binom",
-                                          library_size_vec = res$library_size_vec)
-nuisance_vec
+##############
+check = T; tol = 1e-6
 
-################################
+eigen_x <- eigen(cov_x)
+eigen_y <- eigen(cov_y)
 
-rm(list=ls())
-set.seed(5)
-nat_mat <- matrix(1/5, 100, 5)
-dat <- generate_data(nat_mat, family = "curved_gaussian", nuisance_param_vec = 2)
+Vx <- eigen_x$vectors
+Vy <- eigen_y$vectors
 
-res <- initialize_esvd(dat, k = 1, family = "exponential", library_size_vec = 1)
-res2 <- opt_esvd(res$x_mat, res$y_mat, dat, family = eSVD2:::.exponential,
-                 library_size_vec = 1)
+if(any(eigen_x$values <= tol) | any(eigen_y$values <= tol)) warning("Detecting rank defficiency in reparameterization step")
 
-nuisance_vec <- initialize_nuisance_param(dat, res2$x %*% t(res2$y), family = "curved_gaussian",
-                                          library_size_vec = res$library_size_vec)
-nuisance_vec
+Dx <- eigen_x$values
+Dy <- eigen_y$values
+
+# form R
+tmp2 <- diag(sqrt(Dy)) %*% t(Vy) %*% Vx %*% diag(sqrt(Dx))
+tmp <- crossprod(.mult_mat_vec(Vy, sqrt(Dy)), .mult_mat_vec(Vx, sqrt(Dx)))
+stopifnot(sum(abs(tmp2 - tmp)) <= 1e-6)
+svd_tmp <- svd(tmp)
+Q <- tcrossprod(svd_tmp$u, svd_tmp$v)
+
+# run a check
+if(check){
+  sym_mat <- crossprod(Q, tmp)
+
+  stopifnot(sum(abs(sym_mat - t(sym_mat))) <= 1e-6)
+}
