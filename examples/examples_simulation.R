@@ -1,13 +1,13 @@
 rm(list=ls())
 set.seed(10)
 
-source("../simulation/simulator_generator.R")
-source("../simulation/simulator_methods.R") # you don't need to load this is you want to only want to generate data
+source("../eSVD2_examples/simulation/simulator_generator.R")
+source("../eSVD2_examples/simulation/simulator_methods.R") # you don't need to load this is you want to only want to generate data
 
 # I've found the following parameters to work well (to yield matrices that contain values between 0 and 1000)
 # - curved_gaussian: modifiter = 1/250, nuisance_param = 2
 # - neg_binom: modifier = 1/250, nuisance_param = 50
-# - pcmf: modifier = 1/2, dropout_prob = 0.1 
+# - pcmf: modifier = 1/2, dropout_prob = 0.1
 # - poisson: modifier = 1/300
 # - zinbwave: modifier = 1/250, nuisance_param is a vector of length p (number of genes) sampled from values (80, 120, 600) with equal probabilities
 
@@ -40,10 +40,9 @@ plot(res$cell_mat[,1], res$cell_mat[,2], asp = T, pch = 16, col = rep(1:4, each 
 plot(res$gene_mat[,1], res$gene_mat[,2], asp = T, pch = 16, col = rep(1:2, each = p_each),
      main = "True gene embedding", xlab = "Latent dimension 1", ylab = "Latent dimension 2")
 
-# try estimating this via the SVD (or anything in simulator_methods.R) 
+# try estimating this via the SVD (or anything in simulator_methods.R)
 # -- these only return the cell embeddings for consistency across methods, but we can plot the estimated gene embeddings as well in general for eSVD
 est_embedding <- method_svd(dat)
 plot(est_embedding$fit[,1], est_embedding$fit[,2], asp = T, pch = 16, col = rep(1:4, each = n_each),
      main = "Est. cell embedding", xlab = "Latent dimension 1", ylab = "Latent dimension 2")
 
-      

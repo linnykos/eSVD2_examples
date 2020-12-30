@@ -1,6 +1,6 @@
 rm(list=ls())
 
-devtools::install_github("linnykos/eSVD2")
+# devtools::install_github("linnykos/eSVD2")
 
 library(eSVD2)
 devtools::session_info()
