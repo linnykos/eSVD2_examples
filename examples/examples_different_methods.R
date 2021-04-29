@@ -1,9 +1,11 @@
 rm(list=ls())
+
+# from https://cran.r-project.org/web/packages/glmpca/vignettes/glmpca.html
 set.seed(202)
 ngenes <- 5000 #must be divisible by 10
 ngenes_informative <- ngenes*.1
 ncells <- 50 #number of cells per cluster, must be divisible by 2
-nclust<- 3
+nclust <- 3
 # simulate two batches with different depths
 batch <- rep(1:2, each = nclust*ncells/2)
 ncounts <- stats::rpois(ncells*nclust, lambda = 1000*batch)
@@ -21,6 +23,8 @@ rownames(counts) <- paste("gene", seq(nrow(counts)), sep = "_")
 colnames(counts) <- paste("cell", seq(ncol(counts)), sep = "_")
 # clean up rows
 dat <- t(counts[rowSums(counts) > 0, ])
+
+.rotate <- function(mat){t(mat)[,nrow(mat):1]}
 
 ########################
 
@@ -43,6 +47,7 @@ plot(glm_res$factors[,1], glm_res$factors[,2], asp = T, col = clust, pch = 16)
 plot(glm_res$loadings[,1], glm_res$loadings[,2], asp = T, pch = 16)
 plot(glm_res$dev)
 plot(glm_res$coefX[,1])
+image(.rotate(glm_res$factors[order(clust),]))
 
 # try ZINB-WaVE
 # set.seed(10)
@@ -62,10 +67,13 @@ library_size_vec <- rowSums(dat)
 init <- eSVD2::initialize_esvd(dat, k = 3, family = "poisson", nuisance_param_vec = NA,
                                library_size_vec = library_size_vec,
                                config = eSVD2::initialization_options())
+# image(.rotate(init$x_mat[order(clust),]))
 esvd_res <- opt_esvd(init$x_mat, init$y_mat, dat, family = "poisson",
                 nuisance_param_vec = NA, library_size_vec = library_size_vec,
-                max_iter = 25, verbose = 1)
-plot(esvd_res$x_mat[,1], esvd_res$x_mat[,2], asp = T, col = clust, pch = 16)
+                max_iter = 50, verbose = 1)
+image(.rotate(esvd_res$x_mat[order(clust),]))
+# plot(esvd_res$x_mat[,1], esvd_res$x_mat[,2], asp = T, col = clust, pch = 16)
+plot(esvd_res$x_mat[,2], esvd_res$x_mat[,3], asp = T, col = clust, pch = 16)
 plot(esvd_res$loss)
 set.seed(10)
 umap_res <- Seurat::RunUMAP(esvd_res$x)@cell.embeddings
