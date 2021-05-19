@@ -12,8 +12,11 @@ bm <-  Seurat::FindVariableFeatures(bm, selection.method = "vst", nfeatures = 20
 mat <- bm[["RNA"]]@counts[Seurat::VariableFeatures(bm),]
 mat <- t(as.matrix(mat))
 set.seed(10)
-pcmf_res <- pCMF::pCMF(mat, K = 30, verbose = T, zero_inflation = TRUE,
-                       sparsity = TRUE, ncores = 4)
+K <- 30
+zero_inflation <- TRUE
+sparisty <- TRUE
+pcmf_res <- pCMF::pCMF(mat, K = K, verbose = T, zero_inflation = zero_inflation,
+                       sparsity = sparisty, ncores = 4)
 
 save.image("../../../../out/writeup6/writeup6_citeseq_bm_pcmf.RData")
 
