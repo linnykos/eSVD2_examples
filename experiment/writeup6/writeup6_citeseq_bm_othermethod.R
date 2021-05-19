@@ -50,3 +50,24 @@ plot1 <- Seurat::DimPlot(bm, reduction = "glmfactorumap", group.by = "celltype.l
 plot1 <- plot1 + ggplot2::ggtitle("Human bone marrow (CITE-seq)\nGLM-PCA, Factor")
 ggplot2::ggsave(filename = "../../../out/fig/writeup6/citeseq_bm_glmpca_factor_umap.png",
                 plot1, device = "png", width = 5, height = 5, units = "in")
+
+###############################
+###############################
+
+rm(list=ls())
+
+set.seed(10)
+date_of_run <- Sys.time()
+session_info <- devtools::session_info()
+bm <- SeuratData::LoadData(ds = "bmcite")
+
+Seurat::DefaultAssay(bm) <- "RNA"
+bm <- Seurat::NormalizeData(bm, normalization.method = "LogNormalize", scale.factor = 10000)
+bm <-  Seurat::FindVariableFeatures(bm, selection.method = "vst", nfeatures = 2000)
+
+mat <- bm[["RNA"]]@counts[Seurat::VariableFeatures(bm),]
+mat <- t(as.matrix(mat))
+set.seed(10)
+pcmf_res <- pCMF::pCMF(mat, K = 2, verbose = T, zero_inflation = TRUE,
+                 sparsity = TRUE, ncores = 4)
+
