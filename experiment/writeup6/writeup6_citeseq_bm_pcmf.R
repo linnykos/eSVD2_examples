@@ -16,11 +16,9 @@ K <- 30
 zero_inflation <- TRUE
 sparisty <- TRUE
 
-print("Hello?")
 pcmf_res <- pCMF::pCMF(mat, K = K, verbose = T, zero_inflation = zero_inflation,
-                       sparsity = sparisty, ncores = 4)
+                       sparsity = sparisty, ncores = 1)
 
-print("Finished")
 save.image("../../../../out/writeup6/writeup6_citeseq_bm_pcmf.RData")
 
 
