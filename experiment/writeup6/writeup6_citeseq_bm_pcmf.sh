@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N glmpca_poisson
+#$ -N pcmf
 #$ -j y
 #$ -o ../../../../out/writeup6/qsub/
 #$ -pe openmpi 4

@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N glmpca_poisson
+#$ -N glmpca_nb
 #$ -j y
 #$ -o ../../../../out/writeup6/qsub/
 
