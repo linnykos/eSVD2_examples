@@ -14,7 +14,9 @@ mat <- t(as.matrix(mat))
 
 K <- 30
 set.seed(10)
+time_start <- Sys.time()
 topic_res <- fastTopics::fit_topic_model(mat, k = K)
+time_end <- Sys.time()
 
 save.image("../../../../out/writeup6/writeup6_citeseq_bm_fasttopics.RData")
 

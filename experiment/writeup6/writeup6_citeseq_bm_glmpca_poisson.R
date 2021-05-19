@@ -12,8 +12,11 @@ bm <-  Seurat::FindVariableFeatures(bm, selection.method = "vst", nfeatures = 20
 mat <- bm[["RNA"]]@counts[Seurat::VariableFeatures(bm),]
 set.seed(10)
 K <- 30
+time_start <- Sys.time()
 glmpca_res <- glmpca::glmpca(mat, L = K, fam = "poi",
                              ctl = list(verbose = T), minibatch = "stochastic")
+time_end <- Sys.time()
+
 pred_mat <- glmpca:::predict.glmpca(glmpca_res)
 
 save.image("../../../../out/writeup6/writeup6_citeseq_bm_glmpca_poisson.RData")
