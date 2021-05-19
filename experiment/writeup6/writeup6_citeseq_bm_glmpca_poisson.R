@@ -9,7 +9,7 @@ bm <-  Seurat::FindVariableFeatures(bm, selection.method = "vst", nfeatures = 20
 
 mat <- bm[["RNA"]]@counts[Seurat::VariableFeatures(bm),]
 set.seed(10)
-K <- 30
+K <- 2
 glmpca_res <- glmpca::glmpca(mat, L = K, fam = "poi",
                              ctl = list(verbose = T), minibatch = "stochastic")
 pred_mat <- glmpca:::predict.glmpca(glmpca_res)
