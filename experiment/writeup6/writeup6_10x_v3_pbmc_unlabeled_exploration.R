@@ -29,7 +29,7 @@ pbmc <- Seurat::RunUMAP(pbmc, dims = 1:30, verbose = FALSE)
 pbmc <- Seurat::FindNeighbors(pbmc, dims = 1:30, verbose = FALSE)
 pbmc <- Seurat::FindClusters(pbmc, verbose = FALSE)
 
-png("../../../out/fig/writeup6/10x_pbmc_umap.png", height = 1500, width = 1500, units = "px", res = 300)
+png("../../../out/fig/writeup6/10x_v3_pbmc_umap_unlabeled.png", height = 1500, width = 1500, units = "px", res = 300)
 Seurat::DimPlot(pbmc, label = TRUE) + Seurat::NoLegend()
 graphics.off()
 
@@ -50,7 +50,7 @@ pred.hesc <- SingleR::SingleR(test = pbmc.sce, ref = hpca.se,
                      labels = hpca.se$label.main)
 pbmc$SingleR.calls <- pred.hesc$labels
 
-png("../../../out/fig/writeup6/10x_pbmc_umap_singler.png", height = 1500, width = 1500, units = "px", res = 300)
+png("../../../out/fig/writeup6/10x_v3_pbmc_umap_unlabeled_singler.png", height = 1500, width = 1500, units = "px", res = 300)
 plot1 <- Seurat::DimPlot(pbmc, label = TRUE, group.by = 'SingleR.calls',
                 repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
 plot1 + ggplot2::ggtitle("10x PBMC (v3), SingleR HPCA labels")
