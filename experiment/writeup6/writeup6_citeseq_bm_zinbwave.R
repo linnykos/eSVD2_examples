@@ -21,6 +21,6 @@ time_start <- Sys.time()
 zinb_res <- zinbwave::zinbFit(mat, K = K, BPPARAM=BiocParallel::MulticoreParam(4))
 time_end <- Sys.time()
 
-save.image("../../../../out/writeup6/writeup6_citeseq_bm_pcmf.RData")
+save.image("../../../../out/writeup6/writeup6_citeseq_bm_zinbwave.RData")
 
 
