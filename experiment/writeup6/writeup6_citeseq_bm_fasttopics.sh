@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N fasttopics
+#$ -N bm_fasttopics
 #$ -j y
 #$ -o ../../../../out/writeup6/qsub/
 
