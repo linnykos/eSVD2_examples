@@ -18,7 +18,8 @@ set.seed(10)
 K <- 30
 
 time_start <- Sys.time()
-zinb_res <- zinbwave::zinbFit(mat, K = K, BPPARAM=BiocParallel::MulticoreParam(4))
+zinb_res <- zinbwave::zinbFit(mat, K = K, BPPARAM=BiocParallel::MulticoreParam(4),
+                              verbose = T)
 time_end <- Sys.time()
 
 save.image("../../../../out/writeup6/writeup6_citeseq_bm_zinbwave.RData")
