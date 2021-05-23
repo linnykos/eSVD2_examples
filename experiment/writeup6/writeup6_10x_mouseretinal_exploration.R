@@ -9,7 +9,7 @@ dat$X <- NULL
 dat <- Matrix::Matrix(as.matrix(dat), sparse = T)
 dat <- Matrix::t(dat)
 
-metadata <- read.table("../../../data/10x_mouseretinal/RGC_Atlas_coordinates.txt", sep = "\t", header = TRUE, 
+metadata <- read.table("../../../data/10x_mouseretinal/RGC_Atlas_coordinates.txt", sep = "\t", header = TRUE,
                        stringsAsFactors = F)
 metadata <- metadata[-1,]
 
@@ -46,12 +46,12 @@ rm(list=ls())
 set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
-load("../../../data/10x_mouseretinal/10x_mouseretinal_formatted.RData")
+load("../../../../data/10x_mouseretinal/10x_mouseretinal_formatted.RData")
 
 rownames(metadata) <- metadata[,1]
 metadata <- metadata[,-1]
 
-retinal <- Seurat::CreateSeuratObject(counts = Matrix::t(dat), 
+retinal <- Seurat::CreateSeuratObject(counts = Matrix::t(dat),
                                       meta.data = metadata, min.cells = 5)
 largest_batch <- names(which.max(table(retinal@meta.data$BatchID)))
 cell_keep <- rownames(retinal@meta.data[retinal@meta.data$BatchID == largest_batch,])
@@ -66,7 +66,7 @@ diff(retinal[["pca"]]@stdev)/retinal[["pca"]]@stdev[-1]
 set.seed(10)
 retinal <- Seurat::RunUMAP(retinal, dims = 1:24)
 
-plot1 <- Seurat::DimPlot(retinal, reduction = "umap", group.by = "Cluster", label = TRUE, 
+plot1 <- Seurat::DimPlot(retinal, reduction = "umap", group.by = "Cluster", label = TRUE,
                          repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle("Mouse retinal (10x)")
 ggplot2::ggsave(filename = "../../../out/fig/writeup6/10x_mouseretinal_umap.png",

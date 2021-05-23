@@ -26,7 +26,7 @@ rm(list=ls())
 set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
-load("../../../data/smartseq_mousebrain/smartseq_mousebrain_formatted.RData")
+load("../../../../data/smartseq_mousebrain/smartseq_mousebrain_formatted.RData")
 
 quantile(sparseMatrixStats::rowSums2(dat))
 brain <- Seurat::CreateSeuratObject(counts = Matrix::t(dat), meta.data = metadata, min.cells = 10)
@@ -42,7 +42,7 @@ brain <- Seurat::RunPCA(brain, features = Seurat::VariableFeatures(brain),
 set.seed(10)
 brain <- Seurat::RunUMAP(brain, dims = 1:50, nneighbors = 5)
 
-plot1 <- Seurat::DimPlot(brain, reduction = "umap", group.by = "subclass", label = TRUE, 
+plot1 <- Seurat::DimPlot(brain, reduction = "umap", group.by = "subclass", label = TRUE,
                          repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle("Mouse Brain (Smartseq)")
 ggplot2::ggsave(filename = "../../../out/fig/writeup6/smartseq_mousebrain_umap.png",

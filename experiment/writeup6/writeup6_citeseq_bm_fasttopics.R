@@ -10,7 +10,7 @@ bm <- Seurat::NormalizeData(bm, normalization.method = "LogNormalize", scale.fac
 bm <-  Seurat::FindVariableFeatures(bm, selection.method = "vst", nfeatures = 2000)
 
 mat <- bm[["RNA"]]@counts[Seurat::VariableFeatures(bm),]
-mat <- t(as.matrix(mat))
+mat <- Matrix::t(mat)
 
 K <- 30
 set.seed(10)
