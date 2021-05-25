@@ -11,8 +11,8 @@ rm(list = "dat")
 gc()
 
 print("Starting Seurat")
-pancreas <- Seurat::CreateSeuratObject(counts = Matrix::t(dat$X))
-pancreas[["celltype"]] <- dat$obs$clusters
+pancreas <- Seurat::CreateSeuratObject(counts = tmp)
+pancreas[["celltype"]] <- clusters
 pancreas <- Seurat::NormalizeData(pancreas, normalization.method = "LogNormalize", scale.factor = 10000)
 pancreas <-  Seurat::FindVariableFeatures(pancreas, selection.method = "vst", nfeatures = 2000)
 pancreas <-  Seurat::ScaleData(pancreas)
