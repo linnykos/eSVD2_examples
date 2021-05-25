@@ -32,9 +32,9 @@ pbmc <- Seurat::RunPCA(pbmc, features = Seurat::VariableFeatures(object = pbmc),
 
 diff(pbmc[["pca"]]@stdev)/pbmc[["pca"]]@stdev[-1]
 set.seed(10)
-pbmc <- Seurat::RunUMAP(pbmc, dims = 1:24)
+pbmc <- Seurat::RunUMAP(pbmc, dims = 1:30)
 
-plot1 <- Seurat::DimPlot(pbmc, reduction = "umap", group.by = "celltype", label = TRUE, 
+plot1 <- Seurat::DimPlot(pbmc, reduction = "umap", group.by = "celltype", label = TRUE,
                          repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle("PBMC (10x v3)")
 ggplot2::ggsave(filename = "../../../out/fig/writeup6/10x_v3_pbmc_umap_labeled.png",
