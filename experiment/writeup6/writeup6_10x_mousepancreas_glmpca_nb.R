@@ -5,7 +5,12 @@ date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 print("Loading in data")
 dat <- anndata::read_h5ad("../../../../data/10x_mousepancreas/GSE132188_adata.h5ad.h5")
+tmp <- Matrix::t(dat$X)
+clusters <- dat$obs$clusters
+rm(list = "dat")
+gc()
 
+print("Starting Seurat")
 pancreas <- Seurat::CreateSeuratObject(counts = Matrix::t(dat$X))
 pancreas[["celltype"]] <- dat$obs$clusters
 pancreas <- Seurat::NormalizeData(pancreas, normalization.method = "LogNormalize", scale.factor = 10000)
