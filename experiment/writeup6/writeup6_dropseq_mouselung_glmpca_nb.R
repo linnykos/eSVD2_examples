@@ -3,8 +3,10 @@ rm(list=ls())
 set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
+print("Loading in data")
 dat <- anndata::read_h5ad("../../../../data/dropseq_mouselung/lung_regeneration_after_bleo")
 
+print("Starting Seurat")
 lung <- Seurat::CreateSeuratObject(counts = Matrix::t(dat$X))
 lung[["celltype"]] <- dat$obs$clusters
 lung <- Seurat::NormalizeData(lung, normalization.method = "LogNormalize", scale.factor = 10000)
