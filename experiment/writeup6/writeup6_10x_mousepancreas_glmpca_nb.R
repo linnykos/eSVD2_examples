@@ -4,7 +4,7 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 print("Loading in data")
-dat <- anndata::read_h5ad("../../../../data/10x_mousepancreas/GSE132188_adata.h5ad.h5")
+dat <- anndata::read_h5ad("../../../../data/10x_mousepancreas/endocrinogenesis_day15.5.h5ad")
 tmp <- Matrix::t(dat$X)
 clusters <- dat$obs$clusters
 rm(list = "dat")
