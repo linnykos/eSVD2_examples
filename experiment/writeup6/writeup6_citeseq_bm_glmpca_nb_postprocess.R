@@ -9,10 +9,11 @@ Seurat::DefaultAssay(bm) <- "glm"
 bm <- Seurat::NormalizeData(bm, normalization.method = "LogNormalize", scale.factor = 10000)
 bm[["glm"]]@var.features <- rownames(bm)
 bm <-  Seurat::ScaleData(bm)
-bm <- Seurat::RunPCA(bm, features = Seurat::VariableFeatures(bm), verbose = F)
+bm <- Seurat::RunPCA(bm, features = Seurat::VariableFeatures(bm), verbose = F,
+                     reduction.name = "glmpca")
 
 set.seed(10)
-bm <- Seurat::RunUMAP(bm, dims = 1:30, reduction.name = "glmumap")
+bm <- Seurat::RunUMAP(bm, reduction = "glmpca", dims = 1:30, reduction.name = "glmumap")
 
 plot1 <- Seurat::DimPlot(bm, reduction = "glmumap", group.by = "celltype.l2", label = TRUE,
                          repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
