@@ -49,6 +49,6 @@ pvalue_pairwise <- function(mat, membership_vec, celltype_vec,
   list(pval_mat = res, lookup_mat = lookup)
 }
 
-pval_res <- pvalue_pairwise(pred_mat_unnorm[,1:20], membership_vec, celltype_vec)
+pval_res <- pvalue_pairwise(pred_mat_unnorm, membership_vec, celltype_vec)
 
 save.image("../../../../out/writeup6/writeup6_citeseq_bm_glmpca_nb_pvalue.RData")
