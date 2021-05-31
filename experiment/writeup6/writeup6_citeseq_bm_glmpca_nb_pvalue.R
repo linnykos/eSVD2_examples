@@ -14,7 +14,7 @@ pred_mat_unnorm <- t(pred_mat_unnorm)
 ############
 
 membership_vec <- as.factor(bm@meta.data$celltype.l2)
-celltype_vec <- names(which(table(membership_vec) > nrow(pred_mat_unnorm)/50))
+celltype_vec <- names(which(table(membership_vec) > nrow(pred_mat_unnorm)/100))
 
 ############
 

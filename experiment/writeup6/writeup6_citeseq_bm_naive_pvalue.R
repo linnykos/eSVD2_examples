@@ -15,7 +15,7 @@ bm <-  Seurat::ScaleData(bm)
 
 mat <- t(as.matrix(bm[["RNA"]]@scale.data))
 membership_vec <- as.factor(bm@meta.data$celltype.l2)
-celltype_vec <- names(which(table(membership_vec) > nrow(mat)/50))
+celltype_vec <- names(which(table(membership_vec) > nrow(mat)/100))
 
 ############
 
