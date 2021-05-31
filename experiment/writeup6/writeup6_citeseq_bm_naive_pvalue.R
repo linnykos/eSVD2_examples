@@ -38,6 +38,7 @@ pvalue_pairwise <- function(mat, membership_vec, celltype_vec,
                        type2 = celltype_vec[permn_mat[,2]])
 
   for(j in 1:ncol(mat)){
+    print(j)
     if(verbose && ncol(mat) > 10 && j %% floor(ncol(mat)/10) == 0) cat('*')
     for(i in 1:nrow(permn_mat)){
       res[i,j] <- stats::wilcox.test(x = mat[list_idx[[permn_mat[i,1]]],j],
