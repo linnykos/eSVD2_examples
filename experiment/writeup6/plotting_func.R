@@ -58,8 +58,9 @@ plot_scores_heatmap <- function(score_mat, membership_vec = NA, num_col = 10,
 ######################
 
 plot_volcano <- function(mat, pval_vec, de_idx,
-                         xlab = "Std (signed by FDR selection)",
+                         xlab = "Std (signed by selection)",
                          ylab = "-log10(pval)",
+                         xlim = NA,
                          xgrid = 5, ygrid = 5, cex = 1,
                          color_palette = rev(colorspace::sequential_hcl(10, palette = "Terrain 2")),
                          col_range = c(0,1),
@@ -68,10 +69,10 @@ plot_volcano <- function(mat, pval_vec, de_idx,
   tmp <- max(log_vec[!is.infinite(log_vec)])
   log_vec[is.infinite(log_vec)] <- tmp
 
-  sd_vec <- matrixStats::colSds(mat)
-  mean_vec <- matrixStats::rowMeans2(mat)
+  sd_vec <- matrixStats::rowDiffs(matrixStats::colQuantiles(mat, probs = c(0.25, 0.75)))
+  mean_vec <- matrixStats::rowMedians(mat)
+  if(all(is.na(xlim))) xlim <- c(-1,1)*max(sd_vec)
   sd_vec[de_idx] <- -sd_vec[de_idx]
-  xlim <- c(-1,1)*max(sd_vec)
   ylim <- range(c(0, log_vec))
 
   # assign colors
@@ -101,31 +102,32 @@ plot_volcano <- function(mat, pval_vec, de_idx,
 plot_sd_scatter <- function(mat, membership_vec, de_idx,
                             xlab = "Between-celltype Std",
                             ylab = "Within-celltype Std",
+                            xlim = NA,
                             gridsize = 5,
                             ...){
   uniq_val <- sort(unique(membership_vec))
 
   mean_mat <- sapply(uniq_val, function(celltype){
     idx <- which(membership_vec == celltype)
-    if(class(mat) == "dgCMatrix"){
-      sparseMatrixStats::colMeans2(mat[idx,,drop = F])
+    if(any(class(mat) == "dgCMatrix")){
+      sparseMatrixStats::colMedians(mat[idx,,drop = F])
     } else {
-      matrixStats::colMeans2(mat[idx,,drop = F])
+      matrixStats::colMedians(mat[idx,,drop = F])
     }
   })
-  between_sd_vec <- matrixStats::rowSds(mean_mat)
+  between_sd_vec <- matrixStats::rowDiffs(matrixStats::rowQuantiles(mean_mat, probs = c(0.25, 0.75)))
 
   sd_mat <- sapply(uniq_val, function(celltype){
     idx <- which(membership_vec == celltype)
-    if(class(mat) == "dgCMatrix"){
-      sparseMatrixStats::colSds(mat[idx,,drop = F])
+    if(any(class(mat) == "dgCMatrix")){
+      matrixStats::rowDiffs(sparseMatrixStats::colQuantiles(mat[idx,,drop = F], probs = c(0.25, 0.75)))
     } else {
-      matrixStats::colSds(mat[idx,,drop = F])
+      matrixStats::rowDiffs(matrixStats::colQuantiles(mat[idx,,drop = F], probs = c(0.25, 0.75)))
     }
   })
-  within_sd_vec <- matrixStats::rowMeans2(sd_mat)
+  within_sd_vec <- matrixStats::rowMedians(sd_mat)
 
-  xlim <- range(c(between_sd_vec, within_sd_vec))
+  if(all(is.na(xlim))) xlim <- range(c(between_sd_vec, within_sd_vec))
   graphics::plot(NA, xlim = xlim, ylim = xlim, xlab = xlab, ylab = ylab, ...)
 
   # draw grid
