@@ -13,7 +13,7 @@ pred_mat_unnorm <- t(pred_mat_unnorm)
 
 ############
 
-membership_vec <- as.factor(lung@meta.data$celltype.l2)
+membership_vec <- as.factor(lung@meta.data$celltype)
 celltype_vec <- names(which(table(membership_vec) > nrow(pred_mat_unnorm)/100))
 
 ############

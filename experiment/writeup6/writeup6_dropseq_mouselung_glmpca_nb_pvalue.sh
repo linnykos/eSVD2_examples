@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N lung_glmpca_nb
+#$ -N lung_glmpca_nb_pvalue
 #$ -j y
 #$ -o ../../../../out/writeup6/qsub/
 #$ -l m_mem_free=12G
