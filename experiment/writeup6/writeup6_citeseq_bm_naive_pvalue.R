@@ -9,11 +9,10 @@ bm <- SeuratData::LoadData(ds = "bmcite")
 Seurat::DefaultAssay(bm) <- "RNA"
 bm <- Seurat::NormalizeData(bm, normalization.method = "LogNormalize", scale.factor = 10000)
 bm <-  Seurat::FindVariableFeatures(bm, selection.method = "vst", nfeatures = 2000)
-bm <-  Seurat::ScaleData(bm)
 
 ########3
 
-mat <- t(as.matrix(bm[["RNA"]]@scale.data))
+mat <- t(as.matrix(bm[["RNA"]]@data[Seurat::VariableFeatures(bm),]))
 membership_vec <- as.factor(bm@meta.data$celltype.l2)
 celltype_vec <- names(which(table(membership_vec) > nrow(mat)/100))
 
