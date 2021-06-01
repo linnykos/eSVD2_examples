@@ -1,0 +1,25 @@
+rm(list = ls())
+load("../../../../out/writeup6/writeup6_dropseq_mouselung_naive_pvalue.RData")
+
+pval_obj <- pval_res
+uniq_val <- sort(unique(as.numeric(pval_obj$lookup_mat[,1])))
+p <- ncol(pval_obj$pval_mat)
+quantile(pval_obj$pval_mat)
+
+# intersection-union
+max_pval_mat <- t(sapply(uniq_val, function(i){
+  idx <- which(pval_obj$lookup[,1] == i)
+  apply(pval_obj$pval_mat[idx,], 2, max)
+}))
+
+max_pval_vec <- apply(max_pval_mat, 2, function(x){min(stats::p.adjust(x, method = "bonferroni"))})
+
+adjust_pval_vec <- stats::p.adjust(max_pval_vec, method = "bonferroni")
+pval_thres <- 5*10^(-8)
+de_genes <- which(adjust_pval_vec <= pval_thres)
+length(de_genes)
+
+pval_vec <- apply(max_pval_mat, 2, min)
+
+#########
+
