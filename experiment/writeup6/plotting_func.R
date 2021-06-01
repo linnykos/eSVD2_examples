@@ -141,7 +141,7 @@ plot_sd_scatter <- function(mat, membership_vec, de_idx,
   col_vec <- rep("black", length(between_sd_vec))
   col_vec[de_idx] <- "red"
   graphics::points(x = between_sd_vec, y = within_sd_vec,
-                   pch = 21, cex = cex, bg = col_vec, col = "black")
+                   pch = 21, bg = col_vec, col = "black")
 
   invisible()
 }
