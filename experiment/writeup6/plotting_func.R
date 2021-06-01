@@ -58,7 +58,8 @@ plot_scores_heatmap <- function(score_mat, membership_vec = NA, num_col = 10,
 ######################
 
 plot_volcano <- function(mat, pval_vec, de_idx, bool_iqr = T,
-                         xlab = "IQR (signed by selection)",
+                         xlab = ifelse(bool_iqr, "IQR (signed by selection)",
+                                       "Std (signed by selection)"),
                          ylab = "-log10(pval)",
                          xlim = NA,
                          xgrid = 5, ygrid = 5, cex = 1,
@@ -108,7 +109,7 @@ plot_volcano <- function(mat, pval_vec, de_idx, bool_iqr = T,
 plot_sd_scatter <- function(mat, membership_vec, de_idx,
                             bool_iqr = T,
                             xlab = ifelse(bool_iqr, "Between-celltype IQR", "Between-celltype Median"),
-                            ylab = ifelse(bool_iqr, "Between-celltype IQR", "Between-celltype Median"),
+                            ylab = ifelse(bool_iqr, "Within-celltype IQR", "Within-celltype Median"),
                             xlim = NA,
                             gridsize = 5,
                             ...){
@@ -116,18 +117,10 @@ plot_sd_scatter <- function(mat, membership_vec, de_idx,
 
   mean_mat <- sapply(uniq_val, function(celltype){
     idx <- which(membership_vec == celltype)
-    if(any(class(mat) == "dgCMatrix")){
-      if(bool_iqr) {
-        sparseMatrixStats::colMedians(mat[idx,,drop = F])
-      } else {
-        sparseMatrixStats::colMeans2(mat[idx,,drop = F])
-      }
+    if(bool_iqr) {
+      matrixStats::colMedians(mat[idx,,drop = F])
     } else {
-      if(bool_iqr) {
-        matrixStats::colMedians(mat[idx,,drop = F])
-      } else {
-        matrixStats::colMeans2(mat[idx,,drop = F])
-      }
+      matrixStats::colMeans2(mat[idx,,drop = F])
     }
   })
 
@@ -139,18 +132,10 @@ plot_sd_scatter <- function(mat, membership_vec, de_idx,
 
   sd_mat <- sapply(uniq_val, function(celltype){
     idx <- which(membership_vec == celltype)
-    if(any(class(mat) == "dgCMatrix")){
-      if(bool_iqr){
-        matrixStats::rowDiffs(sparseMatrixStats::colQuantiles(mat[idx,,drop = F], probs = c(0.25, 0.75)))
-      } else {
-        sparseMatrixStats::colSds(mat[idx,,drop = F])
-      }
+    if(bool_iqr){
+      matrixStats::rowDiffs(matrixStats::colQuantiles(mat[idx,,drop = F], probs = c(0.25, 0.75)))
     } else {
-      if(bool_iqr){
-        matrixStats::rowDiffs(matrixStats::colQuantiles(mat[idx,,drop = F], probs = c(0.25, 0.75)))
-      } else {
-        matrixStats::colSds(mat[idx,,drop = F])
-      }
+      matrixStats::colSds(mat[idx,,drop = F])
     }
   })
   if(bool_iqr){
