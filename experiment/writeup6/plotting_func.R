@@ -100,8 +100,9 @@ plot_volcano <- function(mat, pval_vec, de_idx,
 }
 
 plot_sd_scatter <- function(mat, membership_vec, de_idx,
-                            xlab = "Between-celltype IQR",
-                            ylab = "Within-celltype Std",
+                            bool_iqr = T,
+                            xlab = ifelse(bool_iqr, "Between-celltype IQR", "Between-celltype Median"),
+                            ylab = ifelse(bool_iqr, "Between-celltype IQR", "Between-celltype Median"),
                             xlim = NA,
                             gridsize = 5,
                             ...){
@@ -110,22 +111,47 @@ plot_sd_scatter <- function(mat, membership_vec, de_idx,
   mean_mat <- sapply(uniq_val, function(celltype){
     idx <- which(membership_vec == celltype)
     if(any(class(mat) == "dgCMatrix")){
-      sparseMatrixStats::colMedians(mat[idx,,drop = F])
+      if(bool_iqr) {
+        sparseMatrixStats::colMedians(mat[idx,,drop = F])
+      } else {
+        sparseMatrixStats::colMeans2(mat[idx,,drop = F])
+      }
     } else {
-      matrixStats::colMedians(mat[idx,,drop = F])
+      if(bool_iqr) {
+        matrixStats::colMedians(mat[idx,,drop = F])
+      } else {
+        matrixStats::colMeans2(mat[idx,,drop = F])
+      }
     }
   })
-  between_sd_vec <- matrixStats::rowDiffs(matrixStats::rowQuantiles(mean_mat, probs = c(0.25, 0.75)))
+
+  if(bool_iqr){
+    between_sd_vec <- matrixStats::rowDiffs(matrixStats::rowQuantiles(mean_mat, probs = c(0.25, 0.75)))
+  } else {
+    between_sd_vec <- matrixStats::rowSds(mean_mat)
+  }
 
   sd_mat <- sapply(uniq_val, function(celltype){
     idx <- which(membership_vec == celltype)
     if(any(class(mat) == "dgCMatrix")){
-      matrixStats::rowDiffs(sparseMatrixStats::colQuantiles(mat[idx,,drop = F], probs = c(0.25, 0.75)))
+      if(bool_iqr){
+        matrixStats::rowDiffs(sparseMatrixStats::colQuantiles(mat[idx,,drop = F], probs = c(0.25, 0.75)))
+      } else {
+        sparseMatrixStats::colSds(mat[idx,,drop = F])
+      }
     } else {
-      matrixStats::rowDiffs(matrixStats::colQuantiles(mat[idx,,drop = F], probs = c(0.25, 0.75)))
+      if(bool_iqr){
+        matrixStats::rowDiffs(matrixStats::colQuantiles(mat[idx,,drop = F], probs = c(0.25, 0.75)))
+      } else {
+        matrixStats::colSds(mat[idx,,drop = F])
+      }
     }
   })
-  within_sd_vec <- matrixStats::rowMedians(sd_mat)
+  if(bool_iqr){
+    within_sd_vec <- matrixStats::rowMedians(sd_mat)
+  } else {
+    within_sd_vec <- matrixStats::rowSds(sd_mat)
+  }
 
   if(all(is.na(xlim))) xlim <- range(c(between_sd_vec, within_sd_vec))
   graphics::plot(NA, xlim = xlim, ylim = xlim, xlab = xlab, ylab = ylab, ...)

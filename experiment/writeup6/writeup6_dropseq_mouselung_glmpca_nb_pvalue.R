@@ -2,19 +2,15 @@ rm(list=ls())
 
 load("../../../../out/writeup6/writeup6_dropseq_mouselung_glmpca_nb.RData")
 
-stats::cor(as.numeric(glmpca_res$offsets), log(sparseMatrixStats::colSums2(mat)))
-
-U <- as.matrix(cbind(glmpca_res$X, glmpca_res$factors))
-V <- as.matrix(cbind(glmpca_res$coefX, glmpca_res$loadings))
-# ignore glmpca_res$offsets since these contain the size factors
-
-pred_mat_unnorm <- glmpca_res$glmpca_family$linkinv(tcrossprod(V,U))
-pred_mat_unnorm <- t(pred_mat_unnorm)
+lung2 <- Seurat::CreateSeuratObject(counts = pred_mat)
+lung2[["celltype"]] <- lung[["celltype"]]
+lung2 <- Seurat::NormalizeData(lung2, normalization.method = "LogNormalize", scale.factor = 10000)
 
 ############
 
-membership_vec <- as.factor(lung@meta.data$celltype)
-celltype_vec <- names(which(table(membership_vec) > nrow(pred_mat_unnorm)/100))
+pred_mat2 <- t(as.matrix(lung2[["RNA"]]@data))
+membership_vec <- as.factor(lung2@meta.data$celltype)
+celltype_vec <- names(which(table(membership_vec) > nrow(mat)/100))
 
 ############
 
@@ -49,6 +45,6 @@ pvalue_pairwise <- function(mat, membership_vec, celltype_vec,
   list(pval_mat = res, lookup_mat = lookup)
 }
 
-pval_res <- pvalue_pairwise(pred_mat_unnorm, membership_vec, celltype_vec)
+pval_res <- pvalue_pairwise(pred_mat2, membership_vec, celltype_vec)
 
 save.image("../../../../out/writeup6/writeup6_dropseq_mouselung_glmpca_nb_pvalue.RData")
