@@ -58,7 +58,7 @@ plot_scores_heatmap <- function(score_mat, membership_vec = NA, num_col = 10,
 ######################
 
 plot_volcano <- function(mat, pval_vec, de_idx,
-                         xlab = "Std (signed by selection)",
+                         xlab = "IQR (signed by selection)",
                          ylab = "-log10(pval)",
                          xlim = NA,
                          xgrid = 5, ygrid = 5, cex = 1,
@@ -100,7 +100,7 @@ plot_volcano <- function(mat, pval_vec, de_idx,
 }
 
 plot_sd_scatter <- function(mat, membership_vec, de_idx,
-                            xlab = "Between-celltype Std",
+                            xlab = "Between-celltype IQR",
                             ylab = "Within-celltype Std",
                             xlim = NA,
                             gridsize = 5,
