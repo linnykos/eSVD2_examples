@@ -57,7 +57,7 @@ plot_scores_heatmap <- function(score_mat, membership_vec = NA, num_col = 10,
 
 ######################
 
-plot_volcano <- function(mat, pval_vec, de_idx,
+plot_volcano <- function(mat, pval_vec, de_idx, bool_iqr = T,
                          xlab = "IQR (signed by selection)",
                          ylab = "-log10(pval)",
                          xlim = NA,
@@ -69,8 +69,14 @@ plot_volcano <- function(mat, pval_vec, de_idx,
   tmp <- max(log_vec[!is.infinite(log_vec)])
   log_vec[is.infinite(log_vec)] <- tmp
 
-  sd_vec <- matrixStats::rowDiffs(matrixStats::colQuantiles(mat, probs = c(0.25, 0.75)))
-  mean_vec <- matrixStats::rowMedians(mat)
+  if(bool_iqr){
+    sd_vec <- matrixStats::rowDiffs(matrixStats::colQuantiles(mat, probs = c(0.25, 0.75)))
+    mean_vec <- matrixStats::rowMedians(mat)
+  } else {
+    sd_vec <- matrixStats::colSds(mat)
+    mean_vec <- matrixStats::rowMeans2(mat)
+  }
+
   if(all(is.na(xlim))) xlim <- c(-1,1)*max(sd_vec)
   sd_vec[de_idx] <- -sd_vec[de_idx]
   ylim <- range(c(0, log_vec))
