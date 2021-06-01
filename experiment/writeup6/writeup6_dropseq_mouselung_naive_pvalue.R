@@ -1,20 +1,23 @@
+# from https://satijalab.org/seurat/articles/weighted_nearest_neighbor_analysis.html
 rm(list=ls())
 
-load("../../../../out/writeup6/writeup6_citeseq_bm_glmpca_nb.RData")
+set.seed(10)
+date_of_run <- Sys.time()
+session_info <- devtools::session_info()
+print("Loading in data")
+dat <- anndata::read_h5ad("../../../../data/dropseq_mouselung/lung_regeneration_after_bleo")
 
-stats::cor(as.numeric(glmpca_res$offsets), log(sparseMatrixStats::colSums2(mat)))
+print("Starting Seurat")
+lung <- Seurat::CreateSeuratObject(counts = Matrix::t(dat$X))
+lung[["celltype"]] <- dat$obs$clusters
+lung <- Seurat::NormalizeData(lung, normalization.method = "LogNormalize", scale.factor = 10000)
+lung <-  Seurat::FindVariableFeatures(lung, selection.method = "vst", nfeatures = 2000)
 
-U <- as.matrix(cbind(glmpca_res$X, glmpca_res$factors))
-V <- as.matrix(cbind(glmpca_res$coefX, glmpca_res$loadings))
-# ignore glmpca_res$offsets since these contain the size factors
+#######
 
-pred_mat_unnorm <- glmpca_res$glmpca_family$linkinv(tcrossprod(V,U))
-pred_mat_unnorm <- t(pred_mat_unnorm)
-
-############
-
-membership_vec <- as.factor(bm@meta.data$celltype.l2)
-celltype_vec <- names(which(table(membership_vec) > nrow(pred_mat_unnorm)/100))
+mat <- t(as.matrix(lung[["RNA"]]@data[Seurat::VariableFeatures(lung),]))
+membership_vec <- as.factor(lung@meta.data$celltype)
+celltype_vec <- names(which(table(membership_vec) > nrow(mat)/100))
 
 ############
 
@@ -49,6 +52,8 @@ pvalue_pairwise <- function(mat, membership_vec, celltype_vec,
   list(pval_mat = res, lookup_mat = lookup)
 }
 
-pval_res <- pvalue_pairwise(pred_mat_unnorm, membership_vec, celltype_vec)
+pval_res <- pvalue_pairwise(mat, membership_vec, celltype_vec)
+save.image("../../../../out/writeup6/writeup6_dropseq_mouselung_naive_pvalue.RData")
 
-save.image("../../../../out/writeup6/writeup6_citeseq_bm_glmpca_nb_pvalue.RData")
+
+

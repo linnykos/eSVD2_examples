@@ -1,6 +1,6 @@
 rm(list=ls())
 
-load("../../../../out/writeup6/writeup6_citeseq_bm_glmpca_nb.RData")
+load("../../../../out/writeup6/writeup6_dropseq_mouselung_glmpca_nb.RData")
 
 stats::cor(as.numeric(glmpca_res$offsets), log(sparseMatrixStats::colSums2(mat)))
 
@@ -13,7 +13,7 @@ pred_mat_unnorm <- t(pred_mat_unnorm)
 
 ############
 
-membership_vec <- as.factor(bm@meta.data$celltype.l2)
+membership_vec <- as.factor(lung@meta.data$celltype.l2)
 celltype_vec <- names(which(table(membership_vec) > nrow(pred_mat_unnorm)/100))
 
 ############
@@ -51,4 +51,4 @@ pvalue_pairwise <- function(mat, membership_vec, celltype_vec,
 
 pval_res <- pvalue_pairwise(pred_mat_unnorm, membership_vec, celltype_vec)
 
-save.image("../../../../out/writeup6/writeup6_citeseq_bm_glmpca_nb_pvalue.RData")
+save.image("../../../../out/writeup6/writeup6_dropseq_mouselung_glmpca_nb_pvalue.RData")
