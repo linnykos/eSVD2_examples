@@ -45,7 +45,22 @@ ggplot2::ggsave(filename = "../../../../out/fig/writeup6/citeseq_bm_fasttopics_f
 ####################
 #####################
 
-membership_vec <- as.factor(bm@meta.data$celltype.l2)
-celltype_vec <- names(which(table(membership_vec) > nrow(mat)/50))
-pval_mat <- pvalue_pairwise(pred_mat_raw, membership_vec, celltype_vec)
+
+source("plotting_func.R")
+
+celltype <- as.factor(bm@meta.data["celltype.l2"][,1])
+png("../../../../out/fig/writeup6/citeseq_bm_fasttopics_score.png", height = 1500,
+    width = 3000, res = 300, units = "px")
+par(mfrow = c(1,2))
+plot_scores_heatmap(as.matrix(topic_res$L), membership_vec = celltype,
+                    bool_center = T, bool_scale = F,
+                    bool_log = T, scaling_power = 2,
+                    main = "Scores (fastTopics, Unscaled)")
+plot_scores_heatmap(as.matrix(topic_res$L), membership_vec = celltype,
+                    bool_center = T, bool_scale = T,
+                    bool_log = T, scaling_power = 2,
+                    main = "Scores (fastTopics, Scaled)")
+graphics.off()
+
+
 

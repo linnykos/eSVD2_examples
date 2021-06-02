@@ -39,15 +39,15 @@ ggplot2::ggsave(filename = "../../../../out/fig/writeup6/citeseq_bm_glmpca_facto
 source("plotting_func.R")
 
 celltype <- as.factor(bm@meta.data["celltype.l2"][,1])
-png("../../../../out/fig/writeup6/citeseq_bm_glmpca_factor_poisson_score.png", height = 1500,
+png("../../../../out/fig/writeup6/citeseq_bm_glmpca_poisson_score.png", height = 1500,
     width = 3000, res = 300, units = "px")
 par(mfrow = c(1,2))
 plot_scores_heatmap(glmpca_res$factors, membership_vec = celltype,
                     bool_center = T, bool_scale = F,
                     bool_log = T, scaling_power = 2,
-                    main = "Scores (Unscaled)")
+                    main = "Scores (GLM-PCA, Poisson, Unscaled)")
 plot_scores_heatmap(glmpca_res$factors, membership_vec = celltype,
                     bool_center = T, bool_scale = T,
                     bool_log = T, scaling_power = 2,
-                    main = "Scores (Scaled)")
+                    main = "Scores (GLM-PCA, Poisson, Scaled)")
 graphics.off()

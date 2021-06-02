@@ -108,8 +108,8 @@ plot_volcano <- function(mat, pval_vec, de_idx, bool_iqr = T,
 
 plot_sd_scatter <- function(mat, membership_vec, de_idx,
                             bool_iqr = T,
-                            xlab = ifelse(bool_iqr, "Between-celltype IQR", "Between-celltype Median"),
-                            ylab = ifelse(bool_iqr, "Within-celltype IQR", "Within-celltype Median"),
+                            xlab = ifelse(bool_iqr, "Between-celltype IQR", "Between-celltype Std"),
+                            ylab = ifelse(bool_iqr, "Within-celltype IQR", "Within-celltype Std"),
                             xlim = NA,
                             gridsize = 5,
                             ...){

@@ -38,3 +38,24 @@ plot1 <- Seurat::DimPlot(bm, reduction = "pcmffactorumap", group.by = "celltype.
 plot1 <- plot1 + ggplot2::ggtitle("Human bone marrow (CITE-seq)\npCMF, Factor")
 ggplot2::ggsave(filename = "../../../../out/fig/writeup6/citeseq_bm_pcmf_factor_umap.png",
                 plot1, device = "png", width = 5, height = 5, units = "in")
+
+##################
+
+
+source("plotting_func.R")
+
+celltype <- as.factor(bm@meta.data["celltype.l2"][,1])
+png("../../../../out/fig/writeup6/citeseq_bm_pcmf_score.png", height = 1500,
+    width = 3000, res = 300, units = "px")
+par(mfrow = c(1,2))
+plot_scores_heatmap(pcmf_res$factor$U, membership_vec = celltype,
+                    bool_center = T, bool_scale = F,
+                    bool_log = T, scaling_power = 2,
+                    main = "Scores (pCMF, Unscaled)")
+plot_scores_heatmap(pcmf_res$factor$U, membership_vec = celltype,
+                    bool_center = T, bool_scale = T,
+                    bool_log = T, scaling_power = 2,
+                    main = "Scores (pCMF, Scaled)")
+graphics.off()
+
+
