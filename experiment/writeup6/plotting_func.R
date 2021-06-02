@@ -3,7 +3,7 @@ plot_scores_heatmap <- function(score_mat, membership_vec = NA, num_col = 10,
                                 bool_log = F, scaling_power = 1, luminosity = F,
                                 ...){
 
-  n <- nrow(obj$common_score)
+  n <- nrow(score_mat)
   if(bool_center | bool_scale){
     score_mat <- scale(score_mat, center = bool_center, scale = bool_scale)
   }

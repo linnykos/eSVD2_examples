@@ -24,6 +24,7 @@ pval_vec <- apply(max_pval_mat, 2, min)
 
 #########
 
+mat <- as.matrix(Matrix::t(lung[["RNA"]]@data[Seurat::VariableFeatures(lung),]))
 png("../../../../out/fig/writeup6/dropseq_mouselung_volcano.png", height = 1500,
     width = 1500, res = 300, units = "px")
 plot_volcano(mat, pval_vec, de_idx, main = paste0("P-value vs. standard dev.\n(Naive, ",
@@ -43,3 +44,4 @@ png("../../../../out/fig/writeup6/dropseq_mouselung_pval_hist.png", height = 150
 graphics::hist(as.numeric(pval_obj$pval_mat), col = "gray", xlab = "Individual pvalues",
                main = "Histogram of pvalues (Naive)")
 graphics.off()
+

@@ -33,3 +33,21 @@ plot1 <- Seurat::DimPlot(bm, reduction = "glmfactorumap", group.by = "celltype.l
 plot1 <- plot1 + ggplot2::ggtitle("Human bone marrow (CITE-seq)\nGLM-PCA, Factor, Poisson")
 ggplot2::ggsave(filename = "../../../../out/fig/writeup6/citeseq_bm_glmpca_factor_poisson_umap.png",
                 plot1, device = "png", width = 5, height = 5, units = "in")
+
+####################################
+
+source("plotting_func.R")
+
+celltype <- as.factor(bm@meta.data["celltype.l2"][,1])
+png("../../../../out/fig/writeup6/citeseq_bm_glmpca_factor_poisson_score.png", height = 1500,
+    width = 3000, res = 300, units = "px")
+par(mfrow = c(1,2))
+plot_scores_heatmap(glmpca_res$factors, membership_vec = celltype,
+                    bool_center = T, bool_scale = F,
+                    bool_log = T, scaling_power = 2,
+                    main = "Scores (Unscaled)")
+plot_scores_heatmap(glmpca_res$factors, membership_vec = celltype,
+                    bool_center = T, bool_scale = T,
+                    bool_log = T, scaling_power = 2,
+                    main = "Scores (Scaled)")
+graphics.off()

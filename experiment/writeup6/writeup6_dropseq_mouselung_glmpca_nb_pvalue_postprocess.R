@@ -26,14 +26,16 @@ pval_vec <- apply(max_pval_mat, 2, min)
 
 png("../../../../out/fig/writeup6/dropseq_mouselung_glmpca_nb_volcano.png", height = 1500,
     width = 1500, res = 300, units = "px")
-plot_volcano(pred_mat_unnorm, pval_vec, de_idx, main = paste0("P-value vs. standard dev.\n(GLM-PCA, NB, ",
-                                                  round(100*length(de_idx)/ncol(pred_mat_unnorm)), "% significant)"))
+plot_volcano(pred_mat2, pval_vec, de_idx, main = paste0("P-value vs. standard dev.\n(GLM-PCA, NB, ",
+                                                  round(100*length(de_idx)/ncol(pred_mat2)), "% significant)"),
+             bool_iqr = F)
 graphics.off()
 
 png("../../../../out/fig/writeup6/dropseq_mouselung_glmpca_nb_scatter.png", height = 1500,
     width = 1500, res = 300, units = "px")
-plot_sd_scatter(pred_mat_unnorm, lung@meta.data["celltype"][,1], de_idx,
-                main = "Within/Between standard dev.\n(GLM-PCA, NB)")
+plot_sd_scatter(pred_mat2, lung@meta.data["celltype"][,1], de_idx,
+                main = "Within/Between standard dev.\n(GLM-PCA, NB)",
+                bool_iqr = F)
 graphics.off()
 
 png("../../../../out/fig/writeup6/dropseq_mouselung_glmpca_nb_pval_hist.png", height = 1500,
@@ -42,25 +44,23 @@ graphics::hist(as.numeric(pval_obj$pval_mat), col = "gray", xlab = "Individual p
                main = "Histogram of pvalues (GLM-PCA, NB)")
 graphics.off()
 
-png("../../../../out/fig/writeup6/dropseq_mouselung_glmpca_nb_prediction.png", height = 1500,
+mat <- as.matrix(Matrix::t(lung[["RNA"]]@data[Seurat::VariableFeatures(lung),]))
+png("../../../../out/fig/writeup6/dropseq_mouselung_glmpca_nb_prediction_log.png", height = 1500,
     width = 1500, res = 300, units = "px")
 idx <- which(as.matrix(mat) != 0)
-graphics::plot(y = as.matrix(mat)[idx], x = pred_mat[idx], pch = 16, asp = T,
+graphics::plot(y = as.matrix(mat)[idx], x = pred_mat2[idx], pch = 16, asp = T,
+               col = rgb(0.5, 0.5, 0.5, 0.5),
+               xlab = "Predicted value", ylab = "Observed value",
+               main = "Logged observed vs. predicted\n(GLM-PCA, NB)")
+graphics.off()
+
+mat <- as.matrix(Matrix::t(lung[["RNA"]]@counts[Seurat::VariableFeatures(lung),]))
+png("../../../../out/fig/writeup6/dropseq_mouselung_glmpca_nb_prediction.png", height = 1500,
+    width = 1500, res = 300, units = "px")
+idx <- which(mat != 0)
+graphics::plot(y = mat[idx], x = t(pred_mat)[idx], pch = 16, asp = T,
                col = rgb(0.5, 0.5, 0.5, 0.5),
                xlab = "Predicted value", ylab = "Observed value",
                main = "Raw observed vs. predicted\n(GLM-PCA, NB)",
-               xlim = c(1,2000), ylim = c(1,2000))
+               xlim = c(0,2000), ylim = c(0,2000))
 graphics.off()
-
-png("../../../../out/fig/writeup6/dropseq_mouselung_glmpca_nb_prediction_rescaled.png", height = 1500,
-    width = 1500, res = 300, units = "px")
-idx <- which(as.matrix(mat) != 0)
-vec <- as.matrix(mat)[idx]
-med1 <- median(vec); med2 <- median(pred_mat[idx])
-graphics::plot(y = as.matrix(mat)[idx]/med1, x = pred_mat[idx]/med2, pch = 16, asp = T,
-               col = rgb(0.5, 0.5, 0.5, 0.5),
-               xlab = "Rescaled predicted value", ylab = "Rescaled observed value",
-               main = "Raw observed vs. predicted\n(GLM-PCA, NB, rescaled)",
-               xlim = range(vec), ylim = range(vec))
-graphics.off()
-
