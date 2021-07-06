@@ -49,34 +49,51 @@ plot(glm_res$dev)
 plot(glm_res$coefX[,1])
 image(.rotate(glm_res$factors[order(clust),]))
 
-# try ZINB-WaVE
-# set.seed(10)
-# dat_se <- SummarizedExperiment::SummarizedExperiment(assays = list(counts = t(dat)))
-# tmp <- zinbwave::zinbwave(dat_se, K = 2, maxiter.optimize = 100, normalizedValues = F,
-#                           verbose = T, commondispersion = F, BPPARAM = BiocParallel::SerialParam())
-# fit <- SingleCellExperiment::reducedDims(tmp)$zinbwave
-
-# try pcmf
-set.seed(10)
-pcmf_res <- pCMF::pCMF(dat, K = 2, sparsity = F, verbose = T, ncores = 1)
-plot(pcmf_res$factor$U[,1], pcmf_res$factor$U[,2], asp = T, col = clust, pch = 16)
-
-# try eSVD
+# try eSVD: attempt 1
 set.seed(10)
 library_size_vec <- rowSums(dat)
-init <- eSVD2::initialize_esvd(dat, k = 3, family = "poisson", nuisance_param_vec = NA,
-                               library_size_vec = library_size_vec,
-                               config = eSVD2::initialization_options())
+n <- nrow(dat)
+covariates <- matrix(1, nrow = n, ncol = 1)
+init <- eSVD2::initialize_esvd(dat, k = 2, family = "poisson", nuisance_param_vec = NA,
+                               library_size_vec = NA,
+                               covariates = covariates,
+                               config = eSVD2::initialization_options(), verbose = 1)
 # image(.rotate(init$x_mat[order(clust),]))
 esvd_res <- opt_esvd(init$x_mat, init$y_mat, dat, family = "poisson",
-                nuisance_param_vec = NA, library_size_vec = library_size_vec,
+                     nuisance_param_vec = NA, library_size_vec = NA,
+                     b_init = init$b_mat, covariates = covariates,
+                     max_iter = 50, verbose = 1)
+plot(esvd_res$x_mat[,1], esvd_res$x_mat[,2], asp = T, col = clust, pch = 16)
+
+
+# try eSVD: attempt 2
+set.seed(10)
+n <- nrow(dat)
+covariates <- cbind(matrix(1, nrow = n, ncol = 1), log(library_size_vec))
+init <- eSVD2::initialize_esvd(dat, k = 2, family = "poisson", nuisance_param_vec = NA,
+                               library_size_vec = 1,
+                               covariates = covariates,
+                               config = eSVD2::initialization_options(), verbose = 1)
+# image(.rotate(init$x_mat[order(clust),]))
+esvd_res <- opt_esvd(init$x_mat, init$y_mat, dat, family = "poisson",
+                nuisance_param_vec = NA, library_size_vec = 1,
+                b_init = init$b_mat, covariates = covariates,
                 max_iter = 50, verbose = 1)
+plot(esvd_res$x_mat[,1], esvd_res$x_mat[,2], asp = T, col = clust, pch = 16)
+
+nat_mat <- x_mat %*% t(y_mat) + covariates %*% t(esvd_res$b_mat)
+quantile(exp(nat_mat))
+mean_mat <- .mult_vec_mat(library_size_vec, exp(nat_mat))
+image(.rotate(nat_mat))
 image(.rotate(esvd_res$x_mat[order(clust),]))
-# plot(esvd_res$x_mat[,1], esvd_res$x_mat[,2], asp = T, col = clust, pch = 16)
-plot(esvd_res$x_mat[,2], esvd_res$x_mat[,3], asp = T, col = clust, pch = 16)
 plot(esvd_res$loss)
+plot(x_mat[,1], x_mat[,2], asp = T, col = clust, pch = 16)
+plot(y_mat[,1], y_mat[,2], asp = T, pch = 16)
 set.seed(10)
 umap_res <- Seurat::RunUMAP(esvd_res$x)@cell.embeddings
 plot(umap_res[,1], umap_res[,2], asp = T, col = clust, pch = 16)
 
+
+round(crossprod(x_mat), 2)*sqrt(p/n)
+round(crossprod(y_mat), 2)*sqrt(n/p)
 
