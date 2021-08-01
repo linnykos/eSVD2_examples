@@ -23,6 +23,7 @@ mat <- Matrix::t(mat)
 mat <- as.matrix(mat)
 
 # run eSVD
+print("Estimating Poisson")
 set.seed(10)
 n <- nrow(mat)
 library_size_vec <- rowSums(mat)
@@ -35,7 +36,27 @@ init <- eSVD2::initialize_esvd(mat, k = K, family = "poisson", nuisance_param_ve
 esvd_res <- eSVD2::opt_esvd(init$x_mat, init$y_mat, mat, family = "poisson",
                      nuisance_param_vec = NA, library_size_vec = 1,
                      b_init = init$b_mat, covariates = covariates,
-                     max_iter = 50, verbose = 1)
+                     max_iter = 100, verbose = 1)
 
-save.image("../../../../out/writeup6/writeup6_10x_mouseretinal_esvd.RData")
+save.image("../../../../out/writeup6b/writeup6b_10x_mousepancreas_esvd.RData")
+
+###############3
+
+print("Estimating NB")
+init_nat_mat <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat) + tcrossprod(covariates, esvd_res$b_mat)
+nuisance_vec <- eSVD2::initialize_nuisance_param(mat, init_nat_mat, family = "neg_binom",
+                                          library_size_vec = rep(1, n))
+nuisance_vec
+
+init <- eSVD2::initialize_esvd(mat, k = K, family = "neg_binom",
+                               nuisance_param_vec = nuisance_vec,
+                               library_size_vec = 1,
+                               covariates = covariates,
+                               config = eSVD2::initialization_options(), verbose = 1)
+esvd_res2 <- eSVD2::opt_esvd(init$x_mat, init$y_mat, mat, family = "neg_binom",
+                            nuisance_param_vec = nuisance_vec, library_size_vec = 1,
+                            b_init = init$b_mat, covariates = covariates,
+                            max_iter = 100, verbose = 1)
+
+save.image("../../../../out/writeup6b/writeup6b_10x_mousepancreas_esvd.RData")
 
