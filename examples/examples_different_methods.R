@@ -72,7 +72,7 @@ init <- eSVD2::initialize_esvd(dat, k = 2, family = "poisson", nuisance_param_ve
                                library_size_vec = 1,
                                covariates = covariates,
                                config = eSVD2::initialization_options(), verbose = 1)
-esvd_res <- opt_esvd(init$x_mat, init$y_mat, dat, family = "poisson",
+esvd_res <- eSVD2::opt_esvd(init$x_mat, init$y_mat, dat, family = "poisson",
                 nuisance_param_vec = NA, library_size_vec = 1,
                 b_init = init$b_mat, covariates = covariates,
                 max_iter = 50, verbose = 1)
