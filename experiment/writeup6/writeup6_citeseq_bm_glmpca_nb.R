@@ -18,4 +18,4 @@ glmpca_res <- glmpca::glmpca(mat, L = K, fam = "nb",
 time_end <- Sys.time()
 pred_mat <- glmpca:::predict.glmpca(glmpca_res)
 
-save.image("../../../../out/writeup6/writeup6_citeseq_bm_glmpca_nb.RData")
+save.image("../../../../out/writeup6b/writeup6b_citeseq_bm_esvd.RData")

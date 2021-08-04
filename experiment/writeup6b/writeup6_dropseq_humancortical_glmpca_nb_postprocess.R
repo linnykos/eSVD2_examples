@@ -3,6 +3,7 @@ rm(list=ls())
 library(Seurat)
 
 load("../../../../out/writeup6b/writeup6b_dropseq_humancortical_glmpca_nb.RData")
+load("../../../../data/dropseq_humancortical/dropseq_humancortical_formatted.RData")
 
 glm_assay <- Seurat::CreateAssayObject(counts = pred_mat)
 cortical[["glm"]] <- glm_assay

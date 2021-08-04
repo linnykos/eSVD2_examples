@@ -1,5 +1,7 @@
 rm(list=ls())
-load("../../../../out/writeup6b/writeup6b_10x_mousepancreas_esvd_poisson.RData")
+
+library(Seurat)
+load("../../../../out/writeup6b/writeup6b_10x_mousepancreas_esvd2.RData")
 
 nat_mat <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat) + tcrossprod(covariates, esvd_res$b_mat)
 pred_mat <- exp(nat_mat)
@@ -21,8 +23,8 @@ pancreas <- Seurat::RunUMAP(pancreas, reduction = "esvdpca", dims = 1:30, reduct
 
 plot1 <- Seurat::DimPlot(pancreas, reduction = "esvdpca", group.by = "celltype", label = TRUE,
                          repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
-plot1 <- plot1 + ggplot2::ggtitle("Mouse Pancreas (10x)\neSVD, Full, Poisson")
-ggplot2::ggsave(filename = "../../../../out/fig/writeup6b/10x_mousepancreas_esvd_full_poisson_umap.png",
+plot1 <- plot1 + ggplot2::ggtitle("Mouse Pancreas (10x)\neSVD (Alt), Full, Poisson")
+ggplot2::ggsave(filename = "../../../../out/fig/writeup6b/10x_mousepancreas_esvd2_full_poisson_umap.png",
                 plot1, device = "png", width = 5, height = 5, units = "in")
 
 ###################
@@ -35,15 +37,6 @@ pancreas[["esvdfactorumap"]] <- Seurat::CreateDimReducObject(embedding = tmp, ke
 
 plot1 <- Seurat::DimPlot(pancreas, reduction = "esvdfactorumap", group.by = "celltype", label = TRUE,
                          repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
-plot1 <- plot1 + ggplot2::ggtitle("Mouse Pancreas (10x)\neSVD, Factor, Poisson")
-ggplot2::ggsave(filename = "../../../../out/fig/writeup6b/10x_mousepancreas_esvd_factor_poisson_umap.png",
+plot1 <- plot1 + ggplot2::ggtitle("Mouse Pancreas (10x)\neSVD (Alt), Factor, Poisson")
+ggplot2::ggsave(filename = "../../../../out/fig/writeup6b/10x_mousepancreas_esvd2_factor_poisson_umap.png",
                 plot1, device = "png", width = 5, height = 5, units = "in")
-
-#########################
-
-png( "../../../../out/fig/writeup6b/10x_mousepancreas_esvd_poisson_libraryhist.png",
-     height = 1200, width = 1500, res = 300, units = "px")
-graphics::hist(esvd_res$b_mat[,2], col = "gray", main = "Coefficient of log-depth",
-               xlab = "Log depth", breaks = 20)
-graphics::lines(x = rep(1,2), y = c(0,1e6), col = "red", lwd = 2, lty = 2)
-graphics.off()

@@ -53,9 +53,10 @@ cortical <- Seurat::RunUMAP(cortical, dims = 1:50, reduction.name = 'umap.rna', 
 
 n <- ncol(cortical)
 celltype <- sapply(1:n, function(i){
-  idx <- which(rownames(cortical@meta.data) == metadata$Cell[i])[1]
+  idx <- which(metadata$Cell == rownames(cortical@meta.data)[i])[1]
   metadata$Cluster[idx]
 })
+which(is.na(celltype))
 table(celltype)
 # replace names, from Figure 1F in https://www.cell.com/action/showPdf?pii=S0896-6273%2819%2930561-6
 celltype[celltype == "ExDp1"] <- "Excitatory deep layer 1"
@@ -67,6 +68,10 @@ celltype[celltype == "InCGE"] <- "Interneuron CGE"
 celltype[celltype == "InMGE"] <- "Interneuron MGE"
 celltype[celltype == "PgG2M"] <- "Cycling progenitors (G2/M phase)"
 celltype[celltype == "PgS"] <- "Cycling progenitors (S phase)"
+celltype[celltype == "Mic"] <- "Microglia"
+celltype[celltype == "Per"] <- "Pericyte"
+celltype[celltype == "End"] <- "Endothelial"
+
 
 cortical[["celltype"]] <- celltype
 
