@@ -6,7 +6,7 @@ session_info <- devtools::session_info()
 print("Loading in data")
 dat <- anndata::read_h5ad("../../../../data/dropseq_mouselung/lung_regeneration_after_bleo")
 
-print("Starting Seurat")
+print("Starting Seurat ")
 tmp <- Matrix::t(dat$X); tmp <- as.matrix(tmp); tmp <- Matrix::matrix(tmp, sparse = T)
 lung <- Seurat::CreateSeuratObject(counts = tmp)
 rm(list = "tmp")
