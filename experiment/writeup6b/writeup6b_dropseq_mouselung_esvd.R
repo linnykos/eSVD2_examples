@@ -7,7 +7,9 @@ print("Loading in data")
 dat <- anndata::read_h5ad("../../../../data/dropseq_mouselung/lung_regeneration_after_bleo")
 
 print("Starting Seurat")
-lung <- Seurat::CreateSeuratObject(counts = Matrix::t(dat$X))
+tmp <- Matrix::t(dat$X); tmp <- as.matrix(tmp); tmp <- Matrix::matrix(tmp, sparse = T)
+lung <- Seurat::CreateSeuratObject(counts = tmp)
+rm(list = "tmp")
 lung[["celltype"]] <- dat$obs$clusters
 lung <- Seurat::NormalizeData(lung, normalization.method = "LogNormalize", scale.factor = 10000)
 lung <-  Seurat::FindVariableFeatures(lung, selection.method = "vst", nfeatures = 2000)
