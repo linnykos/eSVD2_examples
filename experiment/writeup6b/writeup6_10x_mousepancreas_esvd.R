@@ -46,13 +46,13 @@ print("Estimating NB")
 init_nat_mat <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat) + tcrossprod(covariates, esvd_res$b_mat)
 nuisance_vec <- eSVD2::initialize_nuisance_param(mat, init_nat_mat, family = "neg_binom",
                                           library_size_vec = rep(1, n))
-nuisance_vec
 
 init <- eSVD2::initialize_esvd(mat, k = K, family = "neg_binom",
                                nuisance_param_vec = nuisance_vec,
                                library_size_vec = 1,
                                covariates = covariates,
                                config = eSVD2::initialization_options(), verbose = 1)
+set.seed(10)
 esvd_res2 <- eSVD2::opt_esvd(init$x_mat, init$y_mat, mat, family = "neg_binom",
                             nuisance_param_vec = nuisance_vec, library_size_vec = 1,
                             b_init = init$b_mat, covariates = covariates,
