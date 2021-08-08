@@ -38,3 +38,12 @@ plot1 <- Seurat::DimPlot(bm, reduction = "esvdfactorumap", group.by = "celltype.
 plot1 <- plot1 + ggplot2::ggtitle("Human bone marrow (CITE-seq)\neSVD, Factor, Poisson")
 ggplot2::ggsave(filename = "../../../../out/fig/writeup6b/citeseq_bm_esvd_factor_poisson_umap.png",
                 plot1, device = "png", width = 5, height = 5, units = "in")
+
+#########################
+
+png( "../../../../out/fig/writeup6b/citeseq_bm_esvd_poisson_libraryhist.png",
+     height = 1200, width = 1200, res = 300, units = "px")
+graphics::hist(esvd_res$b_mat[,2], col = "gray", main = "Coefficient of log-depth",
+               xlab = "Log depth", breaks = 25)
+graphics::lines(x = rep(1,2), y = c(0,1e6), col = "red", lwd = 2, lty = 2)
+graphics.off()

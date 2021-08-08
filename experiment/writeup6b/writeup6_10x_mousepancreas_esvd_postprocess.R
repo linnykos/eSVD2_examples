@@ -42,8 +42,8 @@ ggplot2::ggsave(filename = "../../../../out/fig/writeup6b/10x_mousepancreas_esvd
 #########################
 
 png( "../../../../out/fig/writeup6b/10x_mousepancreas_esvd_poisson_libraryhist.png",
-     height = 1200, width = 1500, res = 300, units = "px")
+     height = 1200, width = 1200, res = 300, units = "px")
 graphics::hist(esvd_res$b_mat[,2], col = "gray", main = "Coefficient of log-depth",
-               xlab = "Log depth", breaks = 20)
+               xlab = "Log depth", breaks = 25)
 graphics::lines(x = rep(1,2), y = c(0,1e6), col = "red", lwd = 2, lty = 2)
 graphics.off()

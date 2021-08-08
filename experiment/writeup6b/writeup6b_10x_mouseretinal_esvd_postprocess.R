@@ -38,3 +38,12 @@ plot1 <- Seurat::DimPlot(retinal, reduction = "esvdfactorumap", group.by = "Clus
 plot1 <- plot1 + ggplot2::ggtitle("Mouse retinal (10x)\neSVD, Factor, Poisson")
 ggplot2::ggsave(filename = "../../../../out/fig/writeup6b/10x_mouseretinal_esvd_factor_poisson_umap.png",
                 plot1, device = "png", width = 5, height = 5, units = "in")
+
+#########################
+
+png( "../../../../out/fig/writeup6b/10x_mouseretinal_esvd_poisson_libraryhist.png",
+     height = 1200, width = 1200, res = 300, units = "px")
+graphics::hist(esvd_res$b_mat[,2], col = "gray", main = "Coefficient of log-depth",
+               xlab = "Log depth", breaks = 25)
+graphics::lines(x = rep(1,2), y = c(0,1e6), col = "red", lwd = 2, lty = 2)
+graphics.off()
