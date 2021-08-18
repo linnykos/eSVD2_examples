@@ -38,6 +38,8 @@ init <- eSVD2::initialize_esvd(mat, k = K, family = "poisson", nuisance_param_ve
                                library_size_vec = 1,
                                covariates = covariates,
                                config = eSVD2::initialization_options(), verbose = 1)
+save.image("../../../../out/writeup7/writeup7_sns_esvd_covariates.RData")
+
 print("Starting estimation")
 esvd_res <- eSVD2::opt_esvd(init$x_mat, init$y_mat, mat, family = "poisson",
                             nuisance_param_vec = NA, library_size_vec = 1,
