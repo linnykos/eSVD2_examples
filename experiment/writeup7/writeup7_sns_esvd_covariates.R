@@ -12,25 +12,27 @@ n <- nrow(mat)
 library_size_vec <- rowSums(mat)
 covariates <- cbind(matrix(1, nrow = n, ncol = 1), log(library_size_vec))
 
-uniq_indiv <- unique(sns@meta.data$individual)
+# uniq_indiv <- unique(sns@meta.data$individual)
 uniq_diagnos <- unique(sns@meta.data$diagnosis)
 uniq_sex <- unique(sns@meta.data$sex)
-for(i in uniq_indiv){
-  tmp <- rep(0, n)
-  tmp[which(sns@meta.data$individual == i)] <- 1
-  covariates <- cbind(covariates, tmp)
-}
-for(i in uniq_diagnos){
+# for(i in uniq_indiv){
+#   tmp <- rep(0, n)
+#   tmp[which(sns@meta.data$individual == i)] <- 1
+#   covariates <- cbind(covariates, tmp)
+# }
+for(i in uniq_diagnos[-1]){
   tmp <- rep(0, n)
   tmp[which(sns@meta.data$diagnosis == i)] <- 1
   covariates <- cbind(covariates, tmp)
 }
-for(i in uniq_sex){
+for(i in uniq_sex[-1]){
   tmp <- rep(0, n)
   tmp[which(sns@meta.data$sex == i)] <- 1
   covariates <- cbind(covariates, tmp)
 }
-colnames(covariates) <- c("Intercept", "Log-library", uniq_indiv, uniq_diagnos, uniq_sex)
+#colnames(covariates) <- c("Intercept", "Log-library", uniq_indiv, uniq_diagnos, uniq_sex)
+colnames(covariates) <- c("Intercept", "Log-library", uniq_diagnos[-1], uniq_sex[-1])
+
 
 K <- 30
 print("Starting initialization")
