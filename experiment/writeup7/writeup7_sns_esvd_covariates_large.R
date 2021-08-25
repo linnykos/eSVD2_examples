@@ -20,7 +20,7 @@ sns[["percent.mt"]] <- Seurat::PercentageFeatureSet(sns, pattern = "^MT-")
 
 set.seed(10)
 Seurat::DefaultAssay(sns) <- "RNA"
-sns <- Seurat::SCTransform(sns, verbose = T, variable.features.n = 10000)
+sns <- Seurat::SCTransform(sns, verbose = T, variable.features.n = 50000)
 sns <- Seurat::RunPCA(sns, verbose = F)
 set.seed(10)
 sns <- Seurat::RunUMAP(sns, dims = 1:50, reduction.name = 'umap.rna', reduction.key = 'rnaUMAP_')
@@ -42,7 +42,7 @@ save.image("../../../../out/writeup7/writeup7_sns_esvd_covariates_large.RData")
 ######################
 
 print("Forming covariates")
-mat <- sns[["RNA"]]@counts[Seurat::VariableFeatures(sns),]
+mat <- sns[["RNA"]]@counts[Seurat::VariableFeatures(sns), which(sns@meta.data$celltype == "L2/3")]
 mat <- Matrix::t(mat)
 mat <- as.matrix(mat)
 
@@ -50,7 +50,7 @@ set.seed(10)
 n <- nrow(mat)
 library_size_vec <- rowSums(mat)
 covariates <- cbind(matrix(1, nrow = n, ncol = 1), log(library_size_vec))
-uniq_diagnos <- unique(sns@meta.data$diagnosis)
+uniq_diagnos <- unique(sns@meta.data$diagnosis[which(sns@meta.data$celltype == "L2/3")])
 # uniq_sex <- unique(sns@meta.data$sex)
 for(i in uniq_diagnos[-1]){
   tmp <- rep(0, n)
