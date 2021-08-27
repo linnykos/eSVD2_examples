@@ -33,7 +33,7 @@ rm(list = c("pred_mat")); gc()
 
 set.seed(10)
 tmp <- Seurat::RunUMAP(as.matrix(esvd_res$x_mat))@cell.embeddings
-rownames(tmp) <- rownames(sns@meta.data)
+rownames(tmp) <- rownames(sns@meta.data)[which(sns@meta.data$celltype == "L2/3")]
 
 sns[["esvdfactorumap"]] <- Seurat::CreateDimReducObject(embedding = tmp, key = "UMAP", assay = "RNA")
 
