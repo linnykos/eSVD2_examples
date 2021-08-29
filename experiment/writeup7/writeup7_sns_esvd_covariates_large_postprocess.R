@@ -50,3 +50,18 @@ png("../../../../out/fig/writeup7/sns_esvd_covariates_large_asd_hist.png",
 hist(esvd_res$b_mat[,3], main = "Human brain (SNS, with covariates)\neSVD, ASD coef. histogram",
      col = "gray", xlab = "ASD coefficient", breaks = 50)
 graphics.off()
+
+
+de_genes <- read.csv("../../../../data/sns_autism/de_genes.txt", header = F)
+de_genes2 <- sort(unique(de_genes[,1]))
+length(de_genes2)
+
+idx <- which(colnames(mat) %in% de_genes2)
+length(idx)
+
+quantile(esvd_res$b_mat[idx,3]) # doesn't look particularly promising
+quantile(esvd_res$b_mat[,3])
+
+idx_stop <- which(de_genes[,1] == "RP11-436D23.1")
+idx <- which(colnames(mat) %in% de_genes[1:idx_stop[1],1])
+quantile(esvd_res$b_mat[idx,3])
