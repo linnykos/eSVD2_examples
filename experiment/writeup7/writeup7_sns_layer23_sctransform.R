@@ -1,10 +1,10 @@
 rm(list=ls())
 
+library(Seurat)
+
 set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
-
-library(Seurat)
 
 load("../../../../out/writeup7/writeup7_sns_esvd_covariates_layer23_36501genes.RData")
 mat <- as.matrix(mat)
