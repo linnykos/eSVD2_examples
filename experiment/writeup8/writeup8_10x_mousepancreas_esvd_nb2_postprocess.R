@@ -2,6 +2,7 @@ rm(list=ls())
 
 library(Seurat)
 load("../../../../out/writeup8/writeup8_10x_mousepancreas_esvd_nb2.RData")
+quantile(nuisance_vec)
 
 nat_mat <- tcrossprod(esvd_res2$x_mat, esvd_res2$y_mat) + tcrossprod(covariates, esvd_res2$b_mat)
 pred_mat <- eSVD2:::.mult_mat_vec(exp(nat_mat)/(1-exp(nat_mat)), nuisance_vec)
