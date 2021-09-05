@@ -25,7 +25,7 @@ pancreas <- Seurat::RunUMAP(pancreas, reduction = "esvdpca", dims = 1:30, reduct
 plot1 <- Seurat::DimPlot(pancreas, reduction = "esvdpca", group.by = "celltype", label = TRUE,
                          repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle("Mouse Pancreas (10x)\neSVD (Alt), Full, NB")
-ggplot2::ggsave(filename = "../../../../out/fig/writeup8/10x_mousepancreas_esvd2_full_nb_umap.png",
+ggplot2::ggsave(filename = "../../../../out/fig/writeup8/10x_mousepancreas_esvd_full_nb_umap.png",
                 plot1, device = "png", width = 5, height = 5, units = "in")
 
 ###################
@@ -39,5 +39,5 @@ pancreas[["esvdfactorumap"]] <- Seurat::CreateDimReducObject(embedding = tmp, ke
 plot1 <- Seurat::DimPlot(pancreas, reduction = "esvdfactorumap", group.by = "celltype", label = TRUE,
                          repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle("Mouse Pancreas (10x)\neSVD (Alt), Factor, NB")
-ggplot2::ggsave(filename = "../../../../out/fig/writeup8/10x_mousepancreas_esvd2_factor_nb_umap.png",
+ggplot2::ggsave(filename = "../../../../out/fig/writeup8/10x_mousepancreas_esvd_factor_nb_umap.png",
                 plot1, device = "png", width = 5, height = 5, units = "in")

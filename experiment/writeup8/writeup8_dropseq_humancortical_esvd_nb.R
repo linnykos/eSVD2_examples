@@ -66,6 +66,7 @@ init2 <- eSVD2::initialize_esvd(mat, k = K, family = "neg_binom",
 time_end4 <- Sys.time()
 save.image("../../../../out/writeup8/writeup8_dropseq_humancortical_esvd_nb.RData")
 
+nuisance_vec <- pmax(nuisance_vec, 0.01)
 print("Estimating NB")
 time_start5 <- Sys.time()
 set.seed(10)
@@ -75,7 +76,7 @@ esvd_res2 <- eSVD2::opt_esvd(init2$x_mat, init2$y_mat, mat, family = "neg_binom"
                              b_init = init2$b_mat,
                              covariates = covariates,
                              max_iter = 100,
-                             verbose = 1)
+                             verbose = 2)
 time_end5 <- Sys.time()
 print("Finished")
 save.image("../../../../out/writeup8/writeup8_dropseq_humancortical_esvd_nb.RData")
