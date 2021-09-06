@@ -56,7 +56,7 @@ save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_nb_glmgampo
 K <- 30
 n <- nrow(mat)
 covariates <- matrix(1, nrow = n, ncol = 1)
-head(covariates) <- "Intercept"
+colnames(covariates) <- "Intercept"
 
 print("Initializing NB")
 time_start2 <- Sys.time()
