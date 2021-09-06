@@ -67,18 +67,19 @@ init <- eSVD2::initialize_esvd(mat, k = K,
                                library_size_vec = library_size_vec,
                                covariates = covariates,
                                check_rank = F,
-                               config = eSVD2::initialization_options(), verbose = 1)
+                               config = eSVD2::initialization_options(),
+                               verbose = 1)
 time_end2 <- Sys.time()
 save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_nb_glmgampoi.RData")
 
 print("Estimating NB")
 time_start3 <- Sys.time()
 set.seed(10)
-esvd_res <- eSVD2::opt_esvd(init2$x_mat, init2$y_mat, mat,
+esvd_res <- eSVD2::opt_esvd(init$x_mat, init$y_mat, mat,
                             family = "neg_binom",
                             nuisance_param_vec = nuisance_vec,
                             library_size_vec = library_size_vec,
-                            b_init = init2$b_mat,
+                            b_init = init$b_mat,
                             covariates = covariates,
                             max_iter = 100,
                             verbose = 1)
