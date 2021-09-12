@@ -1,24 +1,22 @@
 rm(list=ls())
-load("../../../../data/dropseq_humancortical/dropseq_humancortical_formatted.RData")
 
-library(eSVD2); library(glmGamPoi); library(scran); library(Seurat)
 set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
+load("../../../../data/10x_mouseretinal/10x_mouseretinal_formatted.RData")
 
-print("Loading in data")
-dat <- anndata::read_h5ad("../../../../data/dropseq_mouselung/lung_regeneration_after_bleo")
+rownames(metadata) <- metadata[,1]
+metadata <- metadata[,-1]
 
-print("Starting Seurat ")
-tmp <- Matrix::t(dat$X); tmp <- as.matrix(tmp); tmp <- Matrix::Matrix(tmp, sparse = T)
-lung <- Seurat::CreateSeuratObject(counts = tmp)
-rm(list = "tmp")
-lung[["celltype"]] <- dat$obs$clusters
-lung <- Seurat::NormalizeData(lung, normalization.method = "LogNormalize", scale.factor = 10000)
-lung <-  Seurat::FindVariableFeatures(lung, selection.method = "vst", nfeatures = 2000)
-rm(list = "dat")
+retinal <- Seurat::CreateSeuratObject(counts = Matrix::t(dat),
+                                      meta.data = metadata, min.cells = 5)
+largest_batch <- names(which.max(table(retinal@meta.data$BatchID)))
+cell_keep <- rownames(retinal@meta.data[retinal@meta.data$BatchID == largest_batch,])
+retinal <- retinal[,cell_keep]
+retinal <- Seurat::NormalizeData(retinal, normalization.method = "LogNormalize", scale.factor = 10000)
+retinal <-  Seurat::FindVariableFeatures(retinal, selection.method = "vst", nfeatures = 2000)
 
-mat <- lung[["RNA"]]@counts[Seurat::VariableFeatures(lung),]
+mat <- retinal[["RNA"]]@counts[Seurat::VariableFeatures(retinal),]
 mat <- Matrix::t(mat)
 mat <- as.matrix(mat)
 
@@ -52,7 +50,7 @@ quantile(glmGamPoi_res$size_factors)
 nuisance_vec <- 1/glmGamPoi_res$overdispersions
 nuisance_vec <- pmin(nuisance_vec, 1e5)
 library_size_vec <- glmGamPoi_res$size_factors
-save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_nb_glmgampoi.RData")
+save.image("../../../../out/writeup8/writeup8_10x_mouseretinal_esvd_nb_glmgampoi.RData")
 
 K <- 30
 n <- nrow(mat)
@@ -71,7 +69,7 @@ init <- eSVD2::initialize_esvd(mat, k = K,
                                config = eSVD2::initialization_options(),
                                verbose = 1)
 time_end2 <- Sys.time()
-save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_nb_glmgampoi.RData")
+save.image("../../../../out/writeup8/writeup8_10x_mouseretinal_esvd_nb_glmgampoi.RData")
 
 print("Estimating NB")
 time_start3 <- Sys.time()
@@ -86,5 +84,5 @@ esvd_res <- eSVD2::opt_esvd(init$x_mat, init$y_mat, mat,
                             verbose = 2)
 time_end3 <- Sys.time()
 print("Finished")
-save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_nb_glmgampoi.RData")
+save.image("../../../../out/writeup8/writeup8_10x_mouseretinal_esvd_nb_glmgampoi.RData")
 
