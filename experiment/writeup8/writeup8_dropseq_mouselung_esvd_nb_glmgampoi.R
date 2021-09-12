@@ -82,7 +82,7 @@ esvd_res <- eSVD2::opt_esvd(init$x_mat, init$y_mat, mat,
                             b_init = init$b_mat,
                             covariates = covariates,
                             max_iter = 100,
-                            verbose = 1)
+                            verbose = 3)
 time_end3 <- Sys.time()
 print("Finished")
 save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_nb_glmgampoi.RData")
