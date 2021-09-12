@@ -55,8 +55,8 @@ save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_nb_glmgampo
 
 K <- 30
 n <- nrow(mat)
-covariates <- matrix(1, nrow = n, ncol = 1)
-colnames(covariates) <- "Intercept"
+covariates <- cbind(1, log(library_size_vec))
+colnames(covariates) <- c("Intercept", "Log-UMI")
 
 print("Initializing NB")
 time_start2 <- Sys.time()
@@ -64,7 +64,7 @@ set.seed(10)
 init <- eSVD2::initialize_esvd(mat, k = K,
                                family = "neg_binom",
                                nuisance_param_vec = nuisance_vec,
-                               library_size_vec = library_size_vec,
+                               library_size_vec = 1,
                                covariates = covariates,
                                check_rank = F,
                                config = eSVD2::initialization_options(),
@@ -78,7 +78,7 @@ set.seed(10)
 esvd_res <- eSVD2::opt_esvd(init$x_mat, init$y_mat, mat,
                             family = "neg_binom",
                             nuisance_param_vec = nuisance_vec,
-                            library_size_vec = library_size_vec,
+                            library_size_vec = 1,
                             b_init = init$b_mat,
                             covariates = covariates,
                             max_iter = 100,
