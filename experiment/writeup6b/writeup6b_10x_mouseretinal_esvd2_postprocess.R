@@ -37,4 +37,4 @@ plot1 <- Seurat::DimPlot(retinal, reduction = "esvdfactorumap", group.by = "Clus
                          repel = TRUE, label.size = 2.5) + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle("Mouse retinal (10x)\neSVD (Alt), Factor, Poisson")
 ggplot2::ggsave(filename = "../../../../out/fig/writeup6b/10x_mouseretinal_esvd2_factor_poisson_umap.png",
-                plot1, device = "png", width = 5, height = 5, units = "in")
+                plot1, device = "png", width = 8, height = 5, units = "in")
