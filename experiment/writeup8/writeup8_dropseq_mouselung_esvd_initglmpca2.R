@@ -55,10 +55,10 @@ rm(list=ls_vec)
 
 ########################################
 
-covariates <- cbind(1, offsets)
-colnames(covariates) <- c("Intercept", "GLMPCA-offsets")
-b_init <- cbind(V[,1], 1)
-colnames(b_init) <- c("Intercept", "GLMPCA-offsets")
+covariates <- matrix(1, nrow = nrow(mat2), ncol = 1)
+colnames(covariates) <- c("Intercept")
+b_init <- matrix(V[,1], nrow = nrow(V), ncol = 1)
+colnames(b_init) <- c("Intercept")
 
 print("Estimating NB via eSVD")
 time_start3 <- Sys.time()
@@ -69,11 +69,14 @@ esvd_res <- eSVD2::opt_esvd(U[,-1], V[,-1], mat2,
                             library_size_vec = 1,
                             b_init = b_init,
                             covariates = covariates,
+                            reestimate_nuisance = T,
+                            global_estimate = T,
+                            offset_vec = offsets,
                             max_iter = 100,
                             tol = 1e-8,
                             verbose = 1)
 time_end3 <- Sys.time()
-save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_initglmpca.RData")
+save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_initglmpca2.RData")
 
 ###################
 
@@ -86,5 +89,5 @@ glmpca_res <- glmpca::glmpca(mat, L = K, fam = "nb",
                              minibatch = "stochastic")
 time_end4 <- Sys.time()
 print("Finished")
-save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_initglmpca.RData")
+save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_initglmpca2.RData")
 

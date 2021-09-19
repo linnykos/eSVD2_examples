@@ -14,7 +14,8 @@ ls_vec <- ls_vec[!ls_vec %in% c("mat", "mat2",
                                 "nuisance_vec",
                                 "library_size_vec",
                                 "date_of_run",
-                                "session_info")]
+                                "session_info",
+                                "lung")]
 rm(list=ls_vec)
 save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_glmpca_initesvd.RData")
 
