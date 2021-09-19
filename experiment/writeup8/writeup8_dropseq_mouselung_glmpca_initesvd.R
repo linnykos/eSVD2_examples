@@ -10,7 +10,11 @@ mat2 <- as.matrix(Matrix::t(mat))
 nuisance_vec <- rep(glmpca_res$glmpca_family$nb_theta[1], ncol(mat2))
 library_size_vec <- matrixStats::rowSums2(mat2)
 ls_vec <- ls()
-ls_vec <- ls_vec[!ls_vec %in% c("mat", "mat2", "nusiance_vec", "library_size_vec", "date_of_run", "session_info")]
+ls_vec <- ls_vec[!ls_vec %in% c("mat", "mat2",
+                                "nuisance_vec",
+                                "library_size_vec",
+                                "date_of_run",
+                                "session_info")]
 rm(list=ls_vec)
 save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_glmpca_initesvd.RData")
 
