@@ -60,13 +60,14 @@ colnames(covariates) <- c("Intercept")
 b_init <- matrix(V[,1], nrow = nrow(V), ncol = 1)
 colnames(b_init) <- c("Intercept")
 
-print("Estimating NB via eSVD")
-time_start3 <- Sys.time()
+print("Estimating NB via eSVD via Newton's")
+time_start1 <- Sys.time()
 set.seed(10)
 esvd_res <- eSVD2::opt_esvd(U[,-1], V[,-1], mat2,
                             family = "neg_binom2",
                             nuisance_param_vec = nuisance_vec,
                             library_size_vec = 1,
+                            method = "newton",
                             b_init = b_init,
                             covariates = covariates,
                             reestimate_nuisance = T,
@@ -75,19 +76,40 @@ esvd_res <- eSVD2::opt_esvd(U[,-1], V[,-1], mat2,
                             max_iter = 100,
                             tol = 1e-8,
                             verbose = 1)
-time_end3 <- Sys.time()
+time_end1 <- Sys.time()
 save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_initglmpca2.RData")
+
+
+print("Estimating NB via eSVD via LGFBS")
+time_start2 <- Sys.time()
+set.seed(10)
+esvd_res2 <- eSVD2::opt_esvd(U[,-1], V[,-1], mat2,
+                            family = "neg_binom2",
+                            nuisance_param_vec = nuisance_vec,
+                            library_size_vec = 1,
+                            method ="lbfgs",
+                            b_init = b_init,
+                            covariates = covariates,
+                            reestimate_nuisance = T,
+                            global_estimate = T,
+                            offset_vec = offsets,
+                            max_iter = 100,
+                            tol = 1e-8,
+                            verbose = 1)
+time_end2 <- Sys.time()
+save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_initglmpca2.RData")
+
 
 ###################
 
 print("Estimating NB via GLM-PCA")
 set.seed(10)
 K <- 30
-time_start4 <- Sys.time()
+time_start3 <- Sys.time()
 glmpca_res <- glmpca::glmpca(mat, L = K, fam = "nb",
                              ctl = list(verbose = T),
                              minibatch = "stochastic")
-time_end4 <- Sys.time()
+time_end3 <- Sys.time()
 print("Finished")
 save.image("../../../../out/writeup8/writeup8_dropseq_mouselung_esvd_initglmpca2.RData")
 
