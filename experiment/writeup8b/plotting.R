@@ -28,7 +28,7 @@ plotting_func <- function(seurat_obj,
   png(heatmap_filename,
       height = 2000, width = 2000, units = "px", res = 300)
   eSVD2:::plot_scores_heatmap(esvd_res$x_mat,
-                              membership_vec = as.factor(seurat_obj@meta.data$celltype),
+                              membership_vec = as.factor(seurat_obj@meta.data[,group.by]),
                               bool_log = T,
                               scaling_power = 1.5,
                               xlab = "Latent factor",
