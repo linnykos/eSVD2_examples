@@ -79,7 +79,7 @@ eSVD2:::plot_scores_heatmap(esvd_res$x_mat,
                             main = "Heatmap for Mouse Lung (Dropseq)\neSVD (NB2, initialized GLM-PCA) Log-scale")
 graphics.off()
 
-
+max_value <- quantile(mat[mat > 2], probs = 0.999)
 nat_mat <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat) + tcrossprod(covariates, esvd_res$b_mat)
 mean_mat <- exp(nat_mat)
 set.seed(10)

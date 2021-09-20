@@ -129,17 +129,3 @@ for(i in 1:6){
         lwd = 2)
 }
 graphics.off()
-
-nat_mat <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat) + tcrossprod(covariates, esvd_res$b_mat)
-prob_mat <- exp(nat_mat)
-mean_mat <-  eSVD2:::.mult_mat_vec(prob_mat/(1-prob_mat), nuisance_vec)
-
-smoothing_esvd <- smooth_gene_vs_umi(mean_mat,
-                                         gene_grouping,
-                                         umi_vec = matrixStats::rowSums2(mat))
-individual_list <- smoothing_original$individual_list
-median_list <- smoothing_original$median_list
-
-
-
-
