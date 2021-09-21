@@ -43,7 +43,7 @@ y_init <- eSVD2:::.mult_mat_vec(svd_res$v, sqrt(svd_res$d))
 # tmp <- tcrossprod(x_init, y_init) + tcrossprod(covariates, b_init)
 ################
 
-print("Estimating NB via eSVD, w/ reparameterization and gene-specific nuisance")
+print("Estimating NB via eSVD, round 1")
 time_start1 <- Sys.time()
 set.seed(10)
 esvd_res <- eSVD2::opt_esvd(x_init, y_init, mat,
@@ -54,10 +54,29 @@ esvd_res <- eSVD2::opt_esvd(x_init, y_init, mat,
                             b_init = b_init,
                             covariates = covariates,
                             reestimate_nuisance = T,
-                            global_estimate = F,
-                            reparameterize = T,
+                            global_estimate = T,
+                            reparameterize = F,
                             max_iter = 100,
                             tol = 1e-8,
                             verbose = 1)
 time_end1 <- Sys.time()
+save.image("../../../../out/writeup8b/writeup8b_dropseq_mouselung_esvd2.RData")
+
+print("Estimating NB via eSVD, round 2")
+time_start2 <- Sys.time()
+set.seed(10)
+esvd_res2 <- eSVD2::opt_esvd(esvd_res$x_mat, esvd_res$y_mat, mat,
+                            family = "neg_binom2",
+                            nuisance_param_vec = nuisance_vec,
+                            library_size_vec = 1,
+                            method = "newton",
+                            b_init = esvd_res$b_mat,
+                            covariates = covariates,
+                            reestimate_nuisance = T,
+                            global_estimate = F,
+                            reparameterize = F,
+                            max_iter = 100,
+                            tol = 1e-8,
+                            verbose = 1)
+time_end2 <- Sys.time()
 save.image("../../../../out/writeup8b/writeup8b_dropseq_mouselung_esvd2.RData")
