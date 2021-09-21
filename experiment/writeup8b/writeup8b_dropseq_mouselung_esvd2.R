@@ -23,7 +23,7 @@ mat <- as.matrix(mat)
 
 ##############
 # initialization
-K <- 30
+K <- 15
 n <- nrow(mat)
 p <- ncol(mat)
 
@@ -40,6 +40,12 @@ svd_res <- irlba::irlba(residual_mat, nv = K)
 x_init <- eSVD2:::.mult_mat_vec(svd_res$u, sqrt(svd_res$d))
 y_init <- eSVD2:::.mult_mat_vec(svd_res$v, sqrt(svd_res$d))
 
+init_theta <- tcrossprod(x_init, y_init) + tcrossprod(covariates, b_init)
+glmgampoi_init <- glmGamPoi::overdispersion_mle(y = Matrix::t(mat),
+                                               mean = exp(t(init_theta)),
+                                               global_estimate = T)
+nuisance_init <- rep(glmgampoi_init$estimate, p)
+
 # tmp <- tcrossprod(x_init, y_init) + tcrossprod(covariates, b_init)
 ################
 
@@ -48,14 +54,14 @@ time_start1 <- Sys.time()
 set.seed(10)
 esvd_res <- eSVD2::opt_esvd(x_init, y_init, mat,
                             family = "neg_binom2",
-                            nuisance_param_vec = nuisance_vec,
+                            nuisance_param_vec = nuisance_init,
                             library_size_vec = 1,
                             method = "newton",
                             b_init = b_init,
                             covariates = covariates,
                             reestimate_nuisance = T,
                             global_estimate = T,
-                            reparameterize = F,
+                            reparameterize = T,
                             max_iter = 100,
                             tol = 1e-8,
                             verbose = 1)
@@ -67,14 +73,14 @@ time_start2 <- Sys.time()
 set.seed(10)
 esvd_res2 <- eSVD2::opt_esvd(esvd_res$x_mat, esvd_res$y_mat, mat,
                             family = "neg_binom2",
-                            nuisance_param_vec = nuisance_vec,
+                            nuisance_param_vec = esvd_res$nuisance_param_vec,
                             library_size_vec = 1,
                             method = "newton",
                             b_init = esvd_res$b_mat,
                             covariates = covariates,
                             reestimate_nuisance = T,
                             global_estimate = F,
-                            reparameterize = F,
+                            reparameterize = T,
                             max_iter = 100,
                             tol = 1e-8,
                             verbose = 1)
