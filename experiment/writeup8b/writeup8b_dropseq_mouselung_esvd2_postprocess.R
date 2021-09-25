@@ -14,7 +14,6 @@ plotting_func(seurat_obj = lung,
               scatter_title = "Mouse Lung (Dropseq)\neSVD (NB2, reparam+gene-specific theta):",
               scatter_filename = "../../../../out/fig/writeup8b/dropseq_mouselung_esvd2_scatter.png")
 
-
 plotting_func(seurat_obj = lung,
               esvd_res2,
               covariates = covariates,
