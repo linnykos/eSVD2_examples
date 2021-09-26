@@ -25,4 +25,5 @@ plotting_func(seurat_obj = retinal,
               heatmap_title = "Heatmap for Mouse Retinal (10x)\neSVD (NB2, reparam+gene-specific theta)",
               heatmap_filename = "../../../../out/fig/writeup8c/10x_mouseretinal_esvd_heatmap_2.png",
               scatter_title = "Mouse Retinal (10x)\neSVD (NB2, reparam+gene-specific theta):",
-              scatter_filename = "../../../../out/fig/writeup8c/10x_mouseretinal_esvd_scatter_2.png")
+              scatter_filename = "../../../../out/fig/writeup8c/10x_mouseretinal_esvd_scatter_2.png",
+              width = 8)
