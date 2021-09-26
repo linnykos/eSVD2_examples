@@ -8,7 +8,8 @@ plotting_func <- function(seurat_obj,
                           heatmap_title,
                           heatmap_filename,
                           scatter_title,
-                          scatter_filename){
+                          scatter_filename,
+                          width = 6){
   set.seed(10)
   tmp <- Seurat::RunUMAP(as.matrix(esvd_res$x_mat))@cell.embeddings
   rownames(tmp) <- rownames(seurat_obj@meta.data)

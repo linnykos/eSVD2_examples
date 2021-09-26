@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/writeup8c/writeup8c_dropseq_mouselung_esvd.RData")
+load("../../../../out/writeup8c/writeup8c_10x_mouseretinal_esvd.RData")
 source("../writeup8b/plotting.R")
 
 plotting_func(seurat_obj = lung,
