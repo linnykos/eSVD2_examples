@@ -22,7 +22,7 @@ plotting_func <- function(seurat_obj,
                            repel = TRUE, label.size = 2.5) + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
   plot1 <- plot1 + ggplot2::ggtitle(factor_title)
   ggplot2::ggsave(filename = factor_filename,
-                  plot1, device = "png", width = 6, height = 5, units = "in")
+                  plot1, device = "png", width = width, height = 5, units = "in")
 
   #########
 
@@ -69,7 +69,8 @@ plotting_func_glmpca <- function(seurat_obj,
                                  heatmap_title,
                                  heatmap_filename,
                                  scatter_title,
-                                 scatter_filename){
+                                 scatter_filename,
+                                 width = 6){
 
   reparam_res <- eSVD2:::.reparameterize(as.matrix(glmpca_res$factors),
                                          as.matrix(glmpca_res$loadings),
@@ -87,7 +88,7 @@ plotting_func_glmpca <- function(seurat_obj,
                            repel = TRUE, label.size = 2.5) + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
   plot1 <- plot1 + ggplot2::ggtitle(factor_title)
   ggplot2::ggsave(filename = factor_filename,
-                  plot1, device = "png", width = 6, height = 5, units = "in")
+                  plot1, device = "png", width = width, height = 5, units = "in")
 
   #########
 
