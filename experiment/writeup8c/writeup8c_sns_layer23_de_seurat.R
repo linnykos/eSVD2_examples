@@ -51,10 +51,11 @@ sns_de <- Seurat::FindMarkers(sns,
                               slot = "data",
                               ident.1 = "Control",
                               ident.2 = "ASD",
-                              group.by = "diagnosis")
+                              group.by = "diagnosis",
+                              verbose = T)
 
 save(sns, sns_de,
-     file = "../../../../out/writeup8d/writeup8d_sns_layer23_de_seurat.RData")
+     file = "../../../../out/writeup8c/writeup8c_sns_layer23_de_seurat.RData")
 
 idx <- rownames(sns_de)[sns_de$p_val_adj <= 0.05]
 de_genes <- c("TTF2",
