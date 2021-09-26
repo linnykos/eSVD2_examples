@@ -1,7 +1,6 @@
 plotting_func <- function(seurat_obj,
                           mat,
                           esvd_res,
-                          covariates,
                           group.by,
                           max_value,
                           factor_title,
@@ -37,7 +36,7 @@ plotting_func <- function(seurat_obj,
                               main = heatmap_title)
   graphics.off()
 
-  nat_mat <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat) + tcrossprod(covariates, esvd_res$b_mat)
+  nat_mat <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat) + tcrossprod(esvd_res$covariates, esvd_res$b_mat)
   nat_mat <- sweep(nat_mat, 1, esvd_res$offset_vec, "+")
   mean_mat <- exp(nat_mat)
   png(scatter_filename,
@@ -46,7 +45,6 @@ plotting_func <- function(seurat_obj,
   eSVD2:::plot_scatterplot_nb(mat,
                               mean_mat = mean_mat,
                               size_vec = esvd_res$nuisance_param_vec,
-                              log_scale = F,
                               quantile_shoulder = 0.5,
                               xlim = c(0, max_value),
                               xlab = "Predicted mean",
