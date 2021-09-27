@@ -1,5 +1,5 @@
 #!/bin/bash
-#$ -N sns_esvd
+#$ -N sns_layer23_esvd
 #$ -j y
 #$ -o ../../../../out/writeup8c/qsub/
 #$ -l m_mem_free=150G

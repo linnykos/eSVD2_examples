@@ -15,7 +15,7 @@ sns <- subset(sns, keep == 1)
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts))
 
-categorical_var <- c("individual", "region", "sex", "Capbatch", "Seqbatch")
+categorical_var <- c("region", "sex")
 numerical_var <- c("age", "RNA.Integrity.Number", "post.mortem.hours", "percent.mt", "nFeature_RNA")
 n <- ncol(sns)
 covariates <- as.matrix(sns@meta.data[,numerical_var])
@@ -23,7 +23,7 @@ covariates <- as.matrix(sns@meta.data[,numerical_var])
 for(variable in categorical_var){
   vec <- sns@meta.data[,variable]
   uniq_level <- unique(vec)
-  for(i in uniq_level){
+  for(i in uniq_level[-1]){
     tmp <- rep(0, n)
     tmp[which(vec == i)] <- 1
 
