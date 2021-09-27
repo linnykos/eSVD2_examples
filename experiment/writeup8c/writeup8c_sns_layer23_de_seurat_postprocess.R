@@ -1,10 +1,10 @@
 rm(list=ls())
 load("../../../../out/writeup8c/writeup8c_sns_layer23_de_seurat.RData")
 
-pval_vec <- sns_de$p_val
-pval_vec <- p.adjust(pval_vec, method = "BH")
+# pval_vec <- sns_de$p_val
+# pval_vec <- p.adjust(pval_vec, method = "BH")
+pval_vec <- sns_de$p_val_adj
 
-idx <- rownames(sns_de)[which(pval_vec <= 0.05)]
 de_genes <- c("TTF2",
               "MX2",
               "ASCC1",
@@ -117,5 +117,13 @@ de_genes <- c("TTF2",
 length(de_genes)
 de_genes <- de_genes[de_genes %in% rownames(sns[["RNA"]]@counts)]
 length(de_genes)
+threshold <- 1e-30
+idx <- rownames(sns_de)[which(pval_vec <= threshold)]
 length(intersect(de_genes, idx))
+length(de_genes)
+length(idx)
+
+
+quantile(sns_de[which(rownames(sns_de) %in% de_genes),"p_val"])
+quantile(sns_de[which(rownames(sns_de) %in% de_genes),"p_val_adj"])
 sns_de[rownames(sns_de) %in% de_genes,]
