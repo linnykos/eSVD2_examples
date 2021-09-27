@@ -21,7 +21,7 @@ sns <- subset(sns, keep == 1)
 # We'll do a full set of indicators
 
 categorical_var <- c("individual", "region", "sex", "Capbatch", "Seqbatch")
-numerical_var <- c("age", "RNA.Integrity.Number", "post.mortem.hours", "percent.mt")
+numerical_var <- c("age", "RNA.Integrity.Number", "post.mortem.hours", "percent.mt", "nFeature_RNA")
 new_indicator_var <- c()
 n <- ncol(sns)
 
@@ -38,7 +38,7 @@ for(variable in categorical_var){
   }
 }
 
-vars_to_regress <- c(numerical_var, new_indicator_var, "nFeature_RNA")
+vars_to_regress <- c(numerical_var, new_indicator_var)
 Seurat::DefaultAssay(sns) <- "RNA"
 set.seed(10)
 sns <- Seurat::SCTransform(sns,
