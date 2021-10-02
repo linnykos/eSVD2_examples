@@ -115,7 +115,7 @@ de_genes <- c("TTF2",
               "RGS12",
               "ATP1B1")
 length(de_genes)
-de_genes <- de_genes[de_genes %in% rownames(sns[["RNA"]]@counts)]
+de_genes <- de_genes[de_genes %in% rownames(sns_de)]
 length(de_genes)
 threshold <- 1e-30
 idx <- rownames(sns_de)[which(pval_vec <= threshold)]
@@ -126,7 +126,7 @@ length(idx)
 
 quantile(sns_de[which(rownames(sns_de) %in% de_genes),"p_val"])
 quantile(sns_de[which(rownames(sns_de) %in% de_genes),"p_val_adj"])
-sns_de[rownames(sns_de) %in% de_genes,]
+
 
 ###############
 
