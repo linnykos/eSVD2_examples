@@ -1,9 +1,30 @@
-rm(list=ls())
-load("../../../../out/writeup8c/writeup8c_sns_layer23_de_seurat.RData")
+load("../../../../out/writeup8c/writeup8c_sns_layer23_de_mast_zlm.RData")
 
-# pval_vec <- sns_de$p_val
-# pval_vec <- p.adjust(pval_vec, method = "BH")
-pval_vec <- sns_de$p_val_adj
+# from https://github.com/himelmallick/BenchmarkSingleCell/blob/master/Library/allUtilityFunctions.R
+get_pval_MAST<-function(fit){
+  mat<-as.matrix(fit[,3,1])
+  rownames(mat)<- row.names(fit[,,1])
+  colnames(mat)<- names(metadata)
+
+  rownames<-rownames(mat)
+  colnames<-colnames(mat)
+  n<-dim(mat)[2]
+  List <- list()
+  for(i in 1:n){
+    List[[i]] <- fit[,3,2+i]
+  }
+  Matrix = do.call(cbind, List)
+  rownames(Matrix)<-rownames
+  colnames(Matrix)<-colnames
+  return(Matrix)
+}
+
+coef.vector <- fit[,3,1]
+pvalue.vector <- get_pval_MAST(fit)[,1]
+paras <- data.frame(coef = coef.vector, pval = pvalue.vector)
+paras <- paras[!duplicated(rownames(paras)),]
+
+pval_vec <- paras$pval
 
 de_genes <- c("TTF2",
               "MX2",
@@ -115,21 +136,11 @@ de_genes <- c("TTF2",
               "RGS12",
               "ATP1B1")
 length(de_genes)
-de_genes <- de_genes[de_genes %in% rownames(sns[["RNA"]]@counts)]
+de_genes <- de_genes[de_genes %in% rownames(paras)]
 length(de_genes)
-threshold <- 1e-30
-idx <- rownames(sns_de)[which(pval_vec <= threshold)]
+threshold <- 1e-5
+pval_vec2 <- p.adjust(pval_vec, method = "bonferroni")
+idx <- rownames(paras)[which(pval_vec2 <= threshold)]
 length(intersect(de_genes, idx))
 length(de_genes)
 length(idx)
-
-
-quantile(sns_de[which(rownames(sns_de) %in% de_genes),"p_val"])
-quantile(sns_de[which(rownames(sns_de) %in% de_genes),"p_val_adj"])
-sns_de[rownames(sns_de) %in% de_genes,]
-
-###############
-
-# to look at the SCTransform results
-sct_obj <- sns[["SCT"]]@SCTModel.list[[1]]
-head(sct_obj@feature.attributes)

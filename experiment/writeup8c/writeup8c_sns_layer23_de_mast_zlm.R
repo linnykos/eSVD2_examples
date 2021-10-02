@@ -27,8 +27,8 @@ mat <- as.matrix(sns[["RNA"]]@counts)
 tpms <- log1p(mat)
 
 # create the SingleCellAssay (sca) object. See https://www.rdocumentation.org/packages/MAST/versions/0.931/topics/SingleCellAssay
-sca <- MAST::FromMatrix(exprsArray = tpms, 
-                        cData = data.frame(wellKey = rownames(metadata), grp = metadata), 
+sca <- MAST::FromMatrix(exprsArray = tpms,
+                        cData = data.frame(wellKey = rownames(metadata), grp = metadata),
                         fData = data.frame(primerid = rownames(sns[["RNA"]]@counts)))
 
 # put ngeneson into the sca object
@@ -41,11 +41,11 @@ colData(sca) <- CD
 set.seed(10)
 zlmdata <- MAST::zlm(~ cngeneson + grp.diagnosis + grp.individual + grp.region + grp.sex + grp.Capbatch + grp.Seqbatch + grp.age + grp.RNA.Integrity.Number + grp.post.mortem.hours + grp.percent.mt + grp.nFeature_RNA, sca = sca)
 
-save(zlmdata, 
+save(zlmdata,
      file = "../../../../out/writeup8c/writeup8c_sns_layer23_de_mast_zlm.RData")
 
 set.seed(10)
-fit <- MAST::lrTest(zlmdata, "grp.diagnosisASD")
+fit <- MAST::lrTest(zlmdata, CoefficientHypothesis("grp.diagnosisASD"))
 
 save(zlmdata, fit,
      file = "../../../../out/writeup8c/writeup8c_sns_layer23_de_mast_zlm.RData")

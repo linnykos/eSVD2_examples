@@ -40,15 +40,18 @@ for(variable in categorical_var){
 
 vars_to_regress <- c(numerical_var, new_indicator_var)
 Seurat::DefaultAssay(sns) <- "RNA"
+gene_names <- rownames(sns)
+gene_names <- gene_names[grep("^MT-", gene_names)]
 set.seed(10)
 sns <- Seurat::SCTransform(sns,
+                           residual.features = gene_names,
                            vars.to.regress = vars_to_regress,
                            verbose = T)
 
 set.seed(10)
 sns_de <- Seurat::FindMarkers(sns,
                               assay = "SCT",
-                              slot = "data",
+                              slot = "scale.data",
                               ident.1 = "Control",
                               ident.2 = "ASD",
                               group.by = "diagnosis",
