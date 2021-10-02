@@ -20,7 +20,7 @@ sns <- subset(sns, keep == 1)
 # a lot of these are categorical, so let's make indicators.
 # We'll do a full set of indicators
 
-categorical_var <- c("individual", "region", "sex", "Capbatch", "Seqbatch")
+categorical_var <- c("region", "sex", "Capbatch", "Seqbatch")
 numerical_var <- c("age", "RNA.Integrity.Number", "post.mortem.hours", "percent.mt", "nFeature_RNA")
 new_indicator_var <- c()
 n <- ncol(sns)

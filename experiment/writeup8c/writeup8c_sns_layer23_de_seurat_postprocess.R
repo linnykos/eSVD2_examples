@@ -124,6 +124,7 @@ length(de_genes)
 length(idx)
 
 
+sns_de[which(rownames(sns_de) %in% de_genes),]
 quantile(sns_de[which(rownames(sns_de) %in% de_genes),"p_val"])
 quantile(sns_de[which(rownames(sns_de) %in% de_genes),"p_val_adj"])
 
