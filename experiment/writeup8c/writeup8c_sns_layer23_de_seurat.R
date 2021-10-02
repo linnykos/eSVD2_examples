@@ -28,7 +28,7 @@ n <- ncol(sns)
 for(variable in categorical_var){
   covariate <- sns@meta.data[,variable]
   uniq_level <- unique(covariate)
-  for(i in uniq_level){
+  for(i in uniq_level[-1]){
     tmp <- rep(0, n)
     tmp[which(covariate == i)] <- 1
 
