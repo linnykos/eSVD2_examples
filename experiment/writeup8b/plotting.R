@@ -103,24 +103,23 @@ plotting_func_glmpca <- function(seurat_obj,
                               main = heatmap_title)
   graphics.off()
 
-  # nat_mat <- tcrossprod(as.matrix(glmpca_res$factors), as.matrix(glmpca_res$loadings)) +
-  #   tcrossprod(as.matrix(glmpca_res$X), as.matrix(glmpca_res$coefX))
-  # nat_mat <- sweep(nat_mat, 1, glmpca_res$offsets, "+")
-  # mean_mat <- exp(nat_mat)
-  # png(scatter_filename,
-  #     height = 2000, width = 2000, units = "px", res = 300)
-  # set.seed(10)
-  # eSVD2:::plot_scatterplot_nb(mat,
-  #                             mean_mat = mean_mat,
-  #                             size_vec = rep(glmpca_res$glmpca_family$nb_theta, ncol(mean_mat)),
-  #                             log_scale = F,
-  #                             quantile_shoulder = 0.5,
-  #                             xlim = c(0, max_value),
-  #                             xlab = "Predicted mean",
-  #                             ylab = "Observed value",
-  #                             main = scatter_title,
-  #                             include_percentage_in_main = T)
-  # graphics.off()
+  nat_mat <- tcrossprod(as.matrix(glmpca_res$factors), as.matrix(glmpca_res$loadings)) +
+    tcrossprod(as.matrix(glmpca_res$X), as.matrix(glmpca_res$coefX))
+  nat_mat <- sweep(nat_mat, 1, glmpca_res$offsets, "+")
+  mean_mat <- exp(nat_mat)
+  png(scatter_filename,
+      height = 2000, width = 2000, units = "px", res = 300)
+  set.seed(10)
+  eSVD2:::plot_scatterplot_nb(mat,
+                              mean_mat = mean_mat,
+                              size_vec = rep(glmpca_res$glmpca_family$nb_theta, ncol(mean_mat)),
+                              quantile_shoulder = 0.5,
+                              xlim = c(0, max_value),
+                              xlab = "Predicted mean",
+                              ylab = "Observed value",
+                              main = scatter_title,
+                              include_percentage_in_main = T)
+  graphics.off()
 
   invisible()
 }

@@ -2,6 +2,7 @@ rm(list=ls())
 
 load("../../../../out/writeup6/writeup6_citeseq_bm_glmpca_nb.RData")
 mat2 <- as.matrix(Matrix::t(mat))
+source("../writeup8b/plotting.R")
 
 plotting_func_glmpca(seurat_obj = bm,
                      mat = mat2,

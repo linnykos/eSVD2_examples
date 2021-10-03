@@ -2,6 +2,7 @@ rm(list=ls())
 
 load("../../../../out/writeup6/writeup6_10x_mouseretinal_glmpca_nb.RData")
 mat2 <- as.matrix(Matrix::t(mat))
+source("../writeup8b/plotting.R")
 
 plotting_func_glmpca(seurat_obj = retinal,
                      mat = mat2,
@@ -13,4 +14,5 @@ plotting_func_glmpca(seurat_obj = retinal,
                      heatmap_title = "Heatmap for Mouse Retinal (10x)\nGLM-PCA",
                      heatmap_filename = "../../../../out/fig/writeup8b/10x_mouseretinal_glmpca_heatmap.png",
                      scatter_title = "Mouse Retinal (10x)\nGLM-PCA:",
-                     scatter_filename = "../../../../out/fig/writeup8b/10x_mouseretinal_glmpca_scatter.png")
+                     scatter_filename = "../../../../out/fig/writeup8b/10x_mouseretinal_glmpca_scatter.png",
+                     width = 8)
