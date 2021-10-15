@@ -118,7 +118,8 @@ plotting_func_glmpca <- function(seurat_obj,
                               xlab = "Predicted mean",
                               ylab = "Observed value",
                               main = scatter_title,
-                              include_percentage_in_main = T)
+                              include_percentage_in_main = T,
+                              verbose = T)
   graphics.off()
 
   invisible()
