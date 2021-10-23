@@ -69,7 +69,7 @@ esvd_res <- eSVD2::opt_esvd(init_res$x_mat,
                             global_estimate = T,
                             reparameterize = T,
                             max_iter = 50,
-                            verbose = 1)
+                            verbose = 2)
 time_end2 <- Sys.time()
 
 print("Estimating NB via eSVD, round 2")
