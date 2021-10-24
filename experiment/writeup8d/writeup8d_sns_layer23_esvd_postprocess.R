@@ -1,7 +1,18 @@
 rm(list=ls())
+library(Seurat)
+
+load("../../../../out/writeup8d/writeup8d_sns_layer23_esvd.RData")
+
+quantile(esvd_res2$nuisance_param_vec)
+
+keep <- rep(0, nrow(sns@meta.data))
+keep[which(rownames(sns@meta.data) %in% rownames(mat))] <- 1
+sns[["keep"]] <- keep
+sns <- subset(sns, keep == 1)
+stopifnot(all(rownames(sns@meta.data) == rownames(mat)))
 
 set.seed(10)
-tmp <- Seurat::RunUMAP(as.matrix(esvd_res$x_mat))@cell.embeddings
+tmp <- Seurat::RunUMAP(as.matrix(esvd_res2$x_mat))@cell.embeddings
 rownames(tmp) <- rownames(sns@meta.data)
 
 sns[["esvdfactorumap"]] <- Seurat::CreateDimReducObject(embedding = tmp,
@@ -15,7 +26,7 @@ for(covariate in covariates){
                            repel = TRUE, label.size = 2.5)
   plot1 <- plot1 + ggplot2::ggtitle(paste0("SNS (Layer 2/3) via eSVD: ", covariate))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../../out/fig/writeup8c/sns_layer23_esvd2_umap_", covariate, ".png"),
+  ggplot2::ggsave(filename = paste0("../../../../out/fig/writeup8d/sns_layer23_esvd2_umap_", covariate, ".png"),
                   plot1, device = "png", width = 6, height = 5, units = "in")
 }
 
@@ -26,11 +37,11 @@ for(covariate in covariates){
                                reduction = "esvdfactorumap")
   plot1 <- plot1 + ggplot2::ggtitle(paste0("SNS (Layer 2/3) via eSVD: ", covariate))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../../out/fig/writeup8c/sns_layer23_esvd2_umap_", covariate, ".png"),
+  ggplot2::ggsave(filename = paste0("../../../../out/fig/writeup8d/sns_layer23_esvd2_umap_", covariate, ".png"),
                   plot1, device = "png", width = 6, height = 5, units = "in")
 }
 
-#############################
+######################
 
 de_genes <- c("TTF2",
               "MX2",
@@ -143,11 +154,12 @@ de_genes <- c("TTF2",
               "ATP1B1")
 de_genes <- de_genes[de_genes %in% colnames(mat)]
 idx <- which(colnames(mat) %in% de_genes)
-vec <- esvd_res$b_mat[,"diagnosis_ASD"]
+colnames(esvd_res2$b_mat) <- colnames(esvd_res2$covariates)
+vec <- esvd_res2$b_mat[,"diagnosis_ASD"]
 xlim <- c(-2,2)
 vec <- vec[vec >= xlim[1]]
 vec <- vec[vec <= xlim[2]]
-png("../../../../out/fig/writeup8c/sns_layer23_esvd2_hist_diagnosis.png",
+png("../../../../out/fig/writeup8d/sns_layer23_esvd2_hist_diagnosis.png",
     width = 1500, height = 1500, units = "px", res = 300)
 hist(vec, main = "SNS (Layer 2/3) via eSVD,\nCoefficient for diagnosis (ASD)",
      col = "gray", xlab = "ASD coefficient", breaks = 50,
@@ -166,41 +178,14 @@ for(i in 1:length(control_id)){
   new_membership_vec[sns@meta.data$individual == control_id[i]] <- i+length(asd_id)
 }
 
-png("../../../../out/fig/writeup8c/sns_layer23_esvd2_heatmap.png",
+png("../../../../out/fig/writeup8d/sns_layer23_esvd2_heatmap.png",
     height = 2000, width = 2000, units = "px", res = 300)
-plot_scores_heatmap(esvd_res$x_mat,
-                            membership_vec = as.factor(new_membership_vec),
-                            bool_log = T,
-                            scaling_power = 1.5,
-                            xlab = "Latent factor",
-                            ylab = "Cells",
+eSVD2:::plot_scores_heatmap(esvd_res2$x_mat,
+                    membership_vec = as.factor(new_membership_vec),
+                    bool_log = T,
+                    scaling_power = 1.5,
+                    xlab = "Latent factor",
+                    ylab = "Cells",
                     major_breakpoint = length(asd_id),
-                            main = "SNS (Layer 2/3) via eSVD, Heatmap")
+                    main = "SNS (Layer 2/3) via eSVD, Heatmap")
 graphics.off()
-
-nat_mat <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat) + tcrossprod(esvd_res$covariates, esvd_res$b_mat)
-nat_mat <- sweep(nat_mat, 1, esvd_res$offset_vec, "+")
-mean_mat <- exp(nat_mat)
-max_value <- quantile(mat[mat > 2], probs = 0.999)
-length(which(mean_mat >= max_value))
-length(which(mean_mat >= max_value))/prod(dim(mean_mat))
-quantile(mean_mat[mean_mat >= max_value])
-mean_mat[mean_mat >= max_value] <- max_value
-length(which(mean_mat >= max_value))
-
-
-png("../../../../out/fig/writeup8c/sns_layer23_esvd2_scatterplot.png",
-    height = 2000, width = 2000, units = "px", res = 300)
-set.seed(10)
-eSVD2:::plot_scatterplot_nb(mat,
-                            mean_mat = mean_mat,
-                            size_vec = rep(esvd_res$nuisance_param_vec[1], ncol(mean_mat)),
-                            quantile_shoulder = 0.5,
-                            xlim = c(0, max_value),
-                            xlab = "Predicted mean",
-                            ylab = "Observed value",
-                            main = "SNS (Layer 2/3) via eSVD, Scatterplot",
-                            include_percentage_in_main = T,
-                            verbose = T)
-graphics.off()
-

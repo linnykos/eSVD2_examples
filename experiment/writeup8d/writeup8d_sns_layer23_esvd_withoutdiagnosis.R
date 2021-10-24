@@ -199,6 +199,7 @@ for(i in 1:length(cols_regress_out)){
   colnames(covariates_new)[ncol(covariates_new)] <- paste0("individual_",i)
 }
 covariates <- covariates_new
+covariates <- covariates[,-which(colnames(covariates) == "diagnosis_ASD")]
 
 #################
 
@@ -216,7 +217,7 @@ init_res <- eSVD2::initialize_esvd(mat,
                                    offset_vec = rep(0, nrow(mat)),
                                    verbose = 1)
 time_end1 <- Sys.time()
-save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd.RData")
+save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_withoutdiagnosis.RData")
 
 ###################3
 
@@ -240,7 +241,7 @@ esvd_res <- eSVD2::opt_esvd(init_res$x_mat,
                             l2pen = 0.1,
                             verbose = 1)
 time_end2 <- Sys.time()
-save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd.RData")
+save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_withoutdiagnosis.RData")
 
 print("Estimating NB via eSVD, round 2")
 time_start3 <- Sys.time()
@@ -261,5 +262,5 @@ esvd_res2 <- eSVD2::opt_esvd(esvd_res$x_mat,
                              tol = 1e-8,
                              verbose = 1)
 time_end3 <- Sys.time()
-save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd.RData")
+save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_withoutdiagnosis.RData")
 
