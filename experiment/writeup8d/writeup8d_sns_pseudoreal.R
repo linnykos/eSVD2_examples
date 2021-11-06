@@ -91,7 +91,7 @@ esvd_res <- eSVD2::opt_esvd(init_res$x_mat,
                             global_estimate = T,
                             reparameterize = T,
                             max_iter = 50,
-                            l2pen = 1,
+                            l2pen = 0.1,
                             verbose = 1)
 time_end2 <- Sys.time()
 save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
