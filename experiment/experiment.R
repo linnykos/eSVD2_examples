@@ -72,4 +72,5 @@ opt <- opt_fun(
   offseti = offset_vec[i],
   l2pen = l2pen)
 
+opt
 
