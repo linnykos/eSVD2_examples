@@ -60,7 +60,7 @@ for(j in autism_gene_idx){
   esvd_res2$b_mat[j,autism_idx] <- value
 }
 
-true_esvd_model <- esvd_res2
+esvd_res_truth <- esvd_res2
 nat_mat <- tcrossprod(esvd_res2$x_mat, esvd_res2$y_mat) + tcrossprod(esvd_res2$covariates, esvd_res2$b_mat)
 nat_mat[nat_mat >= 5] <- 5
 quantile(nat_mat[which(esvd_res2$covariates[,"diagnosis_ASD"] > 0.5), autism_gene_idx])
@@ -87,7 +87,7 @@ quantile(tmp[tmp > 0])
 
 ######################
 ls_vec <- ls()
-ls_vec <- ls_vec[!ls_vec %in% c("true_esvd_model", "mat", "autism_gene_idx")]
+ls_vec <- ls_vec[!ls_vec %in% c("esvd_res_truth", "mat", "autism_gene_idx")]
 rm(list = ls_vec)
 
 # now fit
@@ -96,8 +96,7 @@ rm(list = ls_vec)
 K <- 10
 n <- nrow(mat)
 p <- ncol(mat)
-covariates <- esvd_res2$covariates
-esvd_res_truth <- esvd_res2
+covariates <- esvd_res_truth$covariates
 
 time_start1 <- Sys.time()
 init_res <- eSVD2::initialize_esvd(mat,
