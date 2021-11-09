@@ -2,93 +2,136 @@ rm(list=ls())
 library(Seurat)
 
 load("../../../../out/writeup8d/writeup8d_sns_layer23_esvd.RData")
+true_esvd <- esvd_res2
 ls_vec <- ls()
-ls_vec <- ls_vec[!ls_vec %in% c("esvd_res2")]
+ls_vec <- ls_vec[!ls_vec %in% c("true_esvd")]
 rm(list = ls_vec)
 
-n <- nrow(esvd_res2$x_mat)
-p <- nrow(esvd_res2$y_mat)
-autism_idx <- which(colnames(esvd_res2$covariates) == "diagnosis_ASD")
+n <- nrow(true_esvd$x_mat)
+p <- nrow(true_esvd$y_mat)
+colnames(true_esvd$b_mat) <- colnames(true_esvd$covariates)
+autism_idx <- which(colnames(true_esvd$covariates) == "diagnosis_ASD")
+library_idx <- which(colnames(true_esvd$covariates) == "Log-UMI")
 
 #################3
 # fix the simulation data
-esvd_res2$b_mat[,autism_idx] <- 0
-esvd_res2$covariates[,"age"] <- esvd_res2$covariates[,"age"]/10
-esvd_res2$covariates[,"RNA.Integrity.Number"] <- esvd_res2$covariates[,"RNA.Integrity.Number"]/2
-esvd_res2$covariates[,"post.mortem.hours"] <- esvd_res2$covariates[,"post.mortem.hours"]/10
-esvd_res2$covariates[,"nFeature_RNA"] <- esvd_res2$covariates[,"nFeature_RNA"]/1000
+true_esvd$b_mat[,autism_idx] <- 0
+true_esvd$b_mat[,library_idx] <- 1
 
-y_max <- quantile(abs(esvd_res2$y_mat), prob = 0.99)
-esvd_res2$y_mat[which(abs(esvd_res2$y_mat) >= y_max)] <- y_max*sign(esvd_res2$y_mat[which(abs(esvd_res2$y_mat) >= y_max)])
+y_max <- quantile(abs(true_esvd$y_mat), prob = 0.99)
+true_esvd$y_mat[which(abs(true_esvd$y_mat) >= y_max)] <- y_max*sign(true_esvd$y_mat[which(abs(true_esvd$y_mat) >= y_max)])
 
-x_max <- quantile(abs(esvd_res2$x_mat), prob = 0.99)
-esvd_res2$x_mat[which(abs(esvd_res2$x_mat) >= x_max)] <- x_max*sign(esvd_res2$x_mat[which(abs(esvd_res2$x_mat) >= x_max)])
+x_max <- quantile(abs(true_esvd$x_mat), prob = 0.99)
+true_esvd$x_mat[which(abs(true_esvd$x_mat) >= x_max)] <- x_max*sign(true_esvd$x_mat[which(abs(true_esvd$x_mat) >= x_max)])
 
-b_max <- quantile(abs(esvd_res2$b_mat), prob = 0.95)
-esvd_res2$b_mat[which(abs(esvd_res2$b_mat) >= b_max)] <- b_max*sign(esvd_res2$b_mat[which(abs(esvd_res2$b_mat) >= b_max)])
+b_max <- quantile(abs(true_esvd$b_mat), prob = 0.95)
+true_esvd$b_mat[which(abs(true_esvd$b_mat) >= b_max)] <- b_max*sign(true_esvd$b_mat[which(abs(true_esvd$b_mat) >= b_max)])
 
-x_row_max <- matrixStats::rowMaxs(abs(esvd_res2$x_mat))
+x_row_max <- matrixStats::rowMaxs(abs(true_esvd$x_mat))
 idx <- which(x_row_max >= 2.5)
-esvd_res2$x_mat[idx,] <- esvd_res2$x_mat[idx,]/2
+true_esvd$x_mat[idx,] <- true_esvd$x_mat[idx,]/2
 
-y_row_max <- matrixStats::rowMaxs(abs(esvd_res2$y_mat))
+y_row_max <- matrixStats::rowMaxs(abs(true_esvd$y_mat))
 idx <- which(y_row_max >= 1)
-esvd_res2$y_mat[idx,] <- esvd_res2$y_mat[idx,]/2
+true_esvd$y_mat[idx,] <- true_esvd$y_mat[idx,]/2
 
-b_row_max <- matrixStats::rowMaxs(abs(esvd_res2$b_mat))
+b_row_max <- matrixStats::rowMaxs(abs(true_esvd$b_mat))
 idx <- which(b_row_max >= 3)
-esvd_res2$b_mat[idx,] <- esvd_res2$b_mat[idx,]/5
+true_esvd$b_mat[idx,] <- true_esvd$b_mat[idx,]/5
 
-esvd_res2$b_mat[,c(3:6)] <- esvd_res2$b_mat[,c(3:6)]/2
+true_esvd$b_mat[,c(3:6)] <- true_esvd$b_mat[,c(3:6)]/2
+true_esvd$b_mat[,"age"] <- true_esvd$b_mat[,"age"]/10
+true_esvd$b_mat[,"RNA.Integrity.Number"] <- true_esvd$b_mat[,"RNA.Integrity.Number"]/2
+true_esvd$b_mat[,"post.mortem.hours"] <- true_esvd$b_mat[,"post.mortem.hours"]/10
+true_esvd$b_mat[,"nFeature_RNA"] <- true_esvd$b_mat[,"nFeature_RNA"]/1000
 
 ################
 
-nat_mat <- tcrossprod(esvd_res2$x_mat, esvd_res2$y_mat) + tcrossprod(esvd_res2$covariates, esvd_res2$b_mat)
-nat_mat[nat_mat >= 5] <- 5
+nat_mat1 <- tcrossprod(true_esvd$x_mat, true_esvd$y_mat)
+nat_mat2 <- tcrossprod(true_esvd$covariates[,-library_idx], true_esvd$b_mat[,-library_idx])
+nat_mat <- nat_mat1 + nat_mat2
+mean_mat <- exp(nat_mat)
+mean_mat[mean_mat >= 100] <- 100
 
 set.seed(10)
-autism_gene_idx <- sample(1:p, size = round(p/100))
-multiplier <- 5
-for(j in autism_gene_idx){
-  vec <- nat_mat[,j]
-  vec_autism <- vec[which(esvd_res2$covariates[,"diagnosis_ASD"] > 0.5)]
-  vec_control <- vec[which(esvd_res2$covariates[,"diagnosis_ASD"] < 0.5)]
+autism_gene_idx <- sample(1:p, size = round(p/50))
+multiplier_vec <- rnorm(length(autism_gene_idx), mean = 3, sd = 1)
+for(j in 1:length(autism_gene_idx)){
+  vec <- nat_mat[,autism_gene_idx[j]]
+  vec_autism <- vec[which(true_esvd$covariates[,"diagnosis_ASD"] > 0.5)]
+  vec_control <- vec[which(true_esvd$covariates[,"diagnosis_ASD"] < 0.5)]
 
-  target <- multiplier * max(mean(exp(vec_control)), mean(exp(vec_autism)))
+  target <- multiplier_vec[j] * max(mean(exp(vec_control)), mean(exp(vec_autism)))
   current <- mean(exp(vec_autism))
   value <-  log(target/current)
-  esvd_res2$b_mat[j,autism_idx] <- value
+  true_esvd$b_mat[autism_gene_idx[j],autism_idx] <- value
 }
 
-esvd_res_truth <- esvd_res2
-nat_mat <- tcrossprod(esvd_res2$x_mat, esvd_res2$y_mat) + tcrossprod(esvd_res2$covariates, esvd_res2$b_mat)
-nat_mat[nat_mat >= 5] <- 5
-quantile(nat_mat[which(esvd_res2$covariates[,"diagnosis_ASD"] > 0.5), autism_gene_idx])
-quantile(nat_mat[which(esvd_res2$covariates[,"diagnosis_ASD"] < 0.5), autism_gene_idx])
+nat_mat1 <- tcrossprod(true_esvd$x_mat, true_esvd$y_mat)
+nat_mat2 <- tcrossprod(true_esvd$covariates[,-library_idx], true_esvd$b_mat[,-library_idx])
+nat_mat <- nat_mat1 + nat_mat2
+nat_mat[nat_mat >= log(100)] <- log(100)
+quantile(nat_mat[which(true_esvd$covariates[,"diagnosis_ASD"] > 0.5), autism_gene_idx])
+quantile(nat_mat[which(true_esvd$covariates[,"diagnosis_ASD"] < 0.5), autism_gene_idx])
 
 #################
 
 # now simulate data
-mat <- nat_mat
-for(j in 1:ncol(mat)){
+# first simulate the gamma
+lambda_mat <- nat_mat
+for(j in 1:ncol(lambda_mat)){
   set.seed(j)
-  mat[,j] <- stats::rnbinom(n,
-                            size = esvd_res2$nuisance_param_vec[j],
-                            mu = exp(nat_mat[,j]))
+  lambda_mat[,j] <- stats::rgamma(n,
+                           shape = true_esvd$nuisance_param_vec[j],
+                           scale = exp(nat_mat[,j])/true_esvd$nuisance_param_vec[j])
 }
-mat[mat >= 200] <- 200
-tmp <- mat[which(esvd_res2$covariates[,"diagnosis_ASD"] > 0.5), autism_gene_idx]
+
+# scale up lambda according to the library size
+s_vec <- p*exp(true_esvd$covariates[,library_idx])/matrixStats::rowSums2(lambda_mat)
+
+mat <- lambda_mat
+for(i in 1:nrow(mat)){
+  set.seed(i)
+  mat[i,] <- stats::rpois(p, lambda = s_vec[i]*lambda_mat[i,])
+}
+mat[mat >= 500] <- 500
+true_esvd$covariates[,library_idx] <- log(matrixStats::rowMeans2(mat))
+
+tmp <- mat[which(true_esvd$covariates[,"diagnosis_ASD"] > 0.5), autism_gene_idx]
 length(which(tmp == 0))/prod(dim(tmp))
 quantile(tmp[tmp > 0])
 
-tmp <- mat[which(esvd_res2$covariates[,"diagnosis_ASD"] < 0.5), autism_gene_idx]
+tmp <- mat[which(true_esvd$covariates[,"diagnosis_ASD"] < 0.5), autism_gene_idx]
 length(which(tmp == 0))/prod(dim(tmp))
 quantile(tmp[tmp > 0])
 
 ######################
 ls_vec <- ls()
-ls_vec <- ls_vec[!ls_vec %in% c("esvd_res_truth", "mat", "autism_gene_idx")]
+ls_vec <- ls_vec[!ls_vec %in% c("true_esvd", "mat", "autism_gene_idx",
+                                "nat_mat", "lambda_mat" , "gamma_mat", "s_vec")]
 rm(list = ls_vec)
+
+true_mean <- eSVD2:::.mult_vec_mat(s_vec, lambda_mat)
+max_value <- 30
+png("../../../../out/fig/writeup8d/sns_pseudoreal_true_scatterplot.png",
+    height = 2000, width = 2000, units = "px", res = 300)
+set.seed(10)
+eSVD2:::plot_scatterplot_nb(mat,
+                            mean_mat = true_mean,
+                            size_vec = true_esvd$nuisance_param_vec,
+                            quantile_shoulder = 0.5,
+                            xlim = c(0, max_value),
+                            xlab = "Predicted mean",
+                            ylab = "Observed value",
+                            main = "Pseudoreal: True",
+                            included_col = rgb(0.5, 0.5, 0.5, 0.5),
+                            excluded_col = rgb(0.5, 0, 0, 0.5),
+                            include_percentage_in_main = T,
+                            verbose = T)
+graphics.off()
+
+
+######################################
 
 # now fit
 

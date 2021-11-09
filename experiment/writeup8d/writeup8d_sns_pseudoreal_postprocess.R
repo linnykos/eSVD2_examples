@@ -46,23 +46,6 @@ true_mean <- exp(true_nat)
 est_nat <- tcrossprod(esvd_res2$x_mat, esvd_res2$y_mat) + tcrossprod(esvd_res2$covariates, esvd_res2$b_mat)
 est_mean <- exp(est_nat)
 
-max_value <- 30
-png("../../../../out/fig/writeup8d/sns_pseudoreal_true_scatterplot.png",
-    height = 2000, width = 2000, units = "px", res = 300)
-set.seed(10)
-eSVD2:::plot_scatterplot_nb(mat,
-                            mean_mat = true_mean,
-                            size_vec = esvd_res_truth$nuisance_param_vec,
-                            quantile_shoulder = 0.5,
-                            xlim = c(0, max_value),
-                            xlab = "Predicted mean",
-                            ylab = "Observed value",
-                            main = "Pseudoreal: True",
-                            included_col = rgb(0.5, 0.5, 0.5, 0.5),
-                            excluded_col = rgb(0.5, 0, 0, 0.5),
-                            include_percentage_in_main = T,
-                            verbose = T)
-graphics.off()
 
 
 max_value <- 30
