@@ -139,7 +139,7 @@ graphics.off()
 K <- 10
 n <- nrow(mat)
 p <- ncol(mat)
-covariates <- esvd_res_truth$covariates
+covariates <- true_esvd$covariates
 
 time_start1 <- Sys.time()
 init_res <- eSVD2::initialize_esvd(mat,
