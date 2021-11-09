@@ -152,9 +152,6 @@ init_res <- eSVD2::initialize_esvd(mat,
 time_end1 <- Sys.time()
 save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
 
-quantile(init_res$b_mat[autism_gene_idx,autism_idx])
-quantile(init_res$b_mat[-autism_gene_idx,autism_idx])
-
 ###################3
 
 print("Estimating NB via eSVD, round 1")
@@ -180,9 +177,6 @@ esvd_res <- eSVD2::opt_esvd(init_res$x_mat,
 time_end2 <- Sys.time()
 save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
 
-quantile(esvd_res$b_mat[autism_gene_idx,autism_idx])
-quantile(esvd_res$b_mat[-autism_gene_idx,autism_idx])
-
 print("Estimating NB via eSVD, round 2")
 time_start3 <- Sys.time()
 set.seed(10)
@@ -205,10 +199,4 @@ esvd_res2 <- eSVD2::opt_esvd(esvd_res$x_mat,
                              verbose = 1)
 time_end3 <- Sys.time()
 save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
-
-quantile(esvd_res2$b_mat[autism_gene_idx,autism_idx])
-quantile(esvd_res2$b_mat[-autism_gene_idx,autism_idx])
-
-
-
 
