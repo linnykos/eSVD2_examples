@@ -94,7 +94,6 @@ for(i in 1:nrow(mat)){
   set.seed(i)
   mat[i,] <- stats::rpois(p, lambda = s_vec[i]*lambda_mat[i,])
 }
-mat[mat >= 500] <- 500
 true_esvd$covariates[,library_idx] <- log(matrixStats::rowMeans2(mat))
 
 tmp <- mat[which(true_esvd$covariates[,"diagnosis_ASD"] > 0.5), autism_gene_idx]
