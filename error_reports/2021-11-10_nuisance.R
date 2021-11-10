@@ -1,4 +1,4 @@
-load("nuisance_vec.RData") # load vec_list
+load("2021-11-10_nuisance.RData") # load vec_list
 
 # contains 3 different genes with the following elements:
 # gene_idx: the gene index in the pseudoreal data generation
