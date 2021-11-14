@@ -28,6 +28,7 @@ init_res <- eSVD2::initialize_esvd(mat_subset,
                                    verbose = 1)
 time_end1 <- Sys.time()
 
+print("Starting Poisson fit")
 time_start2 <- Sys.time()
 set.seed(10)
 esvd_res <- eSVD2::opt_esvd(init_res$x_mat,
@@ -51,6 +52,7 @@ save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended.RData"
 
 #############
 
+print("Computing NB initialization")
 # assess the fit
 nat_mat1 <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat)
 nat_mat2 <- tcrossprod(esvd_res$covariates, esvd_res$b_mat)
@@ -132,7 +134,10 @@ gene_frequency <- apply(mat, 2, function(x){length(which(x > 0))})/nrow(mat)
 gene_group_factor[which(gene_frequency < 0.4)] <- 1
 nuisance_param_vec_full[which(gene_frequency < 0.4)] <- 0.1
 gene_group_factor <- factor(gene_group_factor)
+nuisance_value_lower <- c(0.1, 0.1, rep(1, length(gene_idx)))
+nuisance_value_upper <- c(1, 1, rep(1000, length(gene_idx)))
 
+print("Starting NB fit")
 time_start3 <- Sys.time()
 set.seed(10)
 esvd_res_nb1 <- eSVD2::opt_esvd(init_x_mat,
@@ -146,8 +151,8 @@ esvd_res_nb1 <- eSVD2::opt_esvd(init_x_mat,
                                 b_init = init_b_mat,
                                 covariates = init_res$covariates,
                                 gene_group_factor = gene_group_factor,
-                                nuisance_value_lower = c(0.1, 0.1, 1),
-                                nuisance_value_upper = c(1, 1, 1000),
+                                nuisance_value_lower = nuisance_value_lower,
+                                nuisance_value_upper = nuisance_value_upper,
                                 reestimate_nuisance = T,
                                 reestimate_nuisance_per_iteration = 10,
                                 reparameterize = T,
