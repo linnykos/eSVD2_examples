@@ -93,7 +93,7 @@ colnames(init_b_mat) <- colnames(esvd_res$b_mat)
 # round(svd_res$d, 4)
 zz <- tmp$residual_mat
 svd_res <- irlba::irlba(zz, nv = 20)
-round(svd_res$d, 4)
+# round(svd_res$d, 4)
 
 # nat_mat1 <- tcrossprod(init_x_mat, init_y_mat)
 # nat_mat2 <- tcrossprod(covariates, init_b_mat)
@@ -139,7 +139,7 @@ esvd_res_nb1 <- eSVD2::opt_esvd(init_x_mat,
                                 init_y_mat,
                                 mat,
                                 family = "neg_binom2",
-                                nuisance_param_vec = NA,
+                                nuisance_param_vec = nuisance_param_vec_full,
                                 offset_vec = init_res$offset_vec,
                                 library_size_vec = 1,
                                 method = "newton",
@@ -166,7 +166,7 @@ esvd_res_nb2 <- eSVD2::opt_esvd(esvd_res_nb1$x_mat,
                                 esvd_res_nb1$y_mat,
                                 mat,
                                 family = "neg_binom2",
-                                nuisance_param_vec = NA,
+                                nuisance_param_vec = esvd_res_nb1$nuisance_param_vec,
                                 offset_vec = esvd_res_nb1$offset_vec,
                                 library_size_vec = 1,
                                 method = "newton",
