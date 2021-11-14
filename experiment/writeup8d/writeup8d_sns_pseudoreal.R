@@ -90,9 +90,10 @@ for(j in 1:ncol(lambda_mat)){
 s_vec <- p*exp(true_esvd$covariates[,library_idx])/matrixStats::rowSums2(lambda_mat)
 
 mat <- lambda_mat
+tol <- 1e-3
 for(i in 1:nrow(mat)){
   set.seed(i)
-  mat[i,] <- stats::rpois(p, lambda = s_vec[i]*lambda_mat[i,])
+  mat[i,] <- stats::rpois(p, lambda = s_vec[i]*lambda_mat[i,] + tol)
 }
 true_esvd$covariates[,library_idx] <- log(matrixStats::rowMeans2(mat))
 
@@ -109,6 +110,8 @@ ls_vec <- ls()
 ls_vec <- ls_vec[!ls_vec %in% c("true_esvd", "mat", "autism_gene_idx",
                                 "nat_mat", "lambda_mat" , "gamma_mat", "s_vec")]
 rm(list = ls_vec)
+save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal_data.RData")
+
 
 true_mean <- eSVD2:::.mult_vec_mat(s_vec, lambda_mat)
 max_value <- 30

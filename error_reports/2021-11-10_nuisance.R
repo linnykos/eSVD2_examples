@@ -30,7 +30,7 @@ for(i in 1:length(vec_list)){
 #########################
 
 # ways to estimate dispersion
-i <- 3
+i <- 1
 obs_vec <- vec_list[[i]]$obs_vec
 est_vec <- vec_list[[i]]$est_vec
 true_vec <- vec_list[[i]]$true_vec
@@ -39,6 +39,8 @@ glmGamPoi::overdispersion_mle(y = obs_vec,
                               mean = est_vec)$estimate
 MASS::theta.ml(y = obs_vec, mu = est_vec)
 MASS::theta.mm(y = obs_vec, mu = est_vec, dfr = length(obs_vec)-1)
+
+##
 
 glmGamPoi::overdispersion_mle(y = obs_vec,
                               mean = true_vec)$estimate

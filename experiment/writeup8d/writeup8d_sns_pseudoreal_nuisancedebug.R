@@ -80,8 +80,9 @@ for(i in 1:length(vec_list)){
 
 
 ###########################
-i <- 1
+i <- 3
 obs_vec <- vec_list[[i]]$obs_vec
+length(which(obs_vec == 0))/length(obs_vec)
 est_vec <- vec_list[[i]]$est_vec
 true_vec <- vec_list[[i]]$true_vec
 
@@ -158,4 +159,12 @@ plot(est_vec[idx], est_vec[idx]-obs_vec[idx], asp = T)
 MASS::theta.mm(y = obs_vec[idx], mu = true_vec[idx], dfr = length(idx)-1)
 MASS::theta.mm(y = obs_vec[idx], mu = est_vec[idx], dfr = length(idx)-1)
 
+############################
+
+residual = true_vec - obs_vec
+plot(true_vec, residual, asp = T)
+
+idx <- which(abs(residual) <= 3*sqrt(true_vec))
+length(idx)
+length(idx)/length(true_vec)
 

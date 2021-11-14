@@ -134,7 +134,7 @@ print(dim(mat))
 
 ################
 
-# remove cells with too high or too low counts
+# remove cells with too high counts
 bool_mat <- sapply(1:ncol(mat), function(j){
   vec <- rep(0, nrow(mat))
   vec[order(mat[,j], decreasing = T)[1:5]] <- 1
@@ -147,7 +147,12 @@ cell_keep <- rownames(mat)[which(cell_violation <= 20)]
 mat <- mat[cell_keep,]
 metadata <- metadata[cell_keep,]
 
-# remove genes with too high or too low counts
+# remove genes that are too sparsely observed
+gene_instance <- apply(mat, 2, function(x){length(which(x>0))})
+gene_keep <- which(gene_instance > 10)
+mat <- mat[,gene_keep]
+
+# remove genes with too high counts
 gene_total <- matrixStats::colSums2(log1p(mat))
 quantile(gene_total, probs = seq(0,0.1,length.out=11))
 quantile(gene_total, probs = seq(0.9,1,length.out=11))
@@ -172,7 +177,7 @@ numerical_var <- c("age", "RNA.Integrity.Number", "post.mortem.hours", "percent.
 n <- nrow(mat)
 covariates <- as.matrix(metadata[,numerical_var])
 covariates <- cbind(1, log(matrixStats::rowMeans2(mat)), covariates)
-colnames(covariates)[1:2] <- c("Intercept", "Log-UMI")
+colnames(covariates)[1:2] <- c("Intercept", "Log_UMI")
 
 for(variable in categorical_var){
   vec <- metadata[,variable]
@@ -199,6 +204,12 @@ for(i in 1:length(cols_regress_out)){
   colnames(covariates_new)[ncol(covariates_new)] <- paste0("individual_",i)
 }
 covariates <- covariates_new
+de_genes <- de_genes[de_genes %in% colnames(mat)]
+
+ls_vec <- ls()
+ls_vec <- ls_vec[!ls_vec %in% c("covariates", "mat", "de_genes", "sns")]
+save.image("../../../../out/writeup8d/writeup8d_sns_layer23_processed.RData")
+save(mat, covariates, de_genes, file = "../../../../out/writeup8d/writeup8d_sns_layer23_processed_onlymat.RData")
 
 #################
 
@@ -212,7 +223,7 @@ init_res <- eSVD2::initialize_esvd(mat,
                                    k = K,
                                    family = "neg_binom2",
                                    covariates = covariates,
-                                   column_set_to_one = "Log-UMI",
+                                   column_set_to_one = "Log_UMI",
                                    offset_vec = rep(0, nrow(mat)),
                                    verbose = 1)
 time_end1 <- Sys.time()
