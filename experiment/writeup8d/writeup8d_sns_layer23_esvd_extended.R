@@ -48,7 +48,7 @@
 #                             l2pen = 0.1,
 #                             verbose = 1)
 # time_end2 <- Sys.time()
-# save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended.RData")
+# save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended_intermediary.RData")
 #
 # #############
 #
@@ -98,11 +98,13 @@
 # tmp[-gene_idx,(ncol(init_y_mat)+1):(ncol(init_y_mat)+5)] <-  eSVD2:::.mult_mat_vec(svd_res$v[,1:5], sqrt(svd_res$d[1:5]))
 # init_y_mat <- tmp
 #
-# rm(list = c("tmp", "zz", "svd_res"))
-# save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended.RData")
+# rm(list = c("tmp", "zz", "svd_res", "p1"))
+# save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended_intermediary.RData")
 
 ##########################
-load("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended.RData")
+load("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended_intermediary.RData")
+date_of_run <- Sys.time()
+session_info <- devtools::session_info()
 
 gene_group_factor <- rep("overdispersed_2", ncol(mat))
 nuisance_param_vec_full <- rep(0.5, ncol(mat))
@@ -134,7 +136,7 @@ esvd_res_nb1 <- eSVD2::opt_esvd(init_x_mat,
                                 nuisance_value_lower = nuisance_value_lower,
                                 nuisance_value_upper = nuisance_value_upper,
                                 reestimate_nuisance = T,
-                                reestimate_nuisance_per_iteration = 2,
+                                reestimate_nuisance_per_iteration = 5,
                                 reparameterize = T,
                                 max_iter = 50,
                                 l2pen = 0.1,
@@ -145,6 +147,7 @@ save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended.RData"
 gene_group_factor <- rep(NA, ncol(mat))
 gene_group_factor[gene_idx] <- paste0("normal_", 1:length(gene_idx))
 gene_group_factor[-gene_idx] <- paste0("overdispersed_", 1:(ncol(mat)-length(gene_idx)))
+gene_group_factor <- factor(gene_group_factor)
 nuisance_value_lower <- rep(0.1, ncol(mat))
 nuisance_value_lower[1:length(gene_idx)] <- 1
 nuisance_value_upper <- rep(1000, ncol(mat))
@@ -166,7 +169,7 @@ esvd_res_nb2 <- eSVD2::opt_esvd(esvd_res_nb1$x_mat,
                                 nuisance_value_lower = nuisance_value_lower,
                                 nuisance_value_upper = nuisance_value_upper,
                                 reestimate_nuisance = T,
-                                reestimate_nuisance_per_iteration = 10,
+                                reestimate_nuisance_per_iteration = 5,
                                 reparameterize = T,
                                 max_iter = 50,
                                 l2pen = 0.1,

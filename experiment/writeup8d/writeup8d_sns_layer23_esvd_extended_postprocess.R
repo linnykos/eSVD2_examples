@@ -27,6 +27,21 @@ angle_vec <- sapply(1:p, function(j){
 quantile(angle_vec)
 quantile(angle_vec[gene_idx])
 
+cor_vec <- sapply(1:p, function(j){
+  stats::cor(mat[,j], mean_mat[,j])
+})
+quantile(cor_vec)
+quantile(cor_vec[gene_idx])
+quantile(cor_vec[which(colnames(mat) %in% de_genes)])
+
+cor_vec_nonzero <- sapply(1:p, function(j){
+  idx <- which(mat[,j] != 0)
+  stats::cor(mat[idx,j], mean_mat[idx,j])
+})
+quantile(cor_vec_nonzero)
+quantile(cor_vec_nonzero[gene_idx])
+quantile(cor_vec_nonzero[which(colnames(mat) %in% de_genes)])
+
 ####################
 
 round(quantile(esvd_res_nb2$b_mat[,"diagnosis_ASD"]),2)
