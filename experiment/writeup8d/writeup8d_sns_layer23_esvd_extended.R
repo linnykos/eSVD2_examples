@@ -102,6 +102,7 @@
 # save.image("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended_intermediary.RData")
 
 ##########################
+rm(list=ls())
 load("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended_intermediary.RData")
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
@@ -130,14 +131,14 @@ esvd_res_nb1 <- eSVD2::opt_esvd(init_x_mat,
                                 method = "newton",
                                 b_init = init_b_mat,
                                 covariates = init_res$covariates,
-                                bool_run_cpp = F,
+                                bool_run_cpp = T,
                                 gene_group_factor = gene_group_factor,
-                                gene_ignore_excessive_zero = T,
+                                gene_ignore_excessive_zero = F,
                                 nuisance_value_lower = nuisance_value_lower,
                                 nuisance_value_upper = nuisance_value_upper,
                                 reestimate_nuisance = T,
                                 reestimate_nuisance_per_iteration = 5,
-                                reparameterize = T,
+                                reparameterize = F,
                                 max_iter = 50,
                                 l2pen = 0.1,
                                 verbose = 1)
@@ -163,14 +164,14 @@ esvd_res_nb2 <- eSVD2::opt_esvd(esvd_res_nb1$x_mat,
                                 method = "newton",
                                 b_init = esvd_res_nb1$b_mat,
                                 covariates = esvd_res_nb1$covariates,
-                                bool_run_cpp = F,
+                                bool_run_cpp = T,
                                 gene_group_factor = gene_group_factor,
-                                gene_ignore_excessive_zero = T,
+                                gene_ignore_excessive_zero = F,
                                 nuisance_value_lower = nuisance_value_lower,
                                 nuisance_value_upper = nuisance_value_upper,
                                 reestimate_nuisance = T,
                                 reestimate_nuisance_per_iteration = 5,
-                                reparameterize = T,
+                                reparameterize = F,
                                 max_iter = 50,
                                 l2pen = 0.1,
                                 verbose = 1)

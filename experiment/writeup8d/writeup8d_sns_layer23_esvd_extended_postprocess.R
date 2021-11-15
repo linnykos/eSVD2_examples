@@ -52,3 +52,11 @@ round(quantile(esvd_res_nb1$b_mat[,"diagnosis_ASD"]),2)
 round(quantile(esvd_res_nb1$b_mat[de_genes,"diagnosis_ASD"]),2)
 round(quantile(esvd_res_nb1$b_mat[gene_idx,"diagnosis_ASD"]),2)
 
+idx <- intersect(which(esvd_res_nb2$nuisance_param_vec > 1),
+                 grep("overdispersed", esvd_res_nb2$param$gene_group_factor))
+cbind(idx, esvd_res_nb2$nuisance_param_vec[idx])
+j <- 4882
+tmp <- cbind(mat[,j], mean_mat[,j])
+eSVD2:::.compute_principal_angle(tmp)
+
+
