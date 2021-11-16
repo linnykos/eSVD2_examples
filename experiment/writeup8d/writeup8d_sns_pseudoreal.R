@@ -1,8 +1,8 @@
 rm(list=ls())
 library(Seurat)
 
-load("../../../../out/writeup8d/writeup8d_sns_layer23_esvd.RData")
-true_esvd <- esvd_res2
+load("../../../../out/writeup8d/writeup8d_sns_layer23_esvd_extended.RData")
+true_esvd <- esvd_res_nb2
 ls_vec <- ls()
 ls_vec <- ls_vec[!ls_vec %in% c("true_esvd")]
 rm(list = ls_vec)
@@ -11,7 +11,7 @@ n <- nrow(true_esvd$x_mat)
 p <- nrow(true_esvd$y_mat)
 colnames(true_esvd$b_mat) <- colnames(true_esvd$covariates)
 autism_idx <- which(colnames(true_esvd$covariates) == "diagnosis_ASD")
-library_idx <- which(colnames(true_esvd$covariates) == "Log-UMI")
+library_idx <- which(colnames(true_esvd$covariates) == "Log_UMI")
 
 #################3
 # fix the simulation data
@@ -55,7 +55,7 @@ mean_mat[mean_mat >= 100] <- 100
 
 set.seed(10)
 autism_gene_idx <- sample(1:p, size = round(p/50))
-multiplier_vec <- rnorm(length(autism_gene_idx), mean = 3, sd = 1)
+multiplier_vec <- rnorm(length(autism_gene_idx), mean = 5, sd = 1)
 for(j in 1:length(autism_gene_idx)){
   vec <- nat_mat[,autism_gene_idx[j]]
   vec_autism <- vec[which(true_esvd$covariates[,"diagnosis_ASD"] > 0.5)]
@@ -133,72 +133,72 @@ eSVD2:::plot_scatterplot_nb(mat,
 graphics.off()
 
 
-######################################
-
-# now fit
-
-# initialization
-K <- 10
-n <- nrow(mat)
-p <- ncol(mat)
-covariates <- true_esvd$covariates
-
-time_start1 <- Sys.time()
-init_res <- eSVD2::initialize_esvd(mat,
-                                   k = K,
-                                   family = "neg_binom2",
-                                   covariates = covariates,
-                                   column_set_to_one = "Log-UMI",
-                                   offset_vec = rep(0, nrow(mat)),
-                                   verbose = 1)
-time_end1 <- Sys.time()
-save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
-
-###################3
-
-print("Estimating NB via eSVD, round 1")
-time_start2 <- Sys.time()
-set.seed(10)
-esvd_res <- eSVD2::opt_esvd(init_res$x_mat,
-                            init_res$y_mat,
-                            mat,
-                            family = "neg_binom2",
-                            nuisance_param_vec = init_res$nuisance_param_vec,
-                            library_size_vec = 1,
-                            method = "newton",
-                            b_init = init_res$b_mat,
-                            covariates = init_res$covariates,
-                            offset_vec = init_res$offset_vec,
-                            reestimate_nuisance = T,
-                            global_estimate = T,
-                            reparameterize = T,
-                            bool_run_cpp = T,
-                            max_iter = 50,
-                            l2pen = 0.1,
-                            verbose = 1)
-time_end2 <- Sys.time()
-save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
-
-print("Estimating NB via eSVD, round 2")
-time_start3 <- Sys.time()
-set.seed(10)
-esvd_res2 <- eSVD2::opt_esvd(esvd_res$x_mat,
-                             esvd_res$y_mat, mat,
-                             family = "neg_binom2",
-                             nuisance_param_vec = esvd_res$nuisance_param_vec,
-                             library_size_vec = 1,
-                             method = "newton",
-                             b_init = esvd_res$b_mat,
-                             covariates = esvd_res$covariates,
-                             offset_vec = esvd_res$offset_vec,
-                             reestimate_nuisance = T,
-                             global_estimate = F,
-                             reparameterize = T,
-                             bool_run_cpp = T,
-                             max_iter = 50,
-                             tol = 1e-8,
-                             l2pen = 0.1,
-                             verbose = 1)
-time_end3 <- Sys.time()
-save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
+# ######################################
+#
+# # now fit
+#
+# # initialization
+# K <- 10
+# n <- nrow(mat)
+# p <- ncol(mat)
+# covariates <- true_esvd$covariates
+#
+# time_start1 <- Sys.time()
+# init_res <- eSVD2::initialize_esvd(mat,
+#                                    k = K,
+#                                    family = "neg_binom2",
+#                                    covariates = covariates,
+#                                    column_set_to_one = "Log-UMI",
+#                                    offset_vec = rep(0, nrow(mat)),
+#                                    verbose = 1)
+# time_end1 <- Sys.time()
+# save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
+#
+# ###################3
+#
+# print("Estimating NB via eSVD, round 1")
+# time_start2 <- Sys.time()
+# set.seed(10)
+# esvd_res <- eSVD2::opt_esvd(init_res$x_mat,
+#                             init_res$y_mat,
+#                             mat,
+#                             family = "neg_binom2",
+#                             nuisance_param_vec = init_res$nuisance_param_vec,
+#                             library_size_vec = 1,
+#                             method = "newton",
+#                             b_init = init_res$b_mat,
+#                             covariates = init_res$covariates,
+#                             offset_vec = init_res$offset_vec,
+#                             reestimate_nuisance = T,
+#                             global_estimate = T,
+#                             reparameterize = T,
+#                             bool_run_cpp = T,
+#                             max_iter = 50,
+#                             l2pen = 0.1,
+#                             verbose = 1)
+# time_end2 <- Sys.time()
+# save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
+#
+# print("Estimating NB via eSVD, round 2")
+# time_start3 <- Sys.time()
+# set.seed(10)
+# esvd_res2 <- eSVD2::opt_esvd(esvd_res$x_mat,
+#                              esvd_res$y_mat, mat,
+#                              family = "neg_binom2",
+#                              nuisance_param_vec = esvd_res$nuisance_param_vec,
+#                              library_size_vec = 1,
+#                              method = "newton",
+#                              b_init = esvd_res$b_mat,
+#                              covariates = esvd_res$covariates,
+#                              offset_vec = esvd_res$offset_vec,
+#                              reestimate_nuisance = T,
+#                              global_estimate = F,
+#                              reparameterize = T,
+#                              bool_run_cpp = T,
+#                              max_iter = 50,
+#                              tol = 1e-8,
+#                              l2pen = 0.1,
+#                              verbose = 1)
+# time_end3 <- Sys.time()
+# save.image("../../../../out/writeup8d/writeup8d_sns_pseudoreal.RData")
 

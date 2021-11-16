@@ -23,7 +23,7 @@
 #                                    k = K,
 #                                    family = "poisson",
 #                                    covariates = covariates,
-#                                    column_set_to_one = "Log-UMI",
+#                                    column_set_to_one = "Log_UMI",
 #                                    offset_vec = rep(0, nrow(mat)),
 #                                    verbose = 1)
 # time_end1 <- Sys.time()

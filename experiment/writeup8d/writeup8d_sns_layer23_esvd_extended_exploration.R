@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../out/writeup8d/writeup8d_sns_layer23_esvd_extended2.RData")
+load("../../out/writeup8d/writeup8d_sns_layer23_esvd_extended.RData")
 hk_genes <- read.csv("../../data/housekeeping.txt", header = F)[,1]
 
 nat_mat1 <- tcrossprod(esvd_res_nb2$x_mat, esvd_res_nb2$y_mat)
