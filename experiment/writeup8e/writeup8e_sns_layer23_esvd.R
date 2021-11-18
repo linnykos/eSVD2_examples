@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/writeup8e/writeup8e_sns_layer23_processed.RData")
+load("../../../../out/writeup8d/writeup8e_sns_layer23_processed.RData")
 
 library(Seurat)
 set.seed(10)
