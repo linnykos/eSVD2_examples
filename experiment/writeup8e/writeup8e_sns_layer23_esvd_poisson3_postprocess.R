@@ -47,7 +47,10 @@ nuisance_param_vec <- pmin(nuisance_param_vec, 1e5)
 # tmp <- posterior_mean_mat/posterior_var_mat
 # quantile(tmp)
 
-library_mat <- tcrossprod(exp(esvd_res$covariates[,"Log_UMI",drop = F]), exp(esvd_res$b_mat[,"Log_UMI",drop = F]))*ncol(mat)
+library_mat <- sapply(1:ncol(mat), function(j){
+  exp(esvd_res$covariates[,"Log_UMI",drop = F]*esvd_res$b_mat[j,"Log_UMI"])*ncol(mat)
+})
+library_mat <- pmin(library_mat, 50000)
 A <- mat/library_mat
 AplusR <- sweep(A, MARGIN = 2, STATS = nuisance_param_vec, FUN = "+")
 RoverMu <- 1/sweep(mean_mat, MARGIN = 2, STATS = nuisance_param_vec, FUN = "/")
@@ -140,7 +143,7 @@ x_vec <- sapply(1:ncol(mat), function(j){
 
 hk_idx <- which(colnames(mat) %in% hk_genes)
 de_idx <- which(colnames(mat) %in% de_genes)
-col_vec <- rep(rgb(0.5, 0.5, 0.5, 0.5), length(summary_stats))
+col_vec <- rep(rgb(0.5, 0.5, 0.5, 0.5), length(p_val_vec))
 col_vec[hk_idx] <- 3
 col_vec[de_idx] <- 2
 plot(NA, xlim = range(x_vec), ylim = range(-p_val_vec))
@@ -157,7 +160,8 @@ points(x = x_vec[de_idx],
 #############################3
 
 # gene_idx <- which(colnames(mat) == "SAT2")
-gene_idx <- which(colnames(mat) == "MRPL20")
+# gene_idx <- which(colnames(mat) == "MRPL20")
+gene_idx <- which(colnames(mat) == "DEXI")
 col_vec <- rep(rgb(0.5,0.5,0.5,0.5), nrow(posterior_mean_mat2))
 col_vec[case_idx] <- rgb(0.5,0,0,0.5)
 shuffle_idx <- sample(1:nrow(posterior_mean_mat2))
@@ -190,3 +194,31 @@ points(group_stats[[gene_idx]]$control_gaussian[1],
 points(group_stats[[gene_idx]]$control_gaussian[1],
        group_stats[[gene_idx]]$control_gaussian[2],
        col = 1, pch = 16, cex = 3.5)
+
+###
+
+nat_mat1 <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat)
+excluded_idx <- which(colnames(esvd_res$covariates) %in% c("Log_UMI"))
+nat_mat2 <- tcrossprod(esvd_res$covariates[,-excluded_idx], esvd_res$b_mat[,-excluded_idx])
+nat_mat <- nat_mat1+nat_mat2
+mean_mat2 <- exp(nat_mat)
+
+# gene_idx <- which(colnames(mat) == "SAT2")
+# gene_idx <- which(colnames(mat) == "MRPL20")
+gene_idx <- which(colnames(mat) == "DEXI")
+plot(library_mat[,gene_idx]*mean_mat2[,gene_idx]/ncol(mat),
+     mat[,gene_idx], asp = T,
+     col = rgb(0,0,0,0.1))
+
+zz <- mat/library_mat
+quantile(zz)
+
+######################
+
+case_idx <- which(esvd_res$covariates[,"diagnosis_ASD"] == 1)
+control_idx <- which(esvd_res$covariates[,"diagnosis_ASD"] == 0)
+
+p_val_vec <- sapply(1:ncol(mat), function(j){
+  stats::wilcox.test(x = posterior_mean_mat2[case_idx,j],
+                     y = posterior_mean_mat2[control_idx,j])$p.value
+})

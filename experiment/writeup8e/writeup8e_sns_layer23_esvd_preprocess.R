@@ -103,7 +103,7 @@ numerical_var <- c("age", "RNA.Integrity.Number", "post.mortem.hours", "percent.
 n <- nrow(mat)
 metadata <- sns@meta.data
 covariates <- as.matrix(metadata[,numerical_var])
-covariates <- cbind(1, log(matrixStats::rowMeans2(mat)), covariates)
+covariates <- cbind(1, log(matrixStats::rowSums2(mat)), covariates)
 colnames(covariates)[1:2] <- c("Intercept", "Log_UMI")
 
 for(variable in categorical_var){
