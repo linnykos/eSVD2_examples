@@ -15,13 +15,76 @@ nat_mat_nolib <- nat_mat1 + nat_mat2
 mean_mat_nolib <- exp(nat_mat_nolib)
 mean_mat_nolib <- pmin(mean_mat_nolib, 1e4)
 
+zero_prop <- apply(mat, 2, function(x){length(which(x == 0))/length(x)})
+mode_bool <- apply(mat, 2, function(x){
+  if(all(x != 0)) return(FALSE)
+  tab <- table(x)
+  zero_idx <- which(names(tab) == "0")
+  tab[zero_idx] > max(tab[-zero_idx])
+})
+
 mat[mat == 0.25] <- 0
 nuisance_param_vec <- sapply(1:ncol(mat), function(j){
-  MASS::theta.ml(y = mat[,j], mu = mean_mat[,j])
+  print(j)
+  # if(j %% floor(ncol(mat)/10) == 0) cat('*')
+
+  val1 <- MASS::theta.ml(y = mat[,j], mu = mean_mat[,j])
+  # if(colnames(mat)[j] %in% de_genes){
+  #   return(val1)
+  # }
+  val2 <- MASS::theta.mm(y = mat[,j], mu = mean_mat[,j], dfr = nrow(mat)-1)
+  val3 <- glmGamPoi::overdispersion_mle(y = mat[,j], mean = mean_mat[,j])$estimate
+
+  # min(c(val1, val2, val3), na.rm = T)
+
+  vec <- c(val1, val2, val3)
+  vec <- vec[!is.na(vec)]
+  if(length(vec) == 1) return(vec[1])
+  vec <- pmax(pmin(vec, 1e5), 0.1)
+
+  # honestly -- this doesn't make too much sense. The mode can still be zero even if
+  # the nuisance parameter isn't less than 1. (It's the converse that's true.)
+  if(mode_bool[j]){
+    vec <- c(vec, c(0.1, 0.5, 1))
+
+    obs_prob <- length(which(mat[,j] == 0))/nrow(mat)
+    target_prob_vec <- sapply(vec, function(val){
+      mean((1+mean_mat[,j]/val)^(-val))
+    })
+    return(vec[which.min(abs(target_prob_vec - obs_prob))])
+  } else {
+    cat('*')
+    target_quantile_vec <- sapply(vec, function(val){
+      if(val < 1){
+        mode_val <- rep(0, nrow(mat))
+      } else {
+        mode_val <- mean_mat[,j]*(val-1)/val
+      }
+
+      mean(sapply(1:nrow(mat), function(i){
+        if(mode_val[i] == 0){
+          lower_val <- 0
+          upper_val <- stats::qnbinom(0.75, size = val, mu = mean_mat[i,j])
+        } else {
+          quantile_val <- stats::pnbinom(mode_val[i], size = val, mu = mean_mat[i,j])
+          lower_val <- stats::qnbinom(quantile_val*.25, size = val, mu = mean_mat[i,j])
+          upper_val <- stats::qnbinom(quantile_val + (1-quantile_val)*.75, size = val, mu = mean_mat[i,j])
+        }
+
+        lower_val <= mat[i,j] & mat[i,j] <= upper_val
+      }))
+    })
+
+    if(any(target_quantile_vec > 0.75)){
+      vec <- vec[target_quantile_vec > 0.75]
+      target_quantile_vec <- target_quantile_vec[target_quantile_vec > 0.75]
+    }
+
+    vec[which.min(abs(target_quantile_vec - 0.75))]
+  }
 })
 quantile(nuisance_param_vec)
-stopifnot(any(is.na(nuisance_param_vec)))
-nuisance_param_vec <- pmin(nuisance_param_vec, 1e5)
+length(intersect(which(zero_prop <= 0.2), which(nuisance_param_vec == 1e5)))
 
 library_mat <- sapply(1:ncol(mat), function(j){
   exp(esvd_res_full$covariates[,"Log_UMI",drop = F]*esvd_res_full$b_mat[j,"Log_UMI"])
@@ -36,22 +99,6 @@ tmp <- posterior_mean_mat/sqrt(posterior_var_mat)
 quantile(tmp)
 tmp <- posterior_mean_mat/mean_mat_nolib
 round(quantile(tmp),4)
-
-##############
-
-gene_idx <- which(colnames(mat) == "SAT2")
-# gene_idx <- which(colnames(mat) == "DEXI")
-par(mfrow = c(1,2))
-plot(mean_mat[,gene_idx],
-     jitter(mat[,gene_idx]), asp = T,
-     col = rgb(0,0,0,0.05))
-plot(posterior_mean_mat[,gene_idx],
-     mat[,gene_idx]/library_mat[,gene_idx], asp = T,
-     col = rgb(0,0,0,0.05))
-quantile(posterior_mean_mat[,gene_idx]/mean_mat[,gene_idx])
-
-tmp <- cbind(mat[,gene_idx], mean_mat[,gene_idx])
-eSVD2:::.compute_principal_angle(tmp)
 
 ###############
 
@@ -144,7 +191,8 @@ p_val_vec <- sapply(1:length(group_stats), function(j){
 })
 
 x_vec <- sapply(1:ncol(mat), function(j){
-  log(mean(posterior_mean_mat2[case_idx,j])) - log(mean(posterior_mean_mat2[control_idx,j]))
+  # log(mean(mat[case_idx,j])) - log(mean(mat[control_idx,j]))
+  log(mean(mat[case_idx,j])) - log(mean(mat[control_idx,j]))
 })
 
 hk_idx <- which(colnames(mat) %in% hk_genes)
@@ -162,4 +210,63 @@ points(x = x_vec[hk_idx],
 points(x = x_vec[de_idx],
        y = -p_val_vec[de_idx],
        pch = 16, col = col_vec[de_idx])
+
+#############################
+
+gene_idx <- which(colnames(mat) == "SAT2")
+# gene_idx <- which(colnames(mat) == "DEXI")
+# gene_idx <- which.min(p_val_vec)
+col_vec <- rep(rgb(0.5,0.5,0.5,0.5), nrow(posterior_mean_mat2))
+col_vec[case_idx] <- rgb(0.5,0,0,0.5)
+shuffle_idx <- sample(1:nrow(posterior_mean_mat2))
+plot(posterior_mean_mat2[shuffle_idx,gene_idx],
+     sqrt(posterior_var_mat[shuffle_idx,gene_idx]),
+     col = col_vec[shuffle_idx], asp = T)
+points(individual_stats[[gene_idx]]$case_gaussians[1,],
+       sqrt(individual_stats[[gene_idx]]$case_gaussians[2,]),
+       col = "white", pch = 16, cex = 2)
+points(individual_stats[[gene_idx]]$case_gaussians[1,],
+       sqrt(individual_stats[[gene_idx]]$case_gaussians[2,]),
+       col = 2, pch = 16, cex = 1.5)
+
+points(individual_stats[[gene_idx]]$control_gaussians[1,],
+       sqrt(individual_stats[[gene_idx]]$control_gaussians[2,]),
+       col = "white", pch = 16, cex = 2)
+points(individual_stats[[gene_idx]]$control_gaussians[1,],
+       sqrt(individual_stats[[gene_idx]]$control_gaussians[2,]),
+       col = 1, pch = 16, cex = 1.5)
+
+# points(group_stats[[gene_idx]]$case_gaussian[1],
+#        sqrt(as.numeric(group_stats[[gene_idx]]$case_gaussian[2])),
+#        col = "white", pch = 16, cex = 4)
+# points(group_stats[[gene_idx]]$case_gaussian[1],
+#        sqrt(as.numeric(group_stats[[gene_idx]]$case_gaussian[2])),
+#        col = 2, pch = 16, cex = 3.5)
+# points(group_stats[[gene_idx]]$control_gaussian[1],
+#        sqrt(as.numeric(group_stats[[gene_idx]]$control_gaussian[2])),
+#        col = "white", pch = 16, cex = 4)
+# points(group_stats[[gene_idx]]$control_gaussian[1],
+#        sqrt(as.numeric(group_stats[[gene_idx]]$control_gaussian[2])),
+#        col = 1, pch = 16, cex = 3.5)
+
+##############
+
+gene_idx <- which.min(p_val_vec)
+gene_idx <- which.min(x_vec)
+gene_idx
+nuisance_param_vec[gene_idx]
+quantile(library_mat[,gene_idx])
+# gene_idx <- which(colnames(mat) == "DEXI")
+par(mfrow = c(1,2))
+plot(mean_mat[,gene_idx],
+     jitter(mat[,gene_idx]), asp = T,
+     col = rgb(0,0,0,0.05))
+plot(posterior_mean_mat2[,gene_idx],
+     mat[,gene_idx]/library_mat[,gene_idx], asp = T,
+     col = rgb(0,0,0,0.05))
+length(which(mat[,gene_idx] == 0))/nrow(mat)
+#quantile(posterior_mean_mat[,gene_idx]/mean_mat[,gene_idx])
+
+tmp <- cbind(mat[,gene_idx], mean_mat[,gene_idx])
+eSVD2:::.compute_principal_angle(tmp)
 
