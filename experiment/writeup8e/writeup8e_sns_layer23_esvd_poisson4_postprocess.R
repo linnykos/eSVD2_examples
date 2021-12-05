@@ -9,6 +9,8 @@ nat_mat2 <- tcrossprod(esvd_res_full$covariates, esvd_res_full$b_mat)
 nat_mat <- nat_mat1 + nat_mat2
 mean_mat <- exp(nat_mat)
 
+# save(mat, mean_mat, file = "../../out/writeup8e/ns_layer23_example.RData")
+
 library_idx <- which(colnames(esvd_res_full$covariates) == "Log_UMI")
 nat_mat2 <- tcrossprod(esvd_res_full$covariates[,-library_idx], esvd_res_full$b_mat[,-library_idx])
 nat_mat_nolib <- nat_mat1 + nat_mat2
