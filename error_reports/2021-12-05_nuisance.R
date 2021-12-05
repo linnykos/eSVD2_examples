@@ -1,6 +1,9 @@
 rm(list=ls())
 load("../../git/eSVD2_examples/error_reports/2021-12-05_nuisance.RData")
 
+dim(mat); mat[1:5,1:5]
+dim(mean_mat); mean_mat[1:5,1:5]
+
 zero_prop <- apply(mat, 2, function(x){length(which(x == 0))/length(x)})
 quantile(zero_prop)
 
