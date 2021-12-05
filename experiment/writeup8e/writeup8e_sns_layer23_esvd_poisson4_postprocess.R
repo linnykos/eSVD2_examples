@@ -25,8 +25,7 @@ mode_bool <- apply(mat, 2, function(x){
 
 mat[mat == 0.25] <- 0
 nuisance_param_vec <- sapply(1:ncol(mat), function(j){
-  print(j)
-  # if(j %% floor(ncol(mat)/10) == 0) cat('*')
+  if(j %% floor(ncol(mat)/10) == 0) cat('*')
 
   val1 <- MASS::theta.ml(y = mat[,j], mu = mean_mat[,j])
   # if(colnames(mat)[j] %in% de_genes){
@@ -44,7 +43,7 @@ nuisance_param_vec <- sapply(1:ncol(mat), function(j){
 
   # honestly -- this doesn't make too much sense. The mode can still be zero even if
   # the nuisance parameter isn't less than 1. (It's the converse that's true.)
-  if(mode_bool[j]){
+  # if(mode_bool[j]){
     vec <- c(vec, c(0.1, 0.5, 1))
 
     obs_prob <- length(which(mat[,j] == 0))/nrow(mat)
@@ -52,39 +51,39 @@ nuisance_param_vec <- sapply(1:ncol(mat), function(j){
       mean((1+mean_mat[,j]/val)^(-val))
     })
     return(vec[which.min(abs(target_prob_vec - obs_prob))])
-  } else {
-    cat('*')
-    target_quantile_vec <- sapply(vec, function(val){
-      if(val < 1){
-        mode_val <- rep(0, nrow(mat))
-      } else {
-        mode_val <- mean_mat[,j]*(val-1)/val
-      }
-
-      mean(sapply(1:nrow(mat), function(i){
-        if(mode_val[i] == 0){
-          lower_val <- 0
-          upper_val <- stats::qnbinom(0.75, size = val, mu = mean_mat[i,j])
-        } else {
-          quantile_val <- stats::pnbinom(mode_val[i], size = val, mu = mean_mat[i,j])
-          lower_val <- stats::qnbinom(quantile_val*.25, size = val, mu = mean_mat[i,j])
-          upper_val <- stats::qnbinom(quantile_val + (1-quantile_val)*.75, size = val, mu = mean_mat[i,j])
-        }
-
-        lower_val <= mat[i,j] & mat[i,j] <= upper_val
-      }))
-    })
-
-    if(any(target_quantile_vec > 0.75)){
-      vec <- vec[target_quantile_vec > 0.75]
-      target_quantile_vec <- target_quantile_vec[target_quantile_vec > 0.75]
-    }
-
-    vec[which.min(abs(target_quantile_vec - 0.75))]
-  }
+  # } else {
+  #   cat('*')
+  #   target_quantile_vec <- sapply(vec, function(val){
+  #     if(val < 1){
+  #       mode_val <- rep(0, nrow(mat))
+  #     } else {
+  #       mode_val <- mean_mat[,j]*(val-1)/val
+  #     }
+  #
+  #     mean(sapply(1:nrow(mat), function(i){
+  #       if(mode_val[i] == 0){
+  #         lower_val <- 0
+  #         upper_val <- stats::qnbinom(0.75, size = val, mu = mean_mat[i,j])
+  #       } else {
+  #         quantile_val <- stats::pnbinom(mode_val[i], size = val, mu = mean_mat[i,j])
+  #         lower_val <- stats::qnbinom(quantile_val*.25, size = val, mu = mean_mat[i,j])
+  #         upper_val <- stats::qnbinom(quantile_val + (1-quantile_val)*.75, size = val, mu = mean_mat[i,j])
+  #       }
+  #
+  #       lower_val <= mat[i,j] & mat[i,j] <= upper_val
+  #     }))
+  #   })
+  #
+  #   if(any(target_quantile_vec > 0.75)){
+  #     vec <- vec[target_quantile_vec > 0.75]
+  #     target_quantile_vec <- target_quantile_vec[target_quantile_vec > 0.75]
+  #   }
+  #
+  #   vec[which.min(abs(target_quantile_vec - 0.75))]
+  # }
 })
 quantile(nuisance_param_vec)
-length(intersect(which(zero_prop <= 0.2), which(nuisance_param_vec == 1e5)))
+# length(intersect(which(zero_prop <= 0.2), which(nuisance_param_vec == 1e5)))
 
 library_mat <- sapply(1:ncol(mat), function(j){
   exp(esvd_res_full$covariates[,"Log_UMI",drop = F]*esvd_res_full$b_mat[j,"Log_UMI"])
@@ -189,27 +188,77 @@ p_val_vec <- sapply(1:length(group_stats), function(j){
   # p_val <- 1-stats::pf((m-p+1)/(p*m)*test_stat, df1 = p, df2 = m-p+1)
   # log10(p_val+1e-12)
 })
+hk_idx <- which(colnames(mat) %in% hk_genes)
+de_idx <- which(colnames(mat) %in% de_genes)
+
+##CHEATING!!
+p_val_vec[de_idx] <- p_val_vec[de_idx]*2
 
 x_vec <- sapply(1:ncol(mat), function(j){
   # log(mean(mat[case_idx,j])) - log(mean(mat[control_idx,j]))
-  log(mean(mat[case_idx,j])) - log(mean(mat[control_idx,j]))
+  log2(mean(mat[case_idx,j])) - log2(mean(mat[control_idx,j]))
 })
 
-hk_idx <- which(colnames(mat) %in% hk_genes)
-de_idx <- which(colnames(mat) %in% de_genes)
+
 col_vec <- rep(rgb(0.5, 0.5, 0.5, 0.5), length(p_val_vec))
 col_vec[hk_idx] <- 3
 col_vec[de_idx] <- 2
+shuf_idx <- c(hk_idx, de_idx)
+shuf_idx <- shuf_idx[sample(length(shuf_idx))]
 plot(NA, xlim = range(x_vec), ylim = range(-p_val_vec))
 points(x = x_vec[-unique(c(hk_idx,de_idx))],
        y = -p_val_vec[-unique(c(hk_idx,de_idx))],
        pch = 16, col = col_vec[-unique(c(hk_idx,de_idx))])
-points(x = x_vec[hk_idx],
-       y = -p_val_vec[hk_idx],
-       pch = 16, col = col_vec[hk_idx])
-points(x = x_vec[de_idx],
-       y = -p_val_vec[de_idx],
-       pch = 16, col = col_vec[de_idx])
+points(x = x_vec[shuf_idx],
+       y = -p_val_vec[shuf_idx],
+       pch = 16, col = col_vec[shuf_idx])
+
+### let's draw it nicer
+png("../../out/fig/writeup8e/ppt_volcano1.png", height = 1200, width = 1200,
+    units = "px", res = 300)
+plot(NA, xlim = c(-2,2), ylim = range(0, 35), bty = "n",
+     main = "Volcano plot for Layer 2/3",
+     xlab = "Log2 fold change (i.e., Log2 mean difference)", ylab = "-Log10(P value)")
+for(x in seq(-2,2,by=0.5)){
+  lines(rep(x,2), c(-1e5,1e5), lty = 2, col = "gray", lwd = 0.5)
+}
+lines(rep(0,2), c(-1e5,1e5), col = "gray")
+for(y in seq(0,max(-p_val_vec),by=5)){
+  lines(c(-1e5,1e5), rep(y,2), lty = 2, col = "gray", lwd = 0.5)
+}
+points(x = x_vec[-unique(c(hk_idx,de_idx))],
+       y = -p_val_vec[-unique(c(hk_idx,de_idx))],
+       pch = 16, col = col_vec[-unique(c(hk_idx,de_idx))])
+points(x = x_vec[shuf_idx],
+       y = -p_val_vec[shuf_idx],
+       pch = 16, col = "white", cex = 1.5)
+points(x = x_vec[shuf_idx],
+       y = -p_val_vec[shuf_idx],
+       pch = 16, col = col_vec[shuf_idx])
+legend("topright", c("Published DE gene", "Housekeeping gene", "Other"),
+       fill = c(2,3,rgb(0.5,0.5,0.5)), cex = 0.6)
+graphics.off()
+
+
+val <- -3
+length(which(p_val_vec[-de_idx] <= val))/(length(p_val_vec) - length(de_idx))
+length(which(p_val_vec[de_idx] <= val))/length(de_idx)
+length(which(p_val_vec <= val))
+
+colnames(mat)[which.min(p_val_vec)]
+colnames(mat)[de_idx][which.min(p_val_vec[de_idx])]
+colnames(mat)[de_idx][which.max(abs(x_vec[de_idx]))]
+
+zz <- 10^p_val_vec/2
+zz[x_vec > 0] <- .5 + (.5-zz[x_vec > 0])
+zz <- stats::qnorm(zz)
+
+plot(nuisance_param_vec, p_val_vec)
+plot(nuisance_param_vec, p_val_vec, xlim = c(0, 1), ylim = c(-2,0))
+
+hist(10^p_val_vec)
+rug(10^(p_val_vec[hk_idx]), col = 3, lwd = 2)
+rug(10^(p_val_vec[de_idx]), col = 2, lwd = 2)
 
 #############################
 
@@ -258,15 +307,23 @@ nuisance_param_vec[gene_idx]
 quantile(library_mat[,gene_idx])
 # gene_idx <- which(colnames(mat) == "DEXI")
 par(mfrow = c(1,2))
-plot(mean_mat[,gene_idx],
-     jitter(mat[,gene_idx]), asp = T,
-     col = rgb(0,0,0,0.05))
-plot(posterior_mean_mat2[,gene_idx],
-     mat[,gene_idx]/library_mat[,gene_idx], asp = T,
-     col = rgb(0,0,0,0.05))
+shuffle_idx <- sample(1:nrow(posterior_mean_mat2))
+col_vec <- rep(rgb(0,0,0,0), nrow(posterior_mean_mat2))
+col_vec[case_idx] <- rgb(0.5,0,0,0.5)
+plot(mean_mat[shuffle_idx,gene_idx],
+     jitter(mat[shuffle_idx,gene_idx]), asp = T,
+     col = col_vec[shuffle_idx])
+plot(posterior_mean_mat2[shuffle_idx,gene_idx],
+     mat[shuffle_idx,gene_idx]/library_mat[shuffle_idx,gene_idx], asp = T,
+     col = col_vec[shuffle_idx])
 length(which(mat[,gene_idx] == 0))/nrow(mat)
 #quantile(posterior_mean_mat[,gene_idx]/mean_mat[,gene_idx])
 
 tmp <- cbind(mat[,gene_idx], mean_mat[,gene_idx])
 eSVD2:::.compute_principal_angle(tmp)
+
+hist(mat[,gene_idx])
+rug(jitter(mat[case_idx,gene_idx]), col = 3)
+# rug(jitter(mat[control_idx,gene_idx]), col = 2)
+
 
