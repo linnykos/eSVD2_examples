@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/writeup8e/writeup8e_sns_layer23_processed_onlymat.RData")
+load("../../../../out/writeup8e/writeup8e_sns_layer4_processed_onlymat.RData")
 
 library(Seurat)
 set.seed(10)
@@ -113,23 +113,4 @@ time_end3 <- Sys.time()
 save(date_of_run, session_info, gene_idx, de_genes,
      metadata, mat, esvd_res_full, time_start3, time_end3,
      covariates,
-     file = "../../../../out/writeup8e/writeup8e_sns_layer23_esvd_poisson4.RData")
-
-############################
-
-# nat_mat1 <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat)
-# nat_mat2 <- tcrossprod(esvd_res_full$covariates, esvd_res_full$b_mat)
-# nat_mat <- nat_mat1 + nat_mat2
-# mean_mat <- exp(nat_mat)
-#
-# p <- ncol(mat)
-# angle_vec <- sapply(1:p, function(j){
-#   tmp <- cbind(mat[,j], mean_mat[,j])
-#   eSVD2:::.compute_principal_angle(tmp)
-# })
-# quantile(angle_vec)
-#
-# quantile(esvd_res$b_mat[,"Log_UMI"])
-
-
-
+     file = "../../../../out/writeup8e/writeup8e_sns_layer4_esvd_poisson.RData")

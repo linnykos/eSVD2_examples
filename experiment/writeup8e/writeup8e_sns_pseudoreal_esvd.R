@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/writeup8e/writeup8e_sns_layer23_processed_onlymat.RData")
+load("../../../../out/writeup8e/writeup8e_sns_pseudoreal_data.RData")
 
 library(Seurat)
 set.seed(10)
@@ -12,10 +12,9 @@ gene_threshold <- 0.2
 gene_maxval <- apply(mat, 2, function(x){
   quantile(x[x>0], probs = 0.95)
 })
-gene_threshold2 <- 4
+gene_threshold2 <- 30
 gene_idx <- intersect(which(gene_frequency < gene_threshold), which(gene_maxval < gene_threshold2))
-length(intersect(colnames(mat)[gene_idx], de_genes))
-length(de_genes)
+length(gene_idx)
 mat2 <- mat
 zero_substitute <- 0.25
 mat2[mat2 == 0] <- zero_substitute
@@ -113,23 +112,4 @@ time_end3 <- Sys.time()
 save(date_of_run, session_info, gene_idx, de_genes,
      metadata, mat, esvd_res_full, time_start3, time_end3,
      covariates,
-     file = "../../../../out/writeup8e/writeup8e_sns_layer23_esvd_poisson4.RData")
-
-############################
-
-# nat_mat1 <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat)
-# nat_mat2 <- tcrossprod(esvd_res_full$covariates, esvd_res_full$b_mat)
-# nat_mat <- nat_mat1 + nat_mat2
-# mean_mat <- exp(nat_mat)
-#
-# p <- ncol(mat)
-# angle_vec <- sapply(1:p, function(j){
-#   tmp <- cbind(mat[,j], mean_mat[,j])
-#   eSVD2:::.compute_principal_angle(tmp)
-# })
-# quantile(angle_vec)
-#
-# quantile(esvd_res$b_mat[,"Log_UMI"])
-
-
-
+     file = "../../../../out/writeup8e/writeup8e_sns_pseudoreal_esvd_poisson.RData")
