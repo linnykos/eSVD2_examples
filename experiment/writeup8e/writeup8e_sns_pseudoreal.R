@@ -32,7 +32,7 @@ nuisance_param_vec <- sapply(1:ncol(mat), function(j){
 
 true_esvd <- esvd_res_full
 ls_vec <- ls()
-ls_vec <- ls_vec[!ls_vec %in% c("true_esvd", "nuisance_param_vec")]
+ls_vec <- ls_vec[!ls_vec %in% c("true_esvd", "nuisance_param_vec", "metadata")]
 rm(list = ls_vec)
 
 n <- nrow(true_esvd$x_mat)
@@ -168,7 +168,7 @@ ls_vec <- ls()
 ls_vec <- ls_vec[!ls_vec %in% c("true_esvd", "mat", "autism_gene_idx",
                                 "nat_mat", "lambda_mat" , "gamma_mat",
                                 "library_mat", "covariates",
-                                "nuisance_param_vec")]
+                                "nuisance_param_vec", "metadata")]
 rm(list = ls_vec)
 save.image("../../../../out/writeup8e/writeup8e_sns_pseudoreal_data.RData")
 

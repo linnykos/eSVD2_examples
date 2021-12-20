@@ -109,7 +109,7 @@ esvd_res_full <- eSVD2::opt_esvd(init_x_mat,
                                  reestimate_nuisance = F,
                                  verbose = 1)
 time_end3 <- Sys.time()
-save(date_of_run, session_info, gene_idx, de_genes,
-     metadata, mat, esvd_res_full, time_start3, time_end3,
-     covariates,
+save(date_of_run, session_info, gene_idx,
+     mat, esvd_res_full, time_start3, time_end3,
+     covariates, metadata,
      file = "../../../../out/writeup8e/writeup8e_sns_pseudoreal_esvd_poisson.RData")
