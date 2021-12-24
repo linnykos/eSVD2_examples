@@ -7,12 +7,11 @@ date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
 gene_frequency <- apply(mat, 2, function(x){length(which(x > 0))})/nrow(mat)
-quantile(gene_frequency)
-gene_threshold <- 0.2
+gene_threshold <- quantile(gene_frequency, probs = 0.25)
 gene_maxval <- apply(mat, 2, function(x){
   quantile(x[x>0], probs = 0.95)
 })
-gene_threshold2 <- 30
+gene_threshold2 <- quantile(gene_maxval, probs = 0.25)
 gene_idx <- intersect(which(gene_frequency < gene_threshold), which(gene_maxval < gene_threshold2))
 length(gene_idx)
 mat2 <- mat
