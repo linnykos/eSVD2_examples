@@ -108,10 +108,11 @@ esvd_res_full <- eSVD2::opt_esvd(init_x_mat,
                                  reestimate_nuisance = F,
                                  verbose = 1)
 time_end3 <- Sys.time()
+
 save(date_of_run, session_info,
      mat, esvd_res_full, time_start3, time_end3,
      covariates, metadata,
      true_objects = list(autism_gene_idx = autism_gene_idx,
                          nat_mat = nat_mat, lambda_mat = lambda_mat,
-                         gamma_mat = gamma_mat, true_esvd = true_esvd),
+                         true_esvd = true_esvd),
      file = "../../../../out/writeup8f/writeup8f_sns_pseudoreal_esvd_poisson.RData")
