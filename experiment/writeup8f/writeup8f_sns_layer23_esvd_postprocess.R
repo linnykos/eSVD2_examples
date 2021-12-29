@@ -16,7 +16,7 @@ mean_mat_nolib <- exp(nat_mat_nolib)
 mean_mat_nolib <- pmin(mean_mat_nolib, 1e4)
 
 zero_prob <- apply(mat, 2, function(x){
-  length(which(x == 0))/nrow(mat_avg)
+  length(which(x == 0))/nrow(mat)
 })
 nuisance_param_vec <- sapply(1:ncol(mat), function(j){
   if(j %% floor(ncol(mat)/10) == 0) cat('*')

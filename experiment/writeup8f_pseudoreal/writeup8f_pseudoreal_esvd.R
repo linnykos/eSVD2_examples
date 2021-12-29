@@ -19,7 +19,7 @@ zero_substitute <- 0.25
 mat2[mat2 == 0] <- zero_substitute
 mat_subset <- mat2[,gene_idx]
 
-K <- 50
+K <- min(50, round(min(dim(mat_subset))*.75))
 n <- nrow(mat_subset)
 p1 <- ncol(mat_subset)
 
@@ -110,6 +110,7 @@ esvd_res_full <- eSVD2::opt_esvd(init_x_mat,
 time_end3 <- Sys.time()
 
 true_objects = list(autism_gene_idx = autism_gene_idx,
+                    up_idx = up_idx, down_idx = down_idx,
                     nat_mat = nat_mat, lambda_mat = lambda_mat,
                     true_esvd = true_esvd)
 
