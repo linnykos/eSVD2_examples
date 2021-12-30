@@ -7,27 +7,28 @@ nat_mat2 <- tcrossprod(esvd_res_full$covariates, esvd_res_full$b_mat)
 nat_mat <- nat_mat1 + nat_mat2
 mean_mat <- exp(nat_mat)
 
-zero_prob <- apply(mat, 2, function(x){
-  length(which(x == 0))/nrow(mat)
+indiv_list <- lapply(unique(metadata$individual), function(indiv){
+  which(metadata$individual == indiv)
 })
-nuisance_param_vec <- sapply(1:ncol(mat), function(j){
-  if(j %% floor(ncol(mat)/10) == 0) cat('*')
+mat_avg <- t(sapply(indiv_list, function(idx_vec){
+  matrixStats::colMeans2(mat[idx_vec,])
+}))
+mean_avg <- t(sapply(indiv_list, function(idx_vec){
+  matrixStats::colMeans2(mean_mat[idx_vec,])
+}))
 
-  val1 <- MASS::theta.ml(y = mat[,j], mu = mean_mat[,j])
-  val2 <- MASS::theta.mm(y = mat[,j], mu = mean_mat[,j], dfr = nrow(mat)-1)
-  val3 <- glmGamPoi::overdispersion_mle(y = mat[,j], mean = mean_mat[,j])$estimate
+stats::cor(as.numeric(mat_avg), as.numeric(mean_avg))
+nuisance_param_vec <- sapply(1:ncol(mat_avg), function(j){
+  if(j %% floor(ncol(mat_avg)/10) == 0) cat('*')
+
+  val1 <- MASS::theta.ml(y = mat_avg[,j], mu = mean_avg[,j])
+  val2 <- MASS::theta.mm(y = mat_avg[,j], mu = mean_avg[,j], dfr = nrow(mat_avg)-1)
+  val3 <- glmGamPoi::overdispersion_mle(y = mat_avg[,j], mean = mean_avg[,j])$estimate
 
   vec <- c(val1, val2, val3)
   vec <- vec[!is.na(vec)]
-  if(length(vec) == 1) return(vec[1])
-  vec <- pmax(pmin(vec, 1e5), 1)
-  vec <- c(vec, 1)
-
-  obs_prob <- length(which(mat[,j] == 0))/nrow(mat)
-  target_prob_vec <- sapply(vec, function(val){
-    mean((1+mean_mat[,j]/val)^(-val))
-  })
-  return(vec[which.min(abs(target_prob_vec - obs_prob))])
+  vec <- pmax(pmin(vec, 1e5), 0.1)
+  median(vec)
 })
 quantile(nuisance_param_vec)
 
@@ -91,34 +92,34 @@ quantile(true_esvd$b_mat[down_idx, autism_idx])
 ###########
 
 # assess the relative effects
-range_mat <- sapply(1:ncol(true_esvd$b_mat), function(j){
-  print(j)
-  quantile(tcrossprod(true_esvd$covariates[,j], true_esvd$b_mat[,j]))
-})
-colnames(range_mat) <- colnames(true_esvd$covariates)
-round(range_mat,2)
-
-indiv_columns <- grep("individual", colnames(true_esvd$b_mat))
-indiv_vec <- unique(metadata$individual)[1:length(indiv_columns)]
-diagnosis_vec <- sapply(indiv_vec, function(indiv_name){
-  idx <- which(metadata$individual == indiv_name)
-  unique(metadata$diagnosis[idx])
-})
-tmp_df <- data.frame(name = indiv_vec,
-                     number = 1:length(indiv_columns),
-                     diagnosis = diagnosis_vec)
-
-# upweight and downweight certain genes
-set.seed(10)
-max_diff <- diff(range(range_mat))/2
-tmp_gene_idx <- sample(1:nrow(true_esvd$b_mat), size = round(nrow(true_esvd$b_mat)/5))
-for(j in tmp_gene_idx){
-  diagnosis_val <- sample(c("Control", "ASD"), 1)
-  number_vec <- tmp_df$number[which(tmp_df$diagnosis == diagnosis_val)]
-  col_idx <- which(colnames(true_esvd$b_mat) %in% paste0("individual_", number_vec))
-  true_esvd$b_mat[j,col_idx] <- runif(length(col_idx), min = 0, max = max_diff)
-  true_esvd$b_mat[j,-col_idx] <- 0
-}
+# range_mat <- sapply(1:ncol(true_esvd$b_mat), function(j){
+#   print(j)
+#   quantile(tcrossprod(true_esvd$covariates[,j], true_esvd$b_mat[,j]))
+# })
+# colnames(range_mat) <- colnames(true_esvd$covariates)
+# round(range_mat,2)
+#
+# indiv_columns <- grep("individual", colnames(true_esvd$b_mat))
+# indiv_vec <- unique(metadata$individual)[1:length(indiv_columns)]
+# diagnosis_vec <- sapply(indiv_vec, function(indiv_name){
+#   idx <- which(metadata$individual == indiv_name)
+#   unique(metadata$diagnosis[idx])
+# })
+# tmp_df <- data.frame(name = indiv_vec,
+#                      number = 1:length(indiv_columns),
+#                      diagnosis = diagnosis_vec)
+#
+# # upweight and downweight certain genes
+# set.seed(10)
+# max_diff <- diff(range(range_mat))/2
+# tmp_gene_idx <- sample(1:nrow(true_esvd$b_mat), size = round(nrow(true_esvd$b_mat)/5))
+# for(j in tmp_gene_idx){
+#   diagnosis_val <- sample(c("Control", "ASD"), 1)
+#   number_vec <- tmp_df$number[which(tmp_df$diagnosis == diagnosis_val)]
+#   col_idx <- which(colnames(true_esvd$b_mat) %in% paste0("individual_", number_vec))
+#   true_esvd$b_mat[j,col_idx] <- runif(length(col_idx), min = 0, max = max_diff)
+#   true_esvd$b_mat[j,-col_idx] <- 0
+# }
 
 ###########
 
@@ -227,6 +228,7 @@ save.image("../../../../out/writeup8f/writeup8f_pseudoreal_data.RData")
 ######################
 
 quantile(apply(mat, 2, max))
+
 case_idx <- which(metadata[,"diagnosis"] == "ASD")
 control_idx <- which(metadata[,"diagnosis"] == "Control")
 

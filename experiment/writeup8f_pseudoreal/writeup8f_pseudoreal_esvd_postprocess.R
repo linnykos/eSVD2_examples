@@ -7,51 +7,29 @@ nat_mat2 <- tcrossprod(esvd_res_full$covariates, esvd_res_full$b_mat)
 nat_mat <- nat_mat1 + nat_mat2
 mean_mat <- exp(nat_mat)
 
-# save(mat, mean_mat, file = "../../out/writeup8e/ns_layer23_example.RData")
-
 library_idx <- which(colnames(esvd_res_full$covariates) == "Log_UMI")
 nat_mat2 <- tcrossprod(esvd_res_full$covariates[,-library_idx], esvd_res_full$b_mat[,-library_idx])
 nat_mat_nolib <- nat_mat1 + nat_mat2
 mean_mat_nolib <- exp(nat_mat_nolib)
 mean_mat_nolib <- pmin(mean_mat_nolib, 1e4)
-zero_prop <- apply(mat, 2, function(x){length(which(x == 0))/length(x)})
 
-indiv_list <- lapply(unique(metadata$individual), function(indiv){
-  which(metadata$individual == indiv)
-})
-mat_avg <- t(sapply(indiv_list, function(idx_vec){
-  matrixStats::colMeans2(mat[idx_vec,])
-}))
-mean_avg <- t(sapply(indiv_list, function(idx_vec){
-  matrixStats::colMeans2(mean_mat[idx_vec,])
-}))
-zero_prob <- apply(mat_avg, 2, function(x){
-  length(which(x == 0))/nrow(mat_avg)
-})
+nuisance_param_vec <- sapply(1:ncol(mat), function(j){
+  if(j %% floor(ncol(mat)/10) == 0) cat('*')
 
-nuisance_param_vec <- sapply(1:ncol(mat_avg), function(j){
-  if(j %% floor(ncol(mat_avg)/10) == 0) cat('*')
-
-  val1 <- MASS::theta.ml(y = mat_avg[,j], mu = mean_avg[,j])
-  val2 <- MASS::theta.mm(y = mat_avg[,j], mu = mean_avg[,j], dfr = nrow(mat_avg)-1)
-  val3 <- glmGamPoi::overdispersion_mle(y = mat_avg[,j], mean = mean_avg[,j])$estimate
+  val1 <- MASS::theta.ml(y = mat[,j], mu = mean_mat[,j])
+  val2 <- MASS::theta.mm(y = mat[,j], mu = mean_mat[,j], dfr = nrow(mat)-1)
+  val3 <- glmGamPoi::overdispersion_mle(y = mat[,j], mean = mean_mat[,j])$estimate
 
   vec <- c(val1, val2, val3)
   vec <- vec[!is.na(vec)]
   if(length(vec) == 1) return(vec[1])
-  vec <- pmax(pmin(vec, 1e5), 0.1)
+  vec <- pmax(pmin(vec, 1e5), 1)
+  vec <- c(vec, 1)
 
-  obs_prob <- length(which(mat_avg[,j] == 0))/nrow(mat_avg)
-  if(obs_prob == 0){
-    return(median(vec))
-  } else {
-    vec <- c(vec, c(0.1, 0.5, 1))
-
-    target_prob_vec <- sapply(vec, function(val){
-      mean((1+mean_avg[,j]/val)^(-val))
-    })
-  }
-
+  obs_prob <- length(which(mat[,j] == 0))/nrow(mat)
+  target_prob_vec <- sapply(vec, function(val){
+    mean((1+mean_mat[,j]/val)^(-val))
+  })
   return(vec[which.min(abs(target_prob_vec - obs_prob))])
 })
 quantile(nuisance_param_vec)
@@ -82,8 +60,8 @@ posterior_mean_mat2 <- posterior_mean_mat * ratio_mat
 
 case_individuals <- unique(metadata[which(metadata$diagnosis == "ASD"),"individual"])
 control_individuals <- unique(metadata[which(metadata$diagnosis == "Control"),"individual"])
-case_idx <- which(esvd_res_full$covariates[,"diagnosis_ASD"] == 1)
-control_idx <- which(esvd_res_full$covariates[,"diagnosis_ASD"] == 0)
+case_idx <- which(metadata[,"diagnosis"] == "ASD")
+control_idx <- which(metadata[,"diagnosis"] == "Control")
 
 individual_stats <- lapply(1:ncol(mat), function(j){
   if(j %% floor(ncol(mat)/10) == 0) cat('*')
@@ -143,7 +121,6 @@ p_val_vec <- sapply(1:length(group_stats), function(j){
   stats::pt(test_stat, df = df, lower.tail = F, log.p = T)/log(10) + log10(2)
 })
 
-
 x_vec <- sapply(1:ncol(mat), function(j){
   # log(mean(mat[case_idx,j])) - log(mean(mat[control_idx,j]))
   log2(mean(mat[case_idx,j])) - log2(mean(mat[control_idx,j]))
@@ -155,16 +132,18 @@ shuf_idx <- c(de_idx)
 shuf_idx <- shuf_idx[sample(length(shuf_idx))]
 
 ### let's draw it nicer
+x_max <- abs(x_vec)
+y_max <- 5
 png("../../../../out/fig/writeup8f/sns_pseudoreal_volcano.png", height = 1200, width = 1200,
     units = "px", res = 300)
-plot(NA, xlim = c(-1.1,1.1), ylim = range(0, 45), bty = "n",
+plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
      main = "Volcano plot for Layer 2/3",
      xlab = "Log2 fold change (i.e., Log2 mean difference)", ylab = "-Log10(P value)")
-for(x in seq(-2,2,by=0.5)){
+for(x in c(seq(0, x_max, by = 0.5), seq(0, -x_max, by = 0.5))){
   lines(rep(x,2), c(-1e5,1e5), lty = 2, col = "gray", lwd = 0.5)
 }
 lines(rep(0,2), c(-1e5,1e5), col = "gray")
-for(y in seq(0,max(-p_val_vec),by=2)){
+for(y in seq(0,max(-p_val_vec),by=1)){
   lines(c(-1e5,1e5), rep(y,2), lty = 2, col = "gray", lwd = 0.5)
 }
 points(x = x_vec[-unique(c(de_idx))],
@@ -196,4 +175,8 @@ for(i in shuf_idx){
 legend("topright", c("Published DE gene"),
        fill = c(2), cex = 0.6)
 graphics.off()
+
+quantile(esvd_res_full$b_mat[,"diagnosis_ASD"])
+quantile(esvd_res_full$b_mat[true_objects$up_idx,"diagnosis_ASD"])
+quantile(esvd_res_full$b_mat[true_objects$down_idx,"diagnosis_ASD"])
 
