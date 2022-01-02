@@ -19,42 +19,41 @@ indiv_list <- lapply(unique(metadata$individual), function(indiv){
 mat_avg <- t(sapply(indiv_list, function(idx_vec){
   matrixStats::colMeans2(mat[idx_vec,])
 }))
-mean_avg <- t(sapply(indiv_list, function(idx_vec){
-  matrixStats::colMeans2(mean_mat[idx_vec,])
+mean_avg_nolib <- t(sapply(indiv_list, function(idx_vec){
+  matrixStats::colMeans2(mean_mat_nolib[idx_vec,])
 }))
-
-stats::cor(as.numeric(mat_avg), as.numeric(mean_avg))
-nuisance_param_vec <- sapply(1:ncol(mat_avg), function(j){
-  if(j %% floor(ncol(mat_avg)/10) == 0) cat('*')
-
-  val1 <- MASS::theta.ml(y = mat_avg[,j], mu = mean_avg[,j])
-  val2 <- MASS::theta.mm(y = mat_avg[,j], mu = mean_avg[,j], dfr = nrow(mat_avg)-1)
-  val3 <- glmGamPoi::overdispersion_mle(y = mat_avg[,j], mean = mean_avg[,j])$estimate
-
-  vec <- c(val1, val2, val3)
-  vec <- vec[!is.na(vec)]
-  vec <- pmax(pmin(vec, 1e5), 0.1)
-  median(vec)
-})
-quantile(nuisance_param_vec)
-nuisance_param_vec_est <- nuisance_param_vec
 
 library_mat <- sapply(1:ncol(mat), function(j){
   exp(esvd_res_full$covariates[,"Log_UMI",drop = F]*esvd_res_full$b_mat[j,"Log_UMI"])
 })
-library_mat <- pmin(library_mat, 50000)
-AplusR <- sweep(mat, MARGIN = 2, STATS = nuisance_param_vec, FUN = "+")
-RoverMu <- 1/sweep(mean_mat_nolib, MARGIN = 2, STATS = nuisance_param_vec, FUN = "/")
-RoverMuplusS <- RoverMu + library_mat
-posterior_mean_mat <- AplusR/RoverMuplusS
-posterior_var_mat <- AplusR/RoverMuplusS^2
+library_avg <- t(sapply(indiv_list, function(idx_vec){
+  matrixStats::colMeans2(library_mat[idx_vec,])
+}))
+
+res_list <- sapply(1:ncol(mat), function(j){
+  print(j)
+  calculate_fano_parameter(y = mat_avg[,j],
+                           mu = mean_avg_nolib[,j],
+                           sf = library_avg[,j],
+                           max_val = 1e4)
+})
+quantile(res_list[1,])
+
+Alpha <- sweep(mean_mat_nolib, MARGIN = 2,
+               STATS = res_list[1,], FUN = "*")
+AplusAlpha <- mat + Alpha
+SplusBeta <- sweep(library_mat, MARGIN = 2,
+                   STATS = res_list[1,], FUN = "+")
+posterior_mean_mat <- AplusAlpha/SplusBeta
+posterior_var_mat <- AplusAlpha/SplusBeta^2
 tmp <- posterior_mean_mat/sqrt(posterior_var_mat)
 quantile(tmp)
 
-######################
+###########
 
 nat_mat1 <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat)
-nat_mat2 <- tcrossprod(esvd_res_full$covariates[,c("Intercept", "diagnosis_ASD")], esvd_res_full$b_mat[,c("Intercept", "diagnosis_ASD")])
+tmp_idx <- c(which(colnames(covariates) %in% c("Intercept", "diagnosis_ASD")))
+nat_mat2 <- tcrossprod(esvd_res_full$covariates[,tmp_idx], esvd_res_full$b_mat[,tmp_idx])
 nat_mat_clean <- nat_mat1 + nat_mat2
 mean_mat_clean <- exp(nat_mat_clean)
 
@@ -69,7 +68,6 @@ control_idx <- which(metadata[,"diagnosis"] == "Control")
 
 individual_stats <- lapply(1:ncol(mat), function(j){
   if(j %% floor(ncol(mat)/10) == 0) cat('*')
-  r_val <- nuisance_param_vec[j]
 
   # next find the cells, then compute one gaussian per individual
   case_gaussians <- sapply(case_individuals, function(indiv){
@@ -138,10 +136,10 @@ shuf_idx <- shuf_idx[sample(length(shuf_idx))]
 ### let's draw it nicer
 x_max <- max(abs(x_vec))
 y_max <- 40
-png("../../../../out/fig/writeup8f/sns_pseudoreal_volcano.png", height = 1200, width = 1200,
+png("../../../../out/fig/writeup8f/sns_pseudoreal_volcano_fano.png", height = 1200, width = 1200,
     units = "px", res = 300)
 plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
-     main = "Volcano plot for Layer 2/3",
+     main = "Volcano plot for Layer 2/3  (Alt)",
      xlab = "Log2 fold change (i.e., Log2 mean difference)", ylab = "-Log10(P value)")
 for(x in c(seq(0, x_max, by = 0.5), seq(0, -x_max, by = -0.5))){
   lines(rep(x,2), c(-1e5,1e5), lty = 2, col = "gray", lwd = 0.5)
@@ -167,10 +165,10 @@ max_val <- 10
 zz <- 10^p_val_vec/2
 zz[x_vec > 0] <- .5 + (.5-zz[x_vec > 0])
 zz <- pmax(pmin(stats::qnorm(zz), max_val), -max_val)
-png("../../../../out/fig/writeup8f/sns_pseudoreal_zscore_histogram.png", height = 1200, width = 1200,
+png("../../../../out/fig/writeup8f/sns_pseudoreal_zscore_histogram_fano.png", height = 1200, width = 1200,
     units = "px", res = 300)
 hist(zz, breaks = seq(-max_val-0.05, max_val+0.05, by = 0.1), xlim = c(-max_val,max_val),
-     main = "Histogram of two-sided Z-scores",
+     main = "Histogram of two-sided Z-scores (Alt)",
      xlab = "Z-score", ylab = "Frequency")
 lines(rep(0,2), c(0, 1e5), lwd = 1, lty = 3)
 for(i in shuf_idx){
@@ -180,11 +178,8 @@ legend("topright", c("Published DE gene"),
        fill = c(2), cex = 0.6)
 graphics.off()
 
-quantile(esvd_res_full$b_mat[,"diagnosis_ASD"])
-quantile(esvd_res_full$b_mat[true_objects$up_idx,"diagnosis_ASD"])
-quantile(esvd_res_full$b_mat[true_objects$down_idx,"diagnosis_ASD"])
+#############################
 
-#################################
 
 gene_list <- list()
 gene_list[[1]] <- true_objects$up_idx[order(p_val_vec[true_objects$up_idx], decreasing = F)[1:2]]
@@ -216,7 +211,7 @@ all_individuals <- all_individuals[shuf_idx]; col_vec_individuals <- col_vec_ind
 
 for(k in 1:length(gene_list)){
   for(j in 1:length(gene_list[[k]])){
-    png(paste0("../../../../out/fig/writeup8f/ssns_pseudoreal_gene_", names(gene_list)[k], "_", j, ".png"),
+    png(paste0("../../../../out/fig/writeup8f/sns_pseudoreal_gene_fano_", names(gene_list)[k], "_", j, ".png"),
         height = 2500, width = 2500,
         units = "px", res = 300)
     par(mfrow = c(2,2), mar = c(4,4,4,0.5))
@@ -227,8 +222,8 @@ for(k in 1:length(gene_list)){
     plot(tmp[,1], tmp[,2], asp = T,
          xlim = xlim, ylim = xlim,
          xlab = "Predicted mean (full)", ylab = "Observed value",
-         main = paste0("eSVD for ", names(gene_list)[k], "(", j, ", Idx: ", idx, ")", "\n0-percentage: ",
-                       round(zero_prop[idx], 2), ", Nuisance: ", round(nuisance_param_vec[idx], 2)),
+         main = paste0(names(gene_list)[k], "(", j, ", Idx: ", idx, ")", "\n0-percentage: ",
+                       round(zero_prop[idx], 2)),
          pch = 16, col = rgb(0.5,0.5,0.5,0.1))
     lines(c(0, 2*xlim[2]), c(0, 2*xlim[2]), col = 2, lty = 2, lwd = 2)
 
