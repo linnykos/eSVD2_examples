@@ -15,7 +15,7 @@ K <- min(50, round(min(dim(mat))*.75))
 n <- nrow(mat)
 p <- ncol(mat)
 
-covariates_nolib <- covariates[,which(colnames(covariates != "Log_UMI"))]
+covariates_nolib <- covariates[,which(colnames(covariates) != "Log_UMI")]
 
 time_start1 <- Sys.time()
 init_res <- eSVD2::initialize_esvd(mat,
