@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/writeup8e/writeup8g_sns_layer23_processed_onlymat.RData")
+load("../../../../out/writeup8g/writeup8g_sns_layer23_processed_onlymat.RData")
 
 library(Seurat)
 set.seed(10)
@@ -45,7 +45,7 @@ time_end2 <- Sys.time()
 
 save(date_of_run, session_info, de_genes,
      metadata, mat, esvd_res, time_start2, time_end2,
-     file = "../../../../out/writeup8f/writeup8g_sns_layer23_esvd2.RData")
+     file = "../../../../out/writeup8g/writeup8g_sns_layer23_esvd2.RData")
 
 #################
 
@@ -82,5 +82,5 @@ time_end3 <- Sys.time()
 save(date_of_run, session_info, de_genes,
      metadata, mat, esvd_res, time_start2, time_end2,
      esvd_res_full, time_start3, time_end3,
-     file = "../../../../out/writeup8f/writeup8g_sns_layer23_esvd2.RData")
+     file = "../../../../out/writeup8g/writeup8g_sns_layer23_esvd2.RData")
 
