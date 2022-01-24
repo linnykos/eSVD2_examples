@@ -20,12 +20,24 @@ library_mat <- sapply(1:ncol(mat), function(j){
 
 nuisance_vec <- rep(NA, ncol(mat))
 for(j in 1:ncol(mat)){
-  print(j)
-  save(nuisance_vec,
-       file = "../../../../out/writeup8g/writeup8g_sns_layer23_esvd_postprocess_rmpfr_tmp.RData")
+
+  # save(nuisance_vec,
+  #      file = "../../../../out/writeup8g/writeup8g_sns_layer23_esvd_postprocess_rmpfr_tmp.RData")
   nuisance_vec[j] <- calculate_fano_parameter(y = mat[,j],
                                               mu = mean_mat_nolib[,j],
                                               sf = library_mat[,j])
+
+  print(paste0(j, ": ", round(nuisance_vec[j], 2), ", ", round(nuisance_vec[j]/stats::median(library_mat[,j]), 2), " of max"))
 }
 
 save.image("../../../../out/writeup8g/writeup8g_sns_layer23_esvd_postprocess_rmpfr.RData")
+
+
+############3
+
+j = 1
+y = mat[,j]
+mu = mean_mat_nolib[,j]
+sf = library_mat[,j]
+max_val = stats::median(sf)
+min_val = 1

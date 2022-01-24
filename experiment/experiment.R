@@ -1,15 +1,12 @@
 rm(list=ls())
-dispersion <- 0.1
-nat <- 4
 
-trials <- 10000
-set.seed(10)
-gamma_vec <- stats::rgamma(trials, shape = dispersion, scale = exp(nat)/dispersion)
-poisson_vec <- stats::rpois(trials, lambda = gamma_vec)
+mu = 0.05
+gamma = 1
+size = 1000
+n = 10000
 
 set.seed(10)
-nbinom_vec <- stats::rnbinom(trials, size = dispersion, mu = exp(nat))
-
-plot(sort(poisson_vec), sort(nbinom_vec), asp = T)
-mean(poisson_vec); sd(poisson_vec)
-mean(nbinom_vec); sd(nbinom_vec)
+lambda <- stats::rgamma(n, shape = gamma*mu, rate = gamma)
+x <- stats::rpois(n, lambda = size*lambda)
+par(mar = c(4, 0.5, 0.5, 0.5))
+hist(x, breaks = 50)
