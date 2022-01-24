@@ -21,9 +21,8 @@ library_mat <- sapply(1:ncol(mat), function(j){
 nuisance_vec <- rep(NA, ncol(mat))
 for(j in 1:ncol(mat)){
   print(j)
-  if(j %% 100 == 0) {
-    save.image("../../../../out/writeup8g/writeup8g_sns_layer23_esvd_postprocess_rmpfr_tmp.RData")
-  }
+  save(nuisance_vec,
+       file = "../../../../out/writeup8g/writeup8g_sns_layer23_esvd_postprocess_rmpfr_tmp.RData")
   nuisance_vec[j] <- calculate_fano_parameter(y = mat[,j],
                                               mu = mean_mat_nolib[,j],
                                               sf = library_mat[,j])
