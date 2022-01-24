@@ -9,12 +9,13 @@ calculate_fano_parameter <- function(y, mu, sf,
   # determine initial estimate
   res <- Rmpfr::optimizeR(calc.loglik.b, lower = 1/max_val,
                           upper = 1/min_val,
-                          maximum = F, y = y, mu = mu, sf = sf)
+                          maximum = F, y = y, mu = mu, sf = sf,
+                          maxiter = 100)
 
   1/res$minimum
 }
 
-calc.loglik.b <- function(b, y, mu, sf, digits = 10) {
+calc.loglik.b <- function(b, y, mu, sf, digits = 5) {
   n <- length(y)
   if (length(mu) == 1) {
     mu <- rep(mu, n)
