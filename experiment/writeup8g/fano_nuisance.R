@@ -6,21 +6,13 @@ calculate_fano_parameter <- function(y, mu, sf,
   stopifnot(length(y) == length(mu), length(y) == length(sf))
 
   n <- length(y)
-
-  # determine initial estimate
-  # res <- Rmpfr::optimizeR(calc.loglik.b, lower = 1/max_val,
-  #                         upper = 1/min_val,
-  #                         maximum = F, y = y, mu = mu, sf = sf,
-  #                         trace = T,
-  #                         tol = 1e-7,
-  #                         maxiter = 100)
   res <- stats::optimize(calc.loglik.b,
-                  maximum = F,
-                  interval = c(min_val, max_val),
-                  y = y, mu = mu,
-                  sf = sf)
+                         maximum = F,
+                         interval = c(min_val, max_val),
+                         y = y, mu = mu,
+                         sf = sf)
 
-  as.double(res$minimum)
+  res$minimum
 }
 
 calc.loglik.b <- function(b, y, mu, sf) {
