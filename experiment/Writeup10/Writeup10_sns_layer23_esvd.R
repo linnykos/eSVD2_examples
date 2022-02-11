@@ -6,7 +6,7 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
-mat <- Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,])
+mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 
 K <- min(50, round(min(dim(mat))*.5))
 n <- nrow(mat)
