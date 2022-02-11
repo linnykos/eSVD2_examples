@@ -15,36 +15,23 @@ nat_mat_nolib <- nat_mat1 + nat_mat2
 mean_mat_nolib <- exp(nat_mat_nolib)
 mean_mat_nolib <- pmin(mean_mat_nolib, 1e4)
 
-# mean_avg_nolib <- t(sapply(indiv_list, function(idx_vec){
-#   matrixStats::colMeans2(mean_mat_nolib[idx_vec,])
-# }))
-
 library_mat <- sapply(1:ncol(mat), function(j){
   exp(esvd_res_full$covariates[,"Log_UMI",drop = F]*esvd_res_full$b_mat[j,"Log_UMI"])
 })
-# library_avg <- t(sapply(indiv_list, function(idx_vec){
-#   matrixStats::colMeans2(library_mat[idx_vec,])
-# }))
 
-res_list <- sapply(1:ncol(mat), function(j){
+nuisance_vec <- sapply(1:ncol(mat), function(j){
   if(j %% floor(ncol(mat)/10) == 0) cat('*')
-  # print(j)
   calculate_fano_parameter(y = mat[,j],
                            mu = mean_mat_nolib[,j],
-                           sf = library_mat[,j],
-                           max_val = 1e4,
-                           min_val = 1)
+                           sf = library_mat[,j])
 })
-quantile(res_list[1,])
-
-save("mat", "mean_mat_nolib", "library_mat", "res_list", "esvd_res_full", "de_genes",
-     file = "../../../../out/writeup8g/tmp.RData")
+quantile(nuisance_vec)
 
 Alpha <- sweep(mean_mat_nolib, MARGIN = 2,
-               STATS = res_list[1,], FUN = "*")
+               STATS = nuisance_vec, FUN = "*")
 AplusAlpha <- mat + Alpha
 SplusBeta <- sweep(library_mat, MARGIN = 2,
-                   STATS = res_list[1,], FUN = "+")
+                   STATS = nuisance_vec, FUN = "+")
 posterior_mean_mat <- AplusAlpha/SplusBeta
 posterior_var_mat <- AplusAlpha/SplusBeta^2
 tmp <- posterior_mean_mat/sqrt(posterior_var_mat)
@@ -157,7 +144,7 @@ shuf_idx <- shuf_idx[sample(length(shuf_idx))]
 ### let's draw it nicer
 y_max <- ceiling(max(-p_val_vec))
 x_max <- ceiling(max(abs(x_vec)))
-png("../../../../out/fig/writeup8g/sns_layer23_esvd_volcano.png", height = 1200, width = 1200,
+png("../../../../out/fig/writeup8g/sns_layer23_esvd_volcano2.png", height = 1200, width = 1200,
     units = "px", res = 300)
 plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
      main = "Volcano plot for Layer 2/3",
@@ -186,7 +173,7 @@ max_val <- 5
 zz <- 10^p_val_vec/2
 zz[x_vec > 0] <- .5 + (.5-zz[x_vec > 0])
 zz <- pmax(pmin(stats::qnorm(zz), max_val), -max_val)
-png("../../../../out/fig/writeup8g/sns_layer23_esvd_zscore_histogram.png", height = 1200, width = 1200,
+png("../../../../out/fig/writeup8g/sns_layer23_esvd_zscore_histogram2.png", height = 1200, width = 1200,
     units = "px", res = 300)
 hist(zz, breaks = seq(-max_val-0.05, max_val+0.05, by = 0.1), xlim = c(-5,5),
      main = "Histogram of two-sided Z-scores",
@@ -199,7 +186,7 @@ legend("topright", c("Published DE gene", "SFARI gene", "Housekeeping gene"),
        fill = c(2,4,3), cex = 0.6)
 graphics.off()
 
-png("../../../../out/fig/writeup8g/sns_layer23_esvd_zscore_histogram_separate.png",
+png("../../../../out/fig/writeup8g/sns_layer23_esvd_zscore_histogram_separate2.png",
     height = 1000, width = 3000,
     units = "px", res = 300)
 par(mfrow = c(1,3), mar = c(4,4,4,0.5))
@@ -218,6 +205,17 @@ graphics.off()
 
 #############################
 zero_prop <- apply(mat, 2, function(x){length(which(x == 0))/length(x)})
+max_count_idx <- which(apply(mat, 2, max) <= 5)
+larger_prop_vec <- sapply(max_count_idx, function(j){
+  vec1 <- posterior_mean_mat[,j]
+  vec2 <- mat[,j]/library_mat[,j]
+
+  non_zero <- which(vec2 != 0)
+  vec1 <- vec1[non_zero]; vec2 <- vec2[non_zero]
+
+  length(which(vec2 - vec1 < 0))/length(vec2)
+})
+quantile(larger_prop_vec)
 
 case_individuals <- unique(metadata[which(metadata$diagnosis == "ASD"),"individual"])
 control_individuals <- unique(metadata[which(metadata$diagnosis == "Control"),"individual"])
@@ -232,13 +230,15 @@ gene_indices <- c(which(colnames(mat) == "SAT2"),
                   which.max(zero_prop),
                   which.min(zero_prop),
                   which.min(abs(zero_prop - 0.9)),
-                  which.min(abs(zero_prop - 0.2)))
+                  which.min(abs(zero_prop - 0.2)),
+                  max_count_idx[which.max(larger_prop_vec)])
 filename_vec <- c("truede", "nonde", "mostsigp", "largestx",
-                  "maxzero", "leastzero", "0.9zero", "0.2zero")
+                  "maxzero", "leastzero", "0.9zero", "0.2zero",
+                  "maxsmallcount")
 
 for(kk in 1:length(gene_indices)){
   idx <- gene_indices[kk]
-  png(paste0("../../../../out/fig/writeup8g/sns_layer23_esvd_gene_", filename_vec[kk], ".png"),
+  png(paste0("../../../../out/fig/writeup8g/sns_layer23_esvd_gene_", filename_vec[kk], "2.png"),
       height = 2500, width = 2500,
       units = "px", res = 300)
   par(mfrow = c(2,2), mar = c(4,4,4,0.5))
@@ -249,7 +249,7 @@ for(kk in 1:length(gene_indices)){
        xlim = xlim, ylim = xlim,
        xlab = "Predicted mean (full)", ylab = "Observed value",
        main = paste0("eSVD fit for ", colnames(mat)[idx], "\n0-percentage: ",
-                     round(zero_prop[idx], 2), ", Beta: ", round(res_list[1,idx], 2)),
+                     round(zero_prop[idx], 2), ", Beta: ", round(nuisance_vec[idx], 2)),
        pch = 16, col = rgb(0.5,0.5,0.5,0.1))
   lines(c(0, 2*xlim[2]), c(0, 2*xlim[2]), col = 2, lty = 2, lwd = 2)
 
@@ -336,3 +336,65 @@ for(kk in 1:length(gene_indices)){
 
   graphics.off()
 }
+
+#######################################3
+
+png("../../../../out/fig/writeup8g/sns_layer23_esvd_pvalue_nuisance_scatterplot.png",
+    height = 2000, width = 2000,
+    units = "px", res = 300)
+plot(x = log10(nuisance_vec), y = -p_val_vec,
+     xlab = "Log10 Nuisance (beta)",
+     ylab = "-Log10 P-value", pch = 16,
+     col = rgb(0.5, 0.5, 0.5, 0.5))
+graphics.off()
+
+max_val <- 5
+zz <- 10^p_val_vec/2
+zz[x_vec > 0] <- .5 + (.5-zz[x_vec > 0])
+zz <- pmax(pmin(stats::qnorm(zz), max_val), -max_val)
+col_vec <- rep(rgb(0.5, 0.5, 0.5, 0.5), length(p_val_vec))
+col_vec[sfari_idx] <- 4
+col_vec[hk_idx] <- 3
+col_vec[de_idx] <- 2
+shuf_idx <- c(hk_idx, de_idx, sfari_idx)
+shuf_idx <- shuf_idx[sample(length(shuf_idx))]
+mean_val <- mean(zz[hk_idx])
+sd_val <- sd(zz[hk_idx])
+x_range <- range(zz)
+x_seq <- seq(x_range[1], x_range[2], length.out = 500)
+y_seq <- sapply(x_seq, function(val){
+  stats::dnorm(val, mean = mean_val, sd = sd_val)
+})
+y_seq <- y_seq * 800/max(y_seq)
+png("../../../../out/fig/writeup8g/sns_layer23_esvd_zscore_histogram2_withNull.png", height = 1200, width = 1200,
+    units = "px", res = 300)
+hist(zz, breaks = seq(-max_val-0.05, max_val+0.05, by = 0.1), xlim = c(-5,5),
+     main = "Histogram of two-sided Z-scores",
+     xlab = "Z-score", ylab = "Frequency")
+lines(rep(0,2), c(0, 1e5), lwd = 1, lty = 3)
+for(i in shuf_idx){
+  rug(zz[i], col = col_vec[i], lwd = 2)
+}
+lines(x_seq, y_seq, lwd = 1, lty = 2, col = 3)
+legend("topright", c("Published DE gene", "SFARI gene", "Housekeeping gene"),
+       fill = c(2,4,3), cex = 0.6)
+graphics.off()
+
+library(logcondens)
+res <- logConDens(zz[hk_idx], smoothed = T, print = FALSE)
+dens_val <- res$f.smoothed
+dens_val <- dens_val * 800/max(dens_val)
+png("../../../../out/fig/writeup8g/sns_layer23_esvd_zscore_histogram2_withNull2.png", height = 1200, width = 1200,
+    units = "px", res = 300)
+hist(zz, breaks = seq(-max_val-0.05, max_val+0.05, by = 0.1), xlim = c(-5,5),
+     main = "Histogram of two-sided Z-scores",
+     xlab = "Z-score", ylab = "Frequency")
+lines(rep(0,2), c(0, 1e5), lwd = 1, lty = 3)
+for(i in shuf_idx){
+  rug(zz[i], col = col_vec[i], lwd = 2)
+}
+lines(res$xs, dens_val, lwd = 1, lty = 2, col = 3)
+legend("topright", c("Published DE gene", "SFARI gene", "Housekeeping gene"),
+       fill = c(2,4,3), cex = 0.6)
+graphics.off()
+
