@@ -86,3 +86,32 @@ save(date_of_run, session_info,
      esvd_res_full, time_start3, time_end3,
      file = "../../../../out/Writeup10/Writeup10_sns_invip_esvd.RData")
 
+#########################
+
+nat_mat1 <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat)
+nat_mat2 <- tcrossprod(esvd_res_full$covariates, esvd_res_full$b_mat)
+nat_mat <- nat_mat1 + nat_mat2
+mean_mat <- exp(nat_mat)
+
+library_idx <- which(colnames(esvd_res_full$covariates) == "Log_UMI")
+nat_mat2 <- tcrossprod(esvd_res_full$covariates[,-library_idx], esvd_res_full$b_mat[,-library_idx])
+nat_mat_nolib <- nat_mat1 + nat_mat2
+mean_mat_nolib <- exp(nat_mat_nolib)
+
+library_mat <- sapply(1:ncol(mat), function(j){
+  exp(esvd_res_full$covariates[,"Log_UMI",drop = F]*esvd_res_full$b_mat[j,"Log_UMI"])
+})
+
+nuisance_vec <- sapply(1:ncol(mat), function(j){
+  if(j %% floor(ncol(mat)/10) == 0) cat('*')
+  eSVD2:::gamma_rate(x = mat[,j],
+                     mu = mean_mat_nolib[,j],
+                     s = library_mat[,j])
+})
+
+save(date_of_run, session_info,
+     sns, esvd_res, time_start2, time_end2,
+     esvd_res_full, time_start3, time_end3,
+     nuisance_vec,
+     file = "../../../../out/Writeup10/Writeup10_sns_invip_esvd.RData")
+
