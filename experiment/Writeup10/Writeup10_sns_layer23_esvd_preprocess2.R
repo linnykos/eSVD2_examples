@@ -115,37 +115,6 @@ for(variable in categorical_var){
   }
 }
 
-# rescale all the covariates
-for(j in 1:ncol(covariates)){
-  if(colnames(covariates)[j] == "Intercept") next()
-  covariates[,j] <- scale(covariates[,j], center = T, scale = T)
-}
-
-# # regress all variables against intercept + Log_UMI + diagnosis_ASD
-# keep_idx <- which(colnames(covariates) %in% c("Intercept", "Log_UMI", "diagnosis_ASD"))
-# other_idx <- which(colnames(covariates) %in% c("age", "RNA.Integrity.Number", "post.mortem.hours", "percent.mt",
-#                                                "nFeature_RNA", "region_PFC", "sex_F", "Seqbatch_SB2", "Seqbatch_SB1"))
-# for(j in other_idx){
-#   df_tmp <- data.frame(covariates[,j], covariates[,keep_idx])
-#   colnames(df_tmp)[1] <- "tmp"
-#   lm_fit <- stats::lm("tmp ~ . ", data = df_tmp)
-#   vec_tmp <- stats::residuals(lm_fit)
-#   covariates[,j] <- vec_tmp
-# }
-
-# cols_regress_out <- grep("individual", colnames(covariates))
-# covariates_new <- covariates[,-cols_regress_out,drop = F]
-# for(i in 1:length(cols_regress_out)){
-#   df_tmp <- data.frame(covariates[,cols_regress_out[i]], covariates_new)
-#   colnames(df_tmp)[1] <- "tmp"
-#   lm_fit <- stats::lm("tmp ~ . - 1", data = df_tmp)
-#   vec_tmp <- stats::residuals(lm_fit)
-#   if(sum(abs(vec_tmp)) < 1e-6) break()
-#   covariates_new <- cbind(covariates_new, vec_tmp)
-#   colnames(covariates_new)[ncol(covariates_new)] <- paste0("individual_",i)
-# }
-# covariates <- covariates_new
-
 ls_vec <- ls()
 ls_vec <- ls_vec[!ls_vec %in% c("covariates", "sns", "date_of_run", "session_info")]
 rm(list = ls_vec)
