@@ -115,6 +115,12 @@ for(variable in categorical_var){
   }
 }
 
+# rescale all the covariates
+for(j in 1:ncol(covariates)){
+  if(colnames(covariates)[j] == "Intercept") next()
+  covariates[,j] <- scale(covariates[,j], center = T, scale = T)
+}
+
 # # regress all variables against intercept + Log_UMI + diagnosis_ASD
 # keep_idx <- which(colnames(covariates) %in% c("Intercept", "Log_UMI", "diagnosis_ASD"))
 # other_idx <- which(colnames(covariates) %in% c("age", "RNA.Integrity.Number", "post.mortem.hours", "percent.mt",
