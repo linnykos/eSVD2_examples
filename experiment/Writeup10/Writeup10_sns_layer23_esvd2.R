@@ -102,10 +102,10 @@ library_mat <- exp(tcrossprod(
 time_start4 <- Sys.time()
 nuisance_vec <- sapply(1:ncol(mat), function(j){
   if(j %% floor(ncol(mat)/10) == 0) cat('*')
-  val <- eSVD2:::gamma_rate(x = mat[,j],
-                            mu = mean_mat_nolib[,j],
-                            s = library_mat[,j])
-  # print(paste0("Gene ",j, ": ", round(val)))
+  val <- tryCatch(eSVD2:::gamma_rate(x = mat[,j],
+                                     mu = mean_mat_nolib[,j],
+                                     s = library_mat[,j]),
+                  error = function(c) 0)
   val
 })
 time_end4 <- Sys.time()
