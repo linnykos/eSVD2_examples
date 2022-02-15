@@ -115,7 +115,7 @@ col_vec[de_idx] <- 2
 shuf_idx <- c(hk_idx, de_idx, other_idx)
 shuf_idx <- shuf_idx[sample(length(shuf_idx))]
 
-teststat_vec <- pmax(pmin(teststat_vec, 10), -10)
+teststat_vec <- pmax(pmin(teststat_vec, 15), -15)
 max_val <- max(abs(teststat_vec))
 png("../../../../out/fig/Writeup10/sns_layer23_esvd2_teststat_histogram.png", height = 1200, width = 1200,
     units = "px", res = 300)
