@@ -1,6 +1,6 @@
 rm(list=ls())
 library(Seurat)
-load("../../../../out/Writeup10/Writeup10_sns_layer23_esvd.RData")
+load("../../../../out/Writeup10/Writeup10_sns_layer4_esvd.RData")
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 nat_mat1 <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat)
@@ -13,19 +13,6 @@ library_mat <- exp(tcrossprod(
   esvd_res_full$b_mat[,library_idx]
 ))
 
-nuisance_vec <- sapply(1:ncol(mat), function(j){
-  if(j %% floor(ncol(mat)/10) == 0) cat('*')
-  val <- tryCatch(eSVD2:::gamma_rate(x = mat[,j],
-                                     mu = mean_mat_nolib[,j],
-                                     s = library_mat[,j]),
-                  error = function(c) 0)
-  val
-})
-quantile(nuisance_vec)
-save(nuisance_vec,
-     file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_nuisance.RData")
-#load("../../../../out/Writeup10/Writeup10_sns_layer23_esvd_nuisance.RData")
-
 Alpha <- sweep(mean_mat_nolib, MARGIN = 2,
                STATS = nuisance_vec, FUN = "*")
 AplusAlpha <- mat + Alpha
@@ -33,10 +20,6 @@ SplusBeta <- sweep(library_mat, MARGIN = 2,
                    STATS = nuisance_vec, FUN = "+")
 posterior_mean_mat <- AplusAlpha/SplusBeta
 posterior_var_mat <- AplusAlpha/SplusBeta^2
-tmp <- posterior_mean_mat/sqrt(posterior_var_mat)
-quantile(tmp)
-quantile(mean_mat_nolib)
-quantile(Alpha)
 
 #################
 
@@ -130,7 +113,7 @@ shuf_idx <- shuf_idx[sample(length(shuf_idx))]
 
 teststat_vec <- pmax(pmin(teststat_vec, 10), -10)
 max_val <- max(abs(teststat_vec))
-png("../../../../out/fig/Writeup10/sns_layer23_esvd_teststat_histogram.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup10/sns_layer4_esvd_teststat_histogram.png", height = 1200, width = 1200,
     units = "px", res = 300)
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
@@ -146,7 +129,7 @@ legend("topright", c("Published DE gene", "Other interest gene", "Housekeeping g
        fill = c(2,4,3), cex = 0.6)
 graphics.off()
 
-png("../../../../out/fig/Writeup10/sns_layer23_esvd_teststat_histogram_separate.png",
+png("../../../../out/fig/Writeup10/sns_layer4_esvd_teststat_histogram_separate.png",
     height = 1000, width = 3000,
     units = "px", res = 300)
 par(mfrow = c(1,3), mar = c(4,4,4,0.5))
@@ -175,11 +158,11 @@ null_res <- logcondens::logConDens(teststat_vec[hk_idx],
                                        1.5*max(teststat_vec),
                                        length.out = 1000))
 dens_val <- null_res$f.smoothed
-dens_val <- dens_val * 350/max(dens_val)
+dens_val <- dens_val * 1200/max(dens_val)
 max_val <- max(abs(teststat_vec))
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
-png("../../../../out/fig/Writeup10/sns_layer23_esvd_teststat_histogram_logconcave.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup10/sns_layer4_esvd_teststat_histogram_logconcave.png", height = 1200, width = 1200,
     units = "px", res = 300)
 hist(teststat_vec, breaks = break_vec,
      xlim = c(-5,5),
@@ -211,7 +194,7 @@ multtest_res <- multttest_calibrate(teststat_vec = teststat_vec,
 # write_genes(ensg_de,
 #             file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_ensg_velmeshev.txt")
 write_genes(multtest_res$idx,
-            file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_calibrate_name_selected.txt")
+            file = "../../../../out/Writeup10/Writeup10_sns_layer4_esvd_calibrate_name_selected.txt")
 
 #########
 
@@ -231,12 +214,14 @@ x_vec <- sapply(1:ncol(mat_avg), function(j){
 })
 
 ### let's draw it nicer
+quantile(multtest_res$neglog_p_val)
+quantile(multtest_res$neglog_p_val, probs = seq(0.9,1,length.out=11))
 y_max <- 10
 x_max <- ceiling(max(abs(x_vec)))
-png("../../../../out/fig/Writeup10/sns_layer23_esvd_volcano_calibrate.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup10/sns_layer4_esvd_volcano_calibrate.png", height = 1200, width = 1200,
     units = "px", res = 300)
 plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
-     main = "Volcano plot for Layer 2/3",
+     main = "Volcano plot for Layer 4",
      xlab = "Log2 fold change (i.e., Log2 mean difference)", ylab = "-Log10(P value)")
 for(x in seq(-x_max, x_max,by=0.5)){
   lines(rep(x,2), c(-1e5,1e5), lty = 2, col = "gray", lwd = 0.5)

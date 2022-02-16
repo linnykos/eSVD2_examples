@@ -15,13 +15,13 @@ p1 <- ncol(mat)
 covariates_nolib <- covariates[,which(colnames(covariates) != "Log_UMI")]
 
 time_start1 <- Sys.time()
-init_res <- eSVD2::initialize_esvd(mat,
-                                   k = K,
-                                   family = "poisson",
-                                   covariates = covariates_nolib,
-                                   column_set_to_one = NULL,
-                                   offset_vec = covariates[,"Log_UMI"],
-                                   verbose = 1)
+init_res <- initialize_esvd2(mat,
+                             k = K,
+                             family = "poisson",
+                             covariates = covariates_nolib,
+                             column_set_to_one = NULL,
+                             offset_vec = covariates[,"Log_UMI"],
+                             verbose = 1)
 time_end1 <- Sys.time()
 
 print("Starting large Poisson fit, with library coef fixed at 1")

@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/Writeup10/Writeup10_sns_layer23_processed2.RData")
+load("../../../../out/Writeup10/Writeup10_sns_layer4_processed2.RData")
 source("initialization.R")
 
 library(Seurat)
@@ -46,7 +46,7 @@ time_end2 <- Sys.time()
 
 save(date_of_run, session_info,
      sns, esvd_res_full, time_start2, time_end2,
-     file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd2.RData")
+     file = "../../../../out/Writeup10/Writeup10_sns_layer4_esvd2.RData")
 
 ###########################
 
@@ -75,5 +75,5 @@ time_end3 <- Sys.time()
 save(date_of_run, session_info,
      sns, esvd_res_full, time_start2, time_end2,
      nuisance_vec, time_start3, time_end3,
-     file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd2.RData")
+     file = "../../../../out/Writeup10/Writeup10_sns_layer4_esvd2.RData")
 
