@@ -4,8 +4,9 @@ load("../../../../out/Writeup10/Writeup10_sns_layer23_esvd2.RData")
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 nat_mat1 <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat)
-library_idx <- which(!colnames(esvd_res_full$covariates) %in% c("Intercept", "diagnosis_ASD"))
-nat_mat2 <- tcrossprod(esvd_res_full$covariates[,-library_idx], esvd_res_full$b_mat[,-library_idx])
+library_idx <- which(colnames(esvd_res_full$covariates) != "diagnosis_ASD")
+nat_mat2 <- tcrossprod(esvd_res_full$covariates[,"diagnosis_ASD",drop = F],
+                       esvd_res_full$b_mat[,"diagnosis_ASD",drop = F])
 nat_mat_nolib <- nat_mat1 + nat_mat2
 mean_mat_nolib <- exp(nat_mat_nolib)
 library_mat <- exp(tcrossprod(
@@ -115,7 +116,11 @@ col_vec[de_idx] <- 2
 shuf_idx <- c(hk_idx, de_idx, other_idx)
 shuf_idx <- shuf_idx[sample(length(shuf_idx))]
 
-teststat_vec <- pmax(pmin(teststat_vec, 15), -15)
+quantile(teststat_vec)
+quantile(teststat_vec, probs = seq(0.9, 1, length.out=11))
+colnames(mat)[order(abs(teststat_vec), decreasing = T)[1:20]]
+
+teststat_vec <- pmax(pmin(teststat_vec, 10), -10)
 max_val <- max(abs(teststat_vec))
 png("../../../../out/fig/Writeup10/sns_layer23_esvd2_teststat_histogram.png", height = 1200, width = 1200,
     units = "px", res = 300)
@@ -162,7 +167,7 @@ null_res <- logcondens::logConDens(teststat_vec[hk_idx],
                                             1.5*max(teststat_vec),
                                             length.out = 1000))
 dens_val <- null_res$f.smoothed
-dens_val <- dens_val * 200/max(dens_val)
+dens_val <- dens_val * 350/max(dens_val)
 max_val <- 10
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
@@ -218,8 +223,10 @@ x_vec <- sapply(1:ncol(mat_avg), function(j){
   log2(mean(mat_avg[case_individuals,j])+1) - log2(mean(mat_avg[control_individuals,j])+1)
 })
 
+
 ### let's draw it nicer
-y_max <- 10
+quantile(multtest_res$neglog_p_val)
+y_max <- max(multtest_res$neglog_p_val)
 x_max <- ceiling(max(abs(x_vec)))
 png("../../../../out/fig/Writeup10/sns_layer23_esvd2_volcano_calibrate.png", height = 1200, width = 1200,
     units = "px", res = 300)
