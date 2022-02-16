@@ -17,26 +17,54 @@ initialize_esvd2 <- function(dat,
   covariates <- covariates[,-which(colnames(covariates) == "Intercept")]
   offset_vec <- covariates[,which(colnames(covariates) == "Log_UMI")]
   covariates <- covariates[,-which(colnames(covariates) == "Log_UMI")]
-  
-  family <- eSVD2:::.string_to_distr_funcs(family)
-  if(family$name != "gaussian") stopifnot(all(dat[!is.na(dat)] >= 0))
-  
+  covariates[,"nFeature_RNA"] <- scale(covariates[,"nFeature_RNA"], 
+                                       center = F,
+                                       scale = T)
+  # move all the individual covariates to the end
+  col_idx1 <- grep("individual_", colnames(covariates))
+  col_idx2 <- c(grep("Capbatch_", colnames(covariates)),
+               grep("Seqbatch_", colnames(covariates)))
+  covariates <- cbind(covariates[,-c(col_idx1, col_idx2)], 
+                      covariates[,col_idx2],
+                      covariates[,col_idx1])
   n <- nrow(dat); p <- ncol(dat)
   dat[is.na(dat)] <- 0
+  
+  # lm_res <- stats::lm(percent.mt ~ ., data = data.frame(covariates))
+  # na_idx <- which(is.na(stats::coef(lm_res)))
+  # if(length(na_idx) > 0){
+  #   if(verbose >= 1) {
+  #     print(paste0("Removed ", length(na_idx), " covariates due to singularity"))
+  #     print(paste0("Removed covariates:"))
+  #     print(colnames(covariates)[na_idx])
+  #   }
+  #   covariates <- covariates[,-na_idx]
+  # }
   
   ######
   # step: determine the coefficients via regression
   coef_mat <- t(sapply(1:p, function(j){
-    if(verbose >= 1 && p > 10 && j %% floor(p/10) == 0) cat('*')
+    if(verbose == 1 && p > 10 && j %% floor(p/10) == 0) cat('*')
     
-    df <- as.data.frame(cbind(y = mat[,j], covariates))
-    colnames(df)[1] <- "tmp"
-    glm_fit <- stats::glm(tmp ~ . - 1, 
-                          offset = offset_vec,
-                          data = df, 
-                          family = stats::poisson)
+    # df <- as.data.frame(cbind(y = dat[,j], covariates))
+    # colnames(df)[1] <- "tmp"
+    # glm_fit <- stats::glm(tmp ~ . - 1, 
+    #                       offset = offset_vec,
+    #                       data = df, 
+    #                       family = stats::poisson)
+    glm_fit <- glmnet::glmnet(x = covariates,
+                              y = dat[,j],
+                              family = "poisson",
+                              offset = offset_vec,
+                              alpha = 0,
+                              standardize = F,
+                              intercept = F,
+                              lambda = exp(seq(log(10000), log(0.01), length.out = 100)))
+    if(verbose == 2) print(paste0("Iteration ", j, ": Deviance of ", 
+                                  round(glm_fit$dev.ratio[length(glm_fit$dev.ratio)], 2)))
+    
     ## [[note to self: can be improved using the stat helper functions]]
-    c(stats::coef(glm_fit), stats::summary(glm_fit)$deviance)
+    c(glm_fit$beta[,ncol(glm_fit$beta)], glm_fit$dev.ratio[length(glm_fit$dev.ratio)])
   }))
   deviance_vec <- coef_mat[,ncol(coef_mat)]
   coef_mat <- coef_mat[,-ncol(coef_mat)]
