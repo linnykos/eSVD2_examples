@@ -13,18 +13,18 @@ library_mat <- exp(tcrossprod(
   esvd_res_full$b_mat[,library_idx]
 ))
 
-nuisance_vec <- sapply(1:ncol(mat), function(j){
-  # if(j %% floor(ncol(mat)/10) == 0) cat('*')
-  val <- eSVD2:::gamma_rate(x = mat[,j],
-                            mu = mean_mat_nolib[,j],
-                            s = library_mat[,j])
-  print(paste0("Gene ",j, ": ", round(val)))
-  val
-})
-quantile(nuisance_vec)
-save(nuisance_vec,
-     file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_nuisance.RData")
-# load("../../../../out/Writeup10/Writeup10_sns_layer23_esvd_nuisance.RData")
+# nuisance_vec <- sapply(1:ncol(mat), function(j){
+#   # if(j %% floor(ncol(mat)/10) == 0) cat('*')
+#   val <- eSVD2:::gamma_rate(x = mat[,j],
+#                             mu = mean_mat_nolib[,j],
+#                             s = library_mat[,j])
+#   print(paste0("Gene ",j, ": ", round(val)))
+#   val
+# })
+# quantile(nuisance_vec)
+# save(nuisance_vec,
+#      file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_nuisance.RData")
+load("../../../../out/Writeup10/Writeup10_sns_layer23_esvd_nuisance.RData")
 
 Alpha <- sweep(mean_mat_nolib, MARGIN = 2,
                STATS = nuisance_vec, FUN = "*")
@@ -261,6 +261,7 @@ graphics.off()
 
 ##########################
 
+multtest_res$idx
 length(intersect(multtest_res$idx, de_gene_specific))
 length(intersect(multtest_res$idx, de_genes))
 length(intersect(multtest_res$idx, sfari_genes))
