@@ -120,7 +120,7 @@ quantile(teststat_vec)
 quantile(teststat_vec, probs = seq(0.9, 1, length.out=11))
 colnames(mat)[order(abs(teststat_vec), decreasing = T)[1:20]]
 
-teststat_vec <- pmax(pmin(teststat_vec, 10), -10)
+teststat_vec <- pmax(pmin(teststat_vec, 30), -30)
 max_val <- max(abs(teststat_vec))
 png("../../../../out/fig/Writeup10/sns_layer23_esvd2_teststat_histogram.png", height = 1200, width = 1200,
     units = "px", res = 300)
@@ -167,8 +167,8 @@ null_res <- logcondens::logConDens(teststat_vec[hk_idx],
                                             1.5*max(teststat_vec),
                                             length.out = 1000))
 dens_val <- null_res$f.smoothed
-dens_val <- dens_val * 350/max(dens_val)
-max_val <- 10
+dens_val <- dens_val * 150/max(dens_val)
+max_val <- max(abs(teststat_vec))
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
 png("../../../../out/fig/Writeup10/sns_layer23_esvd2_teststat_histogram_logconcave.png", height = 1200, width = 1200,
