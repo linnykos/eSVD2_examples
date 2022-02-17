@@ -167,7 +167,7 @@ null_res <- logcondens::logConDens(teststat_vec[hk_idx],
                                             1.5*max(teststat_vec),
                                             length.out = 1000))
 dens_val <- null_res$f.smoothed
-dens_val <- dens_val * 150/max(dens_val)
+dens_val <- dens_val * 120/max(dens_val)
 max_val <- max(abs(teststat_vec))
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
@@ -257,6 +257,7 @@ graphics.off()
 
 ##########################
 
+teststat_vec[multtest_res$idx]
 multtest_res$idx
 length(multtest_res$idx)
 length(intersect(multtest_res$idx, de_gene_specific))

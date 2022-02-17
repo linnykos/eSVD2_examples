@@ -1,6 +1,6 @@
 rm(list=ls())
 library(Seurat)
-load("../../../../out/Writeup10/Writeup10_sns_layer4_esvd2.RData")
+load("../../../../out/Writeup10/Writeup10_sns_invip_esvd2.RData")
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 nat_mat1 <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat)
@@ -91,7 +91,7 @@ teststat_vec <- sapply(1:length(group_stats), function(j){
 
 load("../../../../data/sns_autism/velmeshev_genes.RData")
 tmp <- velmeshev_de_gene_df_list[[1]]
-tmp <- tmp[which(tmp[,"Cell type"] == "L4"),]
+tmp <- tmp[which(tmp[,"Cell type"] == "IN-VIP"),]
 de_gene_specific <- tmp[,"Gene name"]
 de_genes1 <- velmeshev_marker_gene_df[,"Gene name"]
 de_genes2 <- unlist(lapply(velmeshev_de_gene_df_list[-1], function(de_mat){
@@ -121,7 +121,7 @@ colnames(mat)[order(abs(teststat_vec), decreasing = T)[1:20]]
 
 teststat_vec <- pmax(pmin(teststat_vec, 30), -30)
 max_val <- max(abs(teststat_vec))
-png("../../../../out/fig/Writeup10/sns_layer4_esvd2_teststat_histogram.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup10/sns_invip_esvd2_teststat_histogram.png", height = 1200, width = 1200,
     units = "px", res = 300)
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
@@ -137,7 +137,7 @@ legend("topright", c("Published DE gene", "Other interest gene", "Housekeeping g
        fill = c(2,4,3), cex = 0.6)
 graphics.off()
 
-png("../../../../out/fig/Writeup10/sns_layer4_esvd2_teststat_histogram_separate.png",
+png("../../../../out/fig/Writeup10/sns_invip_esvd2_teststat_histogram_separate.png",
     height = 1000, width = 3000,
     units = "px", res = 300)
 par(mfrow = c(1,3), mar = c(4,4,4,0.5))
@@ -166,11 +166,11 @@ null_res <- logcondens::logConDens(teststat_vec[hk_idx],
                                             1.5*max(teststat_vec),
                                             length.out = 1000))
 dens_val <- null_res$f.smoothed
-dens_val <- dens_val * 100/max(dens_val)
+dens_val <- dens_val * 150/max(dens_val)
 max_val <- max(abs(teststat_vec))
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
-png("../../../../out/fig/Writeup10/sns_layer4_esvd2_teststat_histogram_logconcave.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup10/sns_invip_esvd2_teststat_histogram_logconcave.png", height = 1200, width = 1200,
     units = "px", res = 300)
 hist(teststat_vec, breaks = break_vec,
      xlim = c(-max_val, max_val),
@@ -225,9 +225,9 @@ x_vec <- sapply(1:ncol(mat_avg), function(j){
 
 ### let's draw it nicer
 quantile(multtest_res$neglog_p_val)
-y_max <- max(multtest_res$neglog_p_val)
+y_max <- 20
 x_max <- ceiling(max(abs(x_vec)))
-png("../../../../out/fig/Writeup10/sns_layer4_esvd2_volcano_calibrate.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup10/sns_invip_esvd2_volcano_calibrate.png", height = 1200, width = 1200,
     units = "px", res = 300)
 plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
      main = "Volcano plot for Layer 2/3",
