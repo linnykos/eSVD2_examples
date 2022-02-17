@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/Writeup10/Writeup10_sns_layer4_processed2.RData")
+load("../../../../out/Writeup10/Writeup10_sns_invip_processed2.RData")
 source("initialization.R")
 
 library(Seurat)
@@ -20,12 +20,12 @@ init_res <- initialize_esvd2(mat,
                              covariates = covariates,
                              column_set_to_one = NULL,
                              offset_vec = rep(0, n),
-                             verbose = 2)
+                             verbose = 1)
 time_end1 <- Sys.time()
 
 save(date_of_run, session_info,
      sns, init_res, time_start1, time_end1,
-     file = "../../../../out/Writeup10/Writeup10_sns_layer4_esvd2.RData")
+     file = "../../../../out/Writeup10/Writeup10_sns_invip_esvd2.RData")
 
 
 print("Starting large Poisson fit, with library coef fixed at 1")
@@ -52,9 +52,9 @@ time_end2 <- Sys.time()
 save(date_of_run, session_info,
      sns, init_res, time_start1, time_end1,
      esvd_res, time_start2, time_end2,
-     file = "../../../../out/Writeup10/Writeup10_sns_layer4_esvd2.RData")
+     file = "../../../../out/Writeup10/Writeup10_sns_invip_esvd2.RData")
 
-#################### 
+####################
 
 print("Starting final fit, where library size coef can change")
 
@@ -86,7 +86,7 @@ save(date_of_run, session_info,
      sns, init_res, time_start1, time_end1,
      esvd_res, time_start2, time_end2,
      esvd_res_full, time_start3, time_end3,
-     file = "../../../../out/Writeup10/Writeup10_sns_layer4_esvd2.RData")
+     file = "../../../../out/Writeup10/Writeup10_sns_invip_esvd2.RData")
 
 
 ###########################
@@ -118,5 +118,6 @@ save(date_of_run, session_info,
      esvd_res, time_start2, time_end2,
      esvd_res_full, time_start3, time_end3,
      nuisance_vec, time_start4, time_end4,
-     file = "../../../../out/Writeup10/Writeup10_sns_layer4_esvd2.RData")
+     file = "../../../../out/Writeup10/Writeup10_sns_invip_esvd2.RData")
 
+print("Finished")

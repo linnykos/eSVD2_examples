@@ -20,7 +20,7 @@ init_res <- initialize_esvd2(mat,
                              covariates = covariates,
                              column_set_to_one = NULL,
                              offset_vec = rep(0, n),
-                             verbose = 2)
+                             verbose = 1)
 time_end1 <- Sys.time()
 
 save(date_of_run, session_info,
@@ -54,7 +54,7 @@ save(date_of_run, session_info,
      esvd_res, time_start2, time_end2,
      file = "../../../../out/Writeup10/Writeup10_sns_layer4_esvd2.RData")
 
-#################### 
+####################
 
 print("Starting final fit, where library size coef can change")
 
@@ -120,3 +120,4 @@ save(date_of_run, session_info,
      nuisance_vec, time_start4, time_end4,
      file = "../../../../out/Writeup10/Writeup10_sns_layer4_esvd2.RData")
 
+print("Finished")
