@@ -36,6 +36,7 @@ indiv_covariates[,"RIN"] <- scale(as.numeric(indiv_covariates[,"RIN"]))
 
 # from https://github.com/Sun-lab/ideas_pipeline/blob/main/Autism/step1c_ideas.R
 # https://github.com/Sun-lab/ideas_pipeline/blob/main/simulation/step2_evaluate_methods.R
+# https://github.com/Sun-lab/ideas/blob/main/man/ideas_dist.Rd
 dist1 <- ideas::ideas_dist(count_input = mat,
                            meta_cell = cell_covariates,
                            meta_ind = indiv_covariates,
