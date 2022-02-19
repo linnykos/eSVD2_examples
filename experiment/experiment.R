@@ -49,3 +49,35 @@ anova_list <- lapply(1:length(de_gene_specific), function(i){
   stats::anova(m2, m1)
 })
 
+p_val <- sapply(anova_list, function(obj){
+  obj["Pr(>Chisq)"][2,1]
+})
+floor(p_val*100)
+
+############
+
+mt_gene <- colnames(mat)[grep("^MT-", colnames(mat))]
+anova_list2 <- lapply(1:length(mt_gene), function(i){
+  print(paste0(i, " of ", length(mt_gene)))
+
+  var_idx <- which(colnames(mat) == mt_gene[i])
+  df <- cbind(mat[,var_idx], df)
+  colnames(df)[1] <- c("value")
+
+  m1 <- lme4::glmer(value ~ (1|individual) + percent.mt + RNA.Integrity.Number + post.mortem.hours + (1|Seqbatch) + age + diagnosis + sex + region,
+                    data = df,
+                    family = stats::poisson(link = "log"),
+                    offset = log(df[,"nCount_RNA"]))
+  # summary(m1)
+  m2 <- lme4::glmer(value ~ (1|individual) + percent.mt + RNA.Integrity.Number + post.mortem.hours + (1|Seqbatch) + age + sex + region,
+                    data = df,
+                    family = stats::poisson(link = "log"),
+                    offset = log(df[,"nCount_RNA"]))
+
+  stats::anova(m2, m1)
+})
+p_val <- sapply(anova_list2, function(obj){
+  obj["Pr(>Chisq)"][2,1]
+})
+floor(p_val*100)
+
