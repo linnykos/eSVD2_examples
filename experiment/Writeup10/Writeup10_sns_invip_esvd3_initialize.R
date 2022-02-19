@@ -19,7 +19,7 @@ init_res <- initialize_lme4(mat,
                             metadata = sns@meta.data,
                             pval_thres = 0.05,
                             tmp_path = "../../../../out/Writeup10/Writeup10_sns_invip_esvd3_tmp.RData",
-                            verbose = 1)
+                            verbose = 2)
 time_end1 <- Sys.time()
 
 save(date_of_run, session_info,

@@ -9,7 +9,7 @@ initialize_lme4 <- function(dat,
                               "RNA.Integrity.Number", "post.mortem.hours",
                               "diagnosis", "Seqbatch")]
   df <- data.frame(df)
-  df[,"Log_UMI"] <- log(Matrix::rowSums(mat))
+  df[,"Log_UMI"] <- log(Matrix::rowSums(dat))
   df[,"individual"] <- as.factor(df[,"individual"])
   df[,"region"] <- as.factor(df[,"region"])
   df[,"diagnosis"] <- factor(df[,"diagnosis"], levels = c("Control", "ASD"))
@@ -30,18 +30,20 @@ initialize_lme4 <- function(dat,
   if(verbose >= 1) print("Starting step 1: Fitting lme4's to covariates")
   for(j in 1:p){
     if(verbose == 1 && p > 10 && j %% floor(p/10) == 0) cat('*')
-    df_tmp <- cbind(mat[,j], df)
+    df_tmp <- cbind(dat[,j], df)
     colnames(df_tmp)[1] <- c("value")
 
     m1 <- lme4::glmer(value ~ (1|individual) + percent.mt + RNA.Integrity.Number + post.mortem.hours + (1|Seqbatch) + age + diagnosis + sex + region,
                       data = df_tmp,
                       family = stats::poisson(link = "log"),
-                      offset = df_tmp[,"Log_UMI"])
+                      offset = df_tmp[,"Log_UMI"],
+                      control = lme4::glmerControl(check.conv.singular = lme4::.makeCC(action = "ignore",  tol = 1e-4)))
 
     m2 <- lme4::glmer(value ~ (1|individual) + percent.mt + RNA.Integrity.Number + post.mortem.hours + (1|Seqbatch) + age + sex + region,
                       data = df_tmp,
                       family = stats::poisson(link = "log"),
-                      offset = df_tmp[,"Log_UMI"])
+                      offset = df_tmp[,"Log_UMI"],
+                      control = lme4::glmerControl(check.conv.singular = lme4::.makeCC(action = "ignore",  tol = 1e-4)))
 
     anova_res <- stats::anova(m2, m1)
     p_val <- anova_res["Pr(>Chisq)"]["m1","Pr(>Chisq)"]
