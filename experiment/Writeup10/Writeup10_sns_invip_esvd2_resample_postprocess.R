@@ -27,28 +27,32 @@ quantile(Alpha)
 
 #################
 
-metadata <- sns@meta.data
-case_individuals <- unique(metadata[which(metadata$diagnosis == "ASD"),"individual"])
-control_individuals <- unique(metadata[which(metadata$diagnosis == "Control"),"individual"])
-case_idx <- which(metadata[,"diagnosis"] == "ASD")
-control_idx <- which(metadata[,"diagnosis"] == "Control")
+asd_idx <- which(covariates[,"diagnosis_ASD"] == 1)
+indiv_colidx <- grep("individual_", colnames(covariates))
+case_colidx <- indiv_colidx[which(sapply(indiv_colidx, function(j){
+  tmp_idx <- which(covariates[,j] == 1)
+  all(tmp_idx %in% asd_idx)
+}))]
+control_colidx <- indiv_colidx[which(sapply(indiv_colidx, function(j){
+  tmp_idx <- which(covariates[,j] == 1)
+  all(!tmp_idx %in% asd_idx)
+}))]
+stopifnot(length(intersect(case_colidx, control_colidx)) == 0, all(indiv_colidx %in% c(case_colidx, control_colidx)))
 
 individual_stats <- lapply(1:ncol(mat), function(j){
   if(j %% floor(ncol(mat)/10) == 0) cat('*')
 
   # next find the cells, then compute one gaussian per individual
-  case_gaussians <- sapply(case_individuals, function(indiv){
-    cell_names <- rownames(metadata)[which(metadata$individual == indiv)]
-    cell_idx <- which(rownames(mat) %in% cell_names)
+  case_gaussians <- sapply(case_colidx, function(indiv){
+    cell_idx <- which(covariates[,indiv] == 1)
 
     mean_val <- mean(posterior_mean_mat[cell_idx,j])
     var_val <- mean(posterior_var_mat[cell_idx,j])
     c(mean_val = mean_val, var_val = var_val)
   })
 
-  control_gaussians <- sapply(control_individuals, function(indiv){
-    cell_names <- rownames(metadata)[which(metadata$individual == indiv)]
-    cell_idx <- which(rownames(mat) %in% cell_names)
+  control_gaussians <- sapply(control_colidx, function(indiv){
+    cell_idx <- which(covariates[,indiv] == 0)
 
     mean_val <- mean(posterior_mean_mat[cell_idx,j])
     var_val <- mean(posterior_var_mat[cell_idx,j])
@@ -159,14 +163,14 @@ graphics.off()
 ###########################
 
 set.seed(10)
-null_res <- logcondens::logConDens(teststat_vec[hk_idx],
+null_res <- logcondens::logConDens(teststat_vec[sample(1:length(teststat_vec), size = length(hk_idx))],
                                    smoothed = T,
                                    print = FALSE,
                                    xs = seq(1.5*min(teststat_vec),
                                             1.5*max(teststat_vec),
                                             length.out = 1000))
 dens_val <- null_res$f.smoothed
-dens_val <- dens_val * 800/max(dens_val)
+dens_val <- dens_val * 400/max(dens_val)
 max_val <- max(abs(teststat_vec))
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
@@ -207,25 +211,26 @@ multtest_res <- multttest_calibrate(teststat_vec = teststat_vec,
 
 #########
 
-indiv_list <- lapply(unique(metadata$individual), function(indiv){
-  which(metadata$individual == indiv)
+case_individuals <- lapply(case_colidx, function(j){
+  which(covariates[,j] == 1)
 })
-names(indiv_list) <- unique(metadata$individual)
-case_individuals <- as.character(unique(metadata[which(metadata$diagnosis == "ASD"),"individual"]))
-control_individuals <- as.character(unique(metadata[which(metadata$diagnosis == "Control"),"individual"]))
+control_individuals <- lapply(control_colidx, function(j){
+  which(covariates[,j] == 1)
+})
+indiv_list <- c(case_individuals, control_individuals)
 mat_avg <- t(sapply(indiv_list, function(idx_vec){
   matrixStats::colMeans2(mat[idx_vec,])
 }))
 rownames(mat_avg) <- names(indiv_list)
 x_vec <- sapply(1:ncol(mat_avg), function(j){
   # log(mean(mat[case_idx,j])) - log(mean(mat[control_idx,j]))
-  log2(mean(mat_avg[case_individuals,j])+1) - log2(mean(mat_avg[control_individuals,j])+1)
+  log2(mean(mat_avg[1:length(case_individuals),j])+1) - log2(mean(mat_avg[(length(case_individuals)+1):nrow(mat_avg),j])+1)
 })
 
 
 ### let's draw it nicer
-quantile(multtest_res$neglog_p_val)
-y_max <- 20
+quantile(multtest_res$neglog_p_val, probs = seq(0.9, 1, length.out=11))
+y_max <- 5
 x_max <- ceiling(max(abs(x_vec)))
 png("../../../../out/fig/Writeup10/sns_invip_esvd2_resample_volcano_calibrate.png", height = 1200, width = 1200,
     units = "px", res = 300)

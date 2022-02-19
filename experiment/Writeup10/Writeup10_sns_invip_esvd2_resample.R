@@ -9,11 +9,11 @@ session_info <- devtools::session_info()
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 
-# indiv_covariates <- c(grep("individual_", colnames(covariates)),
-#                       which(colnames(covariates) %in% c("age", "diagnosis_ASD", "sex_F", "post.mortem.hours")))
+indiv_covariates <- c(grep("individual_", colnames(covariates)),
+                      which(colnames(covariates) %in% c("age", "diagnosis_ASD", "sex_F", "post.mortem.hours")))
 set.seed(10)
 permutation_idx <- sample(1:nrow(covariates))
-covariates[,"diagnosis_ASD"] <- covariates[permutation_idx,"diagnosis_ASD"]
+covariates[,indiv_covariates] <- covariates[permutation_idx,indiv_covariates]
 
 K <- min(50, round(min(dim(mat))*.5))
 n <- nrow(mat)
