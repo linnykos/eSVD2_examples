@@ -50,7 +50,7 @@ rownames(indiv_covariates) <- indiv_covariates[,"individual"]
 #
 # save(dist1, date_of_run, session_info,
 #      file = "../../../../out/Writeup10/Writeup10_sns_invip_ideas.RData")
-load("../../../../out/Writeup10/Writeup10_sns_invip_ideas.RData"))
+load("../../../../out/Writeup10/Writeup10_sns_invip_ideas.RData")
 
 pval_res <- ideas::permanova(dist1,
                              meta_ind = indiv_covariates,
