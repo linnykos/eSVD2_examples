@@ -50,10 +50,11 @@ save(sns, sca, mast_res,
 
 set.seed(10)
 mast_lrt <- MAST::lrTest(mast_res, "grp.diagnosis")
-save(sns, sca, mast_res, mast_lrt,
+mast_pval_glmer <- apply(mast_lrt, 1, function(x){x[3,3]})
+save(sns, sca, mast_res, mast_lrt, mast_pval_glmer,
      file = "../../../../out/Writeup10/Writeup10_sns_invip_mast.RData")
 
-set.seed(10)
-fit <- MAST::lrTest(zlmdata, CoefficientHypothesis("grp.diagnosisASD"))
-save(sns, sca, mast_res, mast_lrt, fit,
-     file = "../../../../out/Writeup10/Writeup10_sns_invip_mast.RData")
+# set.seed(10)
+# fit <- MAST::lrTest(mast_res, CoefficientHypothesis("grp.diagnosisASD"))
+# save(sns, sca, mast_res, mast_lrt, fit,
+#      file = "../../../../out/Writeup10/Writeup10_sns_invip_mast.RData")

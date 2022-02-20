@@ -23,6 +23,7 @@ indiv_covariates <- sapply(indiv_vec, function(indiv){
   idx <- which(sns@meta.data[,"individual"] == indiv)
   c(individual = indiv,
     diagnosis = sns@meta.data[idx[1],"diagnosis"],
+    sex = sns@meta.data[idx[1],"sex"],
     age = sns@meta.data[idx[1],"age"],
     Seqbatch = sns@meta.data[idx[1],"Seqbatch"],
     RIN = sns@meta.data[idx[1],"RNA.Integrity.Number"])
@@ -33,21 +34,23 @@ indiv_covariates[,"diagnosis"] <- as.factor(indiv_covariates[,"diagnosis"])
 indiv_covariates[,"Seqbatch"] <- as.factor(indiv_covariates[,"Seqbatch"])
 indiv_covariates[,"age"] <- scale(as.numeric(indiv_covariates[,"age"]))
 indiv_covariates[,"RIN"] <- scale(as.numeric(indiv_covariates[,"RIN"]))
+rownames(indiv_covariates) <- indiv_covariates[,"individual"]
 
 # from https://github.com/Sun-lab/ideas_pipeline/blob/main/Autism/step1c_ideas.R
 # https://github.com/Sun-lab/ideas_pipeline/blob/main/simulation/step2_evaluate_methods.R
 # https://github.com/Sun-lab/ideas/blob/main/man/ideas_dist.Rd
-dist1 <- ideas::ideas_dist(count_input = mat,
-                           meta_cell = cell_covariates,
-                           meta_ind = indiv_covariates,
-                           var_per_cell = "rd",
-                           var2test = "diagnosis",
-                           var2test_type = "binary",
-                           d_metric = "Was",
-                           fit_method = "nb")
-
-save(dist1, date_of_run, session_info,
-     file = "../../../../out/Writeup10/Writeup10_sns_invip_ideas.RData")
+# dist1 <- ideas::ideas_dist(count_input = mat,
+#                            meta_cell = cell_covariates,
+#                            meta_ind = indiv_covariates,
+#                            var_per_cell = "rd",
+#                            var2test = "diagnosis",
+#                            var2test_type = "binary",
+#                            d_metric = "Was",
+#                            fit_method = "nb")
+#
+# save(dist1, date_of_run, session_info,
+#      file = "../../../../out/Writeup10/Writeup10_sns_invip_ideas.RData")
+load("../../../../out/Writeup10/Writeup10_sns_invip_ideas.RData"))
 
 pval_res <- ideas::permanova(dist1,
                              meta_ind = indiv_covariates,
