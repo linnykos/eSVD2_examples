@@ -202,8 +202,8 @@ multtest_res <- multttest_calibrate(teststat_vec = teststat_vec,
 #             file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_ensg_background.txt")
 # write_genes(ensg_de,
 #             file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_ensg_velmeshev.txt")
-# write_genes(multtest_res$idx,
-#             file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_calibrate_name_selected.txt")
+write_genes(multtest_res$idx,
+            file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_calibrate_name_selected.txt")
 
 #########
 
@@ -230,7 +230,7 @@ x_max <- ceiling(max(abs(x_vec)))
 png("../../../../out/fig/Writeup10/sns_invip_esvd2_volcano_calibrate.png", height = 1200, width = 1200,
     units = "px", res = 300)
 plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
-     main = "Volcano plot for Layer 2/3",
+     main = "Volcano plot for IN-VIP",
      xlab = "Log2 fold change (i.e., Log2 mean difference)", ylab = "-Log10(P value)")
 for(x in seq(-x_max, x_max,by=0.5)){
   lines(rep(x,2), c(-1e5,1e5), lty = 2, col = "gray", lwd = 0.5)

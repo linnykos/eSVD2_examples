@@ -28,6 +28,8 @@ pval_res[is.na(pval_res)] <- 0
 pval_res[pval_res == 0] <- min(pval_res[pval_res != 0])/2
 logpval <- -log10(pval_res)
 fdr_idx <- which(stats::p.adjust(pval_res, method = "BH") <= 0.05)
+length(intersect(colnames(mat)[fdr_idx], de_genes))
+length(intersect(colnames(mat)[fdr_idx], de_gene_specific))
 
 col_vec <- rep(rgb(0.5, 0.5, 0.5, 0.5), ncol(mat))
 col_vec[other_idx] <- 4

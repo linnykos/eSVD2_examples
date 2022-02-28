@@ -1,6 +1,6 @@
 rm(list=ls())
 load("../../../../out/Writeup10/Writeup10_sns_invip_processed2.RData")
-load("../../../../out/Writeup10/Writeup10_sns_invip_mast.RData")
+load("../../../../out/Writeup10/Writeup10_sns_invip_de.RData")
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 load("../../../../data/sns_autism/velmeshev_genes.RData")
@@ -24,12 +24,14 @@ other_idx <- which(colnames(mat) %in% c(sfari_genes, de_genes))
 
 #####################
 
-pval_res <- apply(mast_lrt, 1, function(x){x[3,3]})
+pval_res <- sapply(colnames(mat), function(gene){
+  idx <- which(rownames(de_res_nb) == gene)
+  de_res_nb[idx,"p_val"]
+})
 pval_res[is.na(pval_res)] <- 0
 pval_res[pval_res == 0] <- min(pval_res[pval_res != 0])/2
 logpval <- -log10(pval_res)
 fdr_idx <- which(stats::p.adjust(pval_res, method = "BH") <= 0.05)
-length(intersect(colnames(mat)[fdr_idx], hk_genes))
 
 col_vec <- rep(rgb(0.5, 0.5, 0.5, 0.5), ncol(mat))
 col_vec[other_idx] <- 4
@@ -58,6 +60,7 @@ z_score <- sapply(1:length(pval_res), function(i){
   tmp
 })
 
+
 sparisity_vec <- sapply(1:ncol(mat), function(j){
   length(which(mat[,j] == 0))/nrow(mat)
 })
@@ -65,17 +68,17 @@ sparisity_vec <- sapply(1:ncol(mat), function(j){
 quantile(logpval)
 y_max <- max(logpval)
 x_max <- ceiling(max(abs(x_vec)))
-png("../../../../out/fig/Writeup10/sns_invip_mast.png",
+png("../../../../out/fig/Writeup10/sns_invip_nb.png",
     height = 1000, width = 2500,
     units = "px", res = 300)
 par(mfrow = c(1,3))
 # z-scores
 max_val <- max(abs(z_score))
 break_vec <- seq(-0.05, max_val+0.05, by = 0.1)
-break_vec[length(break_vec)] <- max_val+0.05
+break_vec[1] <- -0.05; break_vec[length(break_vec)] <- max_val+0.05
 hist(z_score, breaks = break_vec,
      xlim = c(-0.05, max_val),
-     main = "Histogram of test statistic\n(MAST)",
+     main = "Histogram of test statistic\n(NegBin)",
      xlab = "One-sided Z-score", ylab = "Frequency", freq = T)
 lines(rep(0,2), c(0, 1e5), lwd = 1, lty = 3)
 for(i in shuf_idx){
@@ -87,12 +90,12 @@ legend("topright", c("Published DE gene", "Other interest gene", "Housekeeping g
 # volcano plot
 plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
      main = "Volcano plot for IN-VIP",
-     xlab = "Log2 fold change (i.e., Log2 mean difference)", ylab = "-Log10(P value) via MAST")
+     xlab = "Log2 fold change (i.e., Log2 mean difference)", ylab = "-Log10(P value) via NegBin")
 for(x in seq(-x_max, x_max,by=0.5)){
   lines(rep(x,2), c(-1e5,1e5), lty = 2, col = "gray", lwd = 0.5)
 }
 lines(rep(0,2), c(-1e5,1e5), col = "gray")
-for(y in seq(0,y_max,by=2)){
+for(y in seq(0,y_max,by=5)){
   lines(c(-1e5,1e5), rep(y,2), lty = 2, col = "gray", lwd = 0.5)
 }
 points(x = x_vec[-unique(c(hk_idx,de_idx))],
