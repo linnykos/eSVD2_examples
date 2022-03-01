@@ -22,12 +22,15 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 
 #####################
 
+time_start1 <- Sys.time()
 esvd_init <- eSVD2:::initialize_esvd(dat = mat,
                                      covariates = covariates,
                                      case_control_variable = "diagnosis_ASD",
                                      offset_variables = "Log_UMI",
                                      verbose = 2,
-                                     tmp_path = "../../../../out/Writeup10/Writeup10_sns_invip_esvd_coef_tmp.RData")
+                                     tmp_path = "../../../../out/Writeup11/Writeup11_sns_invip_esvd_coef_tmp.RData")
+time_end1 <- Sys.time()
 
-save(dat, esvd_init,
-     file = "../../../../out/Writeup10/Writeup10_sns_invip_esvd_coef.RData")
+save(date_of_run, session_info,
+     mat, esvd_init, time_start1, time_end1,
+     file = "../../../../out/Writeup11/Writeup11_sns_invip_esvd_coef.RData")

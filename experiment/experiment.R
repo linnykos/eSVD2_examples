@@ -1,83 +1,88 @@
 rm(list=ls())
-load("../../../../out/Writeup10/Writeup10_sns_invip_processed2.RData")
+rm(list=ls())
+load("../../../../out/Writeup10/Writeup10_sns_invip_processed.RData")
+
+library(Seurat)
+set.seed(10)
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
+covariate_dat <- sns@meta.data[,c("percent.mt", "individual", "region", "age", "sex",
+                                  "RNA.Integrity.Number", "post.mortem.hours",
+                                  "diagnosis", "Seqbatch")]
+covariate_df <- data.frame(covariate_dat)
+covariate_df[,"individual"] <- as.factor(covariate_df[,"individual"])
+covariate_df[,"region"] <- as.factor(covariate_df[,"region"])
+covariate_df[,"diagnosis"] <- factor(covariate_df[,"diagnosis"], levels = c("Control", "ASD"))
+covariate_df[,"sex"] <- as.factor(covariate_df[,"sex"])
+covariate_df[,"Seqbatch"] <- as.factor(covariate_df[,"Seqbatch"])
+covariates <- eSVD2:::format_covariates(dat = mat,
+                                        covariate_df = covariate_df,
+                                        mixed_effect_variables = c("individual", "Seqbatch"))
+
+load("../../../../out/Writeup11/Writeup11_sns_invip_esvd_coef_tmp.RData")
+case_control_variable = "diagnosis_ASD"
+offset_variables = "Log_UMI"
+k = 10
+verbose = 1
+dat = mat
+
+n <- nrow(mat)
+if(verbose >= 1) print("Step 1b: Cleaning up coefficients")
+covariates <- cbind(rep(1, n), covariates)
+colnames(covariates)[1] <- "Intercept"
+print(dim(covariates))
+print(dim(b_mat))
+col_idx <- sapply(colnames(covariates), function(i){which(colnames(b_mat) == i)})
+b_mat <- b_mat[,as.numeric(col_idx)]
+
+if(verbose >= 1) print("Step 2: Computing residuals")
+tmp <- eSVD2:::.initialize_residuals(b_mat = b_mat,
+                                     covariates = covariates,
+                                     dat = dat,
+                                     k = k)
+
+esvd_init <- structure(list(x_mat = tmp$x_mat, y_mat = tmp$y_mat,
+                            b_mat = b_mat,
+                            covariates = covariates,
+                            nuisance_param_vec = rep(0, ncol(dat))),
+                       class = "eSVD")
+
+save(mat, esvd_init,
+     file = "../../../../out/Writeup11/Writeup11_sns_invip_esvd_coef.RData")
 
 load("../../../../data/sns_autism/velmeshev_genes.RData")
 tmp <- velmeshev_de_gene_df_list[[1]]
-tmp <- tmp[which(tmp[,"Cell type"] == "IN-VIP"),]
+tmp <- tmp[which(tmp[,"Cell type"] == "L2/3"),]
 de_gene_specific <- tmp[,"Gene name"]
-de_gene_specific <- intersect(de_gene_specific, colnames(mat))
+de_genes1 <- velmeshev_marker_gene_df[,"Gene name"]
+de_genes2 <- unlist(lapply(velmeshev_de_gene_df_list[-1], function(de_mat){
+  idx <- ifelse("Gene name" %in% colnames(de_mat), "Gene name", "HGNC Symbol")
+  de_mat[,idx]
+}))
+de_genes <- sort(unique(c(de_genes1, de_genes2)))
+de_genes <- de_genes[!de_genes %in% de_gene_specific]
+hk_genes <- read.csv("../../../../data/housekeeping/housekeeping.txt", header = F)[,1]
+sfari_genes <- read.csv("../../../../data/SFARI/SFARI-Gene_genes_09-02-2021release_01-06-2022export.csv", header = T)[,2]
+cycling_genes <- c(cc.genes$s.genes, cc.genes$g2m.genes)
 
-covariates <- sns@meta.data
-covariates <- covariates[,c("nCount_RNA", "nFeature_RNA", "percent.mt",
-                            "individual", "region", "age", "sex",
-                            "RNA.Integrity.Number", "post.mortem.hours",
-                            "diagnosis", "Seqbatch")]
-df <- data.frame(covariates)
-df[,"nCount_RNA"] <- Matrix::rowSums(mat)
-df[,"individual"] <- as.factor(df[,"individual"])
-df[,"region"] <- as.factor(df[,"region"])
-df[,"diagnosis"] <- as.factor(df[,"diagnosis"])
-df[,"sex"] <- as.factor(df[,"sex"])
-df[,"Seqbatch"] <- as.factor(df[,"Seqbatch"])
-df[,"nFeature_RNA"] <- scale(df[,"nFeature_RNA"], center = T, scale = T)
-df[,"percent.mt"] <- scale(df[,"percent.mt"], center = T, scale = T)
-df[,"RNA.Integrity.Number"] <- scale(df[,"RNA.Integrity.Number"], center = T, scale = T)
-df[,"age"] <- scale(df[,"age"], center = T, scale = T)
-df[,"post.mortem.hours"] <- scale(df[,"post.mortem.hours"], center = T, scale = T)
+hk_idx <- which(colnames(mat) %in% c(hk_genes, cycling_genes))
+de_idx <- which(colnames(mat) %in% de_gene_specific)
+other_idx <- which(colnames(mat) %in% c(sfari_genes, de_genes))
 
-# var_idx <- which(colnames(mat) == "SAT2")
-# var_idx <- which(colnames(mat) == "MT-CO2")
-anova_list <- lapply(1:length(de_gene_specific), function(i){
-  print(paste0(i, " of ", length(de_gene_specific)))
+# zz <- esvd_init$b_mat[,"diagnosis_ASD"]
+# zz <- esvd_res$b_mat[,"diagnosis_ASD"]
+zz <- esvd_res_full$b_mat[,"diagnosis_ASD"]
+length(which(zz[hk_idx] == 0))/length(hk_idx)
+tmp <- zz[hk_idx]; round(quantile(abs(tmp[tmp!=0])),3)
+length(which(zz[de_idx] == 0))/length(de_idx)
+tmp <- zz[de_idx]; round(quantile(abs(tmp[tmp!=0])),3)
+length(which(zz[other_idx] == 0))/length(other_idx)
+tmp <- zz[other_idx]; round(quantile(abs(tmp[tmp!=0])),3)
+length(which(zz == 0))/length(zz)
+round(quantile(abs(zz[zz!=0])),3)
 
-  var_idx <- which(colnames(mat) == de_gene_specific[i])
-  df <- cbind(mat[,var_idx], df)
-  colnames(df)[1] <- c("value")
+##################################3
 
-  m1 <- lme4::glmer(value ~ (1|individual) + percent.mt + RNA.Integrity.Number + post.mortem.hours + (1|Seqbatch) + age + diagnosis + sex + region,
-                    data = df,
-                    family = stats::poisson(link = "log"),
-                    offset = log(df[,"nCount_RNA"]))
-  # summary(m1)
-  m2 <- lme4::glmer(value ~ (1|individual) + percent.mt + RNA.Integrity.Number + post.mortem.hours + (1|Seqbatch) + age + sex + region,
-                    data = df,
-                    family = stats::poisson(link = "log"),
-                    offset = log(df[,"nCount_RNA"]))
 
-  stats::anova(m2, m1)
-})
 
-p_val <- sapply(anova_list, function(obj){
-  obj["Pr(>Chisq)"][2,1]
-})
-floor(p_val*100)
-
-############
-
-mt_gene <- colnames(mat)[grep("^MT-", colnames(mat))]
-anova_list2 <- lapply(1:length(mt_gene), function(i){
-  print(paste0(i, " of ", length(mt_gene)))
-
-  var_idx <- which(colnames(mat) == mt_gene[i])
-  df <- cbind(mat[,var_idx], df)
-  colnames(df)[1] <- c("value")
-
-  m1 <- lme4::glmer(value ~ (1|individual) + percent.mt + RNA.Integrity.Number + post.mortem.hours + (1|Seqbatch) + age + diagnosis + sex + region,
-                    data = df,
-                    family = stats::poisson(link = "log"),
-                    offset = log(df[,"nCount_RNA"]))
-  # summary(m1)
-  m2 <- lme4::glmer(value ~ (1|individual) + percent.mt + RNA.Integrity.Number + post.mortem.hours + (1|Seqbatch) + age + sex + region,
-                    data = df,
-                    family = stats::poisson(link = "log"),
-                    offset = log(df[,"nCount_RNA"]))
-
-  stats::anova(m2, m1)
-})
-p_val <- sapply(anova_list2, function(obj){
-  obj["Pr(>Chisq)"][2,1]
-})
-floor(p_val*100)
 
