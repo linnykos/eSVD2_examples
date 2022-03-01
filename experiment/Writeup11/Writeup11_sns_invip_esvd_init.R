@@ -22,7 +22,7 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 
 #####################
 
-esvd_init <- eSVD2:::initialize_esvd(dat = dat,
+esvd_init <- eSVD2:::initialize_esvd(dat = mat,
                                      covariates = covariates,
                                      case_control_variable = "diagnosis_ASD",
                                      offset_variables = "Log_UMI",
