@@ -69,9 +69,9 @@ hk_idx <- which(colnames(mat) %in% c(hk_genes, cycling_genes))
 de_idx <- which(colnames(mat) %in% de_gene_specific)
 other_idx <- which(colnames(mat) %in% c(sfari_genes, de_genes))
 
-# zz <- esvd_init$b_mat[,"diagnosis_ASD"]
+zz <- esvd_init$b_mat[,"diagnosis_ASD"]
 # zz <- esvd_res$b_mat[,"diagnosis_ASD"]
-zz <- esvd_res_full$b_mat[,"diagnosis_ASD"]
+# zz <- esvd_res_full$b_mat[,"diagnosis_ASD"]
 length(which(zz[hk_idx] == 0))/length(hk_idx)
 tmp <- zz[hk_idx]; round(quantile(abs(tmp[tmp!=0])),3)
 length(which(zz[de_idx] == 0))/length(de_idx)

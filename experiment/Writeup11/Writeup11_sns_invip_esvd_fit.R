@@ -10,6 +10,7 @@ session_info <- devtools::session_info()
 
 print("Starting first eSVD fit")
 
+mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 case_control_variable = "diagnosis_ASD"
 offset_var <- setdiff(colnames(esvd_init$covariates), case_control_variable)
 offset_mat <- tcrossprod(esvd_init$covariates[,offset_var], esvd_init$b_mat[,offset_var])
