@@ -77,7 +77,7 @@ compute_twosample_pvalue <- function(factor_vec,
   R2 <- sum(sparse_mat[idx2, idx2])/2
 
   nE <- sum(sparse_mat)/2
-  node_deg_list <- lapply(1:n, function(i){
+  node_deg_list <- lapply(1:N, function(i){
     .nonzero_col(sparse_mat, col_idx = i, bool_value = F)
   })
   total_deg <- sapply(node_deg_list, length)

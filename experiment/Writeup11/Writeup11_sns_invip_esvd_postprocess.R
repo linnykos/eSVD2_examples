@@ -2,6 +2,7 @@ rm(list=ls())
 library(Seurat)
 load("../../../../out/Writeup10/Writeup10_sns_invip_processed.RData")
 load("../../../../out/Writeup11/Writeup11_sns_invip_esvd_fit.RData")
+source("twosampletest.R")
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 case_control_variable = "diagnosis_ASD"
@@ -24,10 +25,10 @@ SplusBeta <- sweep(library_mat, MARGIN = 2,
                    STATS = nuisance_vec, FUN = "+")
 posterior_mean_mat <- AplusAlpha/SplusBeta
 posterior_var_mat <- AplusAlpha/SplusBeta^2
-tmp <- posterior_mean_mat/sqrt(posterior_var_mat)
-quantile(tmp)
-quantile(mean_mat_nolib)
-quantile(Alpha)
+# tmp <- posterior_mean_mat/sqrt(posterior_var_mat)
+# quantile(tmp)
+# quantile(mean_mat_nolib)
+# quantile(Alpha)
 
 #################
 
@@ -63,32 +64,18 @@ individual_stats <- lapply(1:ncol(mat), function(j){
        control_gaussians = control_gaussians)
 })
 
-# see https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians
-group_stats <- lapply(1:length(individual_stats), function(j){
-  case_gaussians <- individual_stats[[j]]$case_gaussians
-  control_gaussians <- individual_stats[[j]]$control_gaussians
+factor_vec <- factor(c(rep("case", length(case_individuals)),
+                       rep("control", length(control_individuals))))
+teststat_vec <- sapply(1:length(individual_stats), function(j){
+  mean_vec <- c(individual_stats[[i]]$case_gaussians["mean_val",],
+                individual_stats[[i]]$control_gaussians["mean_val",])
+  var_vec <- c(individual_stats[[i]]$case_gaussians["var_val",],
+                individual_stats[[i]]$control_gaussians["var_val",])
 
-  case_gaussian <- list(mean_val = mean(case_gaussians[1,]),
-                        var_val = mean(case_gaussians[2,]) + mean(case_gaussians[1,]^2) - (mean(case_gaussians[1,]))^2,
-                        n = ncol(case_gaussians))
-  control_gaussian <- list(mean_val = mean(control_gaussians[1,]),
-                           var_val = mean(control_gaussians[2,]) + mean(control_gaussians[1,]^2) - (mean(control_gaussians[1,]))^2,
-                           n = ncol(control_gaussians))
-
-  list(case_gaussian = case_gaussian,
-       control_gaussian = control_gaussian)
-})
-
-teststat_vec <- sapply(1:length(group_stats), function(j){
-  case_gaussian <- group_stats[[j]]$case_gaussian
-  control_gaussian <- group_stats[[j]]$control_gaussian
-
-  n1 <- control_gaussian$n; n2 <- case_gaussian$n
-  mean1 <- control_gaussian$mean_val; mean2 <- case_gaussian$mean_val
-  cov1 <- control_gaussian$var_val; cov2 <- control_gaussian$var_val
-
-  combined_cov <- cov1/n1 + cov2/n2
-  (mean2 - mean1)/sqrt(combined_cov)
+  compute_twosample_pvalue(factor_vec = factor_vec,
+                           mean_vec = mean_vec,
+                           var_vec = var_vec,
+                           k = 3, verbose = 0)
 })
 
 ##########
