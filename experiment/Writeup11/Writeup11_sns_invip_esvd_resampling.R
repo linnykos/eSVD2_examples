@@ -56,7 +56,7 @@ esvd_init <- eSVD2:::initialize_esvd(dat = mat,
                                      tmp_path = "../../../../out/Writeup11/Writeup11_sns_invip_esvd_resample_tmp.RData")
 time_end1 <- Sys.time()
 
-save(date_of_run, session_info, sns,
+save(date_of_run, session_info, sns, covariate_df,
      esvd_init, time_start1, time_end1,
      file = "../../../../out/Writeup11/Writeup11_sns_invip_esvd_resample.RData")
 
@@ -85,7 +85,7 @@ esvd_res <- eSVD2::opt_esvd(esvd_init$x_mat,
                             offset_vec = NULL,
                             offset_mat = offset_mat,
                             global_estimate = F,
-                            l2pen = 0.01,
+                            l2pen = 0.1,
                             max_iter = 50,
                             run_cpp = F,
                             reparameterize = F,
@@ -93,7 +93,7 @@ esvd_res <- eSVD2::opt_esvd(esvd_init$x_mat,
                             verbose = 1)
 time_end2 <- Sys.time()
 
-save(date_of_run, session_info,
+save(date_of_run, session_info, sns, covariate_df,
      esvd_init, time_start1, time_end1,
      esvd_res, time_start2, time_end2,
      file = "../../../../out/Writeup11/Writeup11_sns_invip_esvd_resample.RData")
@@ -119,7 +119,7 @@ esvd_res_full <- eSVD2::opt_esvd(esvd_res$x_mat,
                                  offset_vec = rep(0, nrow(mat)),
                                  offset_mat = NULL,
                                  global_estimate = F,
-                                 l2pen = 0.01,
+                                 l2pen = 0.1,
                                  max_iter = 50,
                                  run_cpp = T,
                                  reparameterize = F,
@@ -127,7 +127,7 @@ esvd_res_full <- eSVD2::opt_esvd(esvd_res$x_mat,
                                  verbose = 1)
 time_end3 <- Sys.time()
 
-save(date_of_run, session_info,
+save(date_of_run, session_info, sns, covariate_df,
      esvd_init, time_start1, time_end1,
      esvd_res, time_start2, time_end2,
      esvd_res_full, time_start3, time_end3,
@@ -157,7 +157,7 @@ nuisance_vec <- sapply(1:ncol(mat), function(j){
 })
 time_end4 <- Sys.time()
 
-save(date_of_run, session_info,
+save(date_of_run, session_info, sns, covariate_df,
      esvd_init, time_start1, time_end1,
      esvd_res, time_start2, time_end2,
      esvd_res_full, time_start3, time_end3,

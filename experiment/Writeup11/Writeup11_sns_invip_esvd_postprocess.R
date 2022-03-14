@@ -67,15 +67,17 @@ individual_stats <- lapply(1:ncol(mat), function(j){
 factor_vec <- factor(c(rep("case", length(case_individuals)),
                        rep("control", length(control_individuals))))
 teststat_vec <- sapply(1:length(individual_stats), function(j){
-  mean_vec <- c(individual_stats[[i]]$case_gaussians["mean_val",],
-                individual_stats[[i]]$control_gaussians["mean_val",])
-  var_vec <- c(individual_stats[[i]]$case_gaussians["var_val",],
-                individual_stats[[i]]$control_gaussians["var_val",])
+  if(j %% floor(ncol(mat)/10) == 0) cat('*')
+
+  mean_vec <- c(individual_stats[[j]]$case_gaussians["mean_val",],
+                individual_stats[[j]]$control_gaussians["mean_val",])
+  var_vec <- c(individual_stats[[j]]$case_gaussians["var_val",],
+                individual_stats[[j]]$control_gaussians["var_val",])
 
   compute_twosample_pvalue(factor_vec = factor_vec,
                            mean_vec = mean_vec,
                            var_vec = var_vec,
-                           k = 3, verbose = 0)
+                           k = 3, verbose = 0)$test_stat
 })
 
 ##########
@@ -112,7 +114,7 @@ colnames(mat)[order(abs(teststat_vec), decreasing = T)[1:20]]
 
 teststat_vec <- pmax(pmin(teststat_vec, 30), -30)
 max_val <- max(abs(teststat_vec))
-png("../../../../out/fig/Writeup11/sns_invip_esvd_teststat_histogram.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup11/sns_invip_esvd_graphbased_teststat_histogram.png", height = 1200, width = 1200,
     units = "px", res = 300)
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
@@ -128,7 +130,7 @@ legend("topright", c("Published DE gene", "Other interest gene", "Housekeeping g
        fill = c(2,4,3), cex = 0.6)
 graphics.off()
 
-png("../../../../out/fig/Writeup11/sns_invip_esvd_teststat_histogram_separate.png",
+png("../../../../out/fig/Writeup11/sns_invip_esvd_graphbased_teststat_histogram_separate.png",
     height = 1000, width = 3000,
     units = "px", res = 300)
 par(mfrow = c(1,3), mar = c(4,4,4,0.5))
@@ -161,7 +163,7 @@ dens_val <- dens_val * 150/max(dens_val)
 max_val <- max(abs(teststat_vec))
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
-png("../../../../out/fig/Writeup11/sns_invip_esvd_teststat_histogram_logconcave.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup11/sns_invip_esvd_graphbased_teststat_histogram_logconcave.png", height = 1200, width = 1200,
     units = "px", res = 300)
 hist(teststat_vec, breaks = break_vec,
      xlim = c(-max_val, max_val),
@@ -182,19 +184,6 @@ multtest_res <- multttest_calibrate(teststat_vec = teststat_vec,
                                     null_x = null_res$xs,
                                     fdr_cutoff = 0.05,
                                     two_sided = T)
-# gene_metadata <- read.csv("../../../../data/sns_autism/genes.tsv",
-#                           sep = "\t", header = F)
-# ensg_selected <- gene_metadata[gene_metadata[,2] %in% multtest_res$idx,1]
-# ensg_backround <- gene_metadata[gene_metadata[,2] %in% colnames(mat),1]
-# ensg_de <- gene_metadata[gene_metadata[,2] %in% de_gene_specific,1]
-# write_genes(ensg_selected,
-#             file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_calibrate_ensg_selected.txt")
-# write_genes(ensg_backround,
-#             file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_ensg_background.txt")
-# write_genes(ensg_de,
-#             file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_ensg_velmeshev.txt")
-# write_genes(multtest_res$idx,
-#             file = "../../../../out/Writeup10/Writeup10_sns_layer23_esvd_calibrate_name_selected.txt")
 
 #########
 
@@ -213,12 +202,11 @@ x_vec <- sapply(1:ncol(mat_avg), function(j){
   log2(mean(mat_avg[case_individuals,j])+1) - log2(mean(mat_avg[control_individuals,j])+1)
 })
 
-
 ### let's draw it nicer
 quantile(multtest_res$neglog_p_val)
 y_max <- 20
 x_max <- ceiling(max(abs(x_vec)))
-png("../../../../out/fig/Writeup10/sns_invip_esvd2_volcano_calibrate.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup10/sns_invip_esvd_graphbased_volcano_calibrate.png", height = 1200, width = 1200,
     units = "px", res = 300)
 plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
      main = "Volcano plot for IN-VIP",
@@ -240,112 +228,6 @@ points(x = x_vec[shuf_idx],
        y = multtest_res$neglog_p_val[shuf_idx],
        pch = 16, col = col_vec[shuf_idx])
 lines(x = c(-2*x_max, 2*x_max), y = rep(min(multtest_res$neglog_p_val[multtest_res$idx]),2),
-      col = 2, lwd = 2, lty = 2)
-legend("topleft", c("Published DE gene", "Other interest gene", "Housekeeping gene", "Other"),
-       fill = c(2,4,3,rgb(0.5,0.5,0.5)), cex = 0.5)
-graphics.off()
-
-##########################
-
-sparisity_vec <- sapply(1:ncol(mat), function(j){
-  length(which(mat[,j] == 0))/nrow(mat)
-})
-xlim <- range(sparisity_vec)
-ylim <- c(0,20)
-png("../../../../out/fig/Writeup10/sns_invip_esvd2_sparsity.png",
-    height = 1200, width = 2400,
-    units = "px", res = 300)
-par(mfrow = c(1,2))
-plot(NA, xlim = xlim, ylim = ylim,
-     xlab = "% of observed 0's in gene",
-     ylab = "-Log10(P value)",
-     main = "P-value vs. sparsity")
-points(x = sparisity_vec[-unique(c(hk_idx,de_idx))],
-       y = multtest_res$neglog_p_val[-unique(c(hk_idx,de_idx))],
-       pch = 16, col = col_vec[-unique(c(hk_idx,de_idx))])
-points(x = sparisity_vec[shuf_idx],
-       y = multtest_res$neglog_p_val[shuf_idx],
-       pch = 16, col = "white", cex = 1.5)
-points(x = sparisity_vec[shuf_idx],
-       y = multtest_res$neglog_p_val[shuf_idx],
-       pch = 16, col = col_vec[shuf_idx])
-lines(x = c(-2,2)*max(sparisity_vec), y = rep(min(multtest_res$neglog_p_val[multtest_res$idx]),2),
-      col = 2, lwd = 2, lty = 2)
-
-xlim <- range(log(nuisance_vec))
-plot(NA, xlim = xlim, ylim = ylim,
-     xlab = "Estimated nuisance parameter (log-scale)",
-     ylab = "-Log10(P value)",
-     main = "Log(nuisance parameter) vs. sparsity")
-points(x = log(nuisance_vec)[-unique(c(hk_idx,de_idx))],
-       y = multtest_res$neglog_p_val[-unique(c(hk_idx,de_idx))],
-       pch = 16, col = col_vec[-unique(c(hk_idx,de_idx))])
-points(x = log(nuisance_vec)[shuf_idx],
-       y = multtest_res$neglog_p_val[shuf_idx],
-       pch = 16, col = "white", cex = 1.5)
-points(x = log(nuisance_vec)[shuf_idx],
-       y = multtest_res$neglog_p_val[shuf_idx],
-       pch = 16, col = col_vec[shuf_idx])
-lines(x = c(-2,2)*max(log(nuisance_vec)), y = rep(min(multtest_res$neglog_p_val[multtest_res$idx]),2),
-      col = 2, lwd = 2, lty = 2)
-graphics.off()
-
-##########################
-
-multtest_res$idx
-length(multtest_res$idx)
-length(intersect(multtest_res$idx, de_gene_specific))
-length(intersect(multtest_res$idx, de_genes))
-length(intersect(multtest_res$idx, sfari_genes))
-length(intersect(multtest_res$idx, hk_genes))
-
-##########################
-##########################
-##########################
-
-# let's see what happens if we use the low-rank matrix directly
-
-nat_mat1 <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat)
-diagnosis_idx <- which(colnames(esvd_res_full$covariates) == "diagnosis_ASD")
-nat_mat2 <- tcrossprod(esvd_res_full$covariates[,diagnosis_idx,drop=F], esvd_res_full$b_mat[,diagnosis_idx,drop=F])
-nat_mat_nolib <- nat_mat1 + nat_mat2
-mean_mat_nolib <- exp(nat_mat_nolib)
-case_idx <- which(sns@meta.data[,"diagnosis"] == "ASD")
-control_idx <- which(sns@meta.data[,"diagnosis"] == "Control")
-p_val_vec <- sapply(1:ncol(mean_mat_nolib), function(j){
-  if(j %% floor(ncol(mean_mat_nolib)/10) == 0) cat('*')
-  res <- stats::wilcox.test(x = mean_mat_nolib[case_idx,j],
-                            y = mean_mat_nolib[control_idx,j])
-  res$p.value
-})
-neglog10_pval <- pmin(-log10(p_val_vec), 400)
-idx <- which(stats::p.adjust(p_val_vec, method = "BH") <= 0.05)
-length(idx)
-
-y_max <- 400
-x_max <- ceiling(max(abs(x_vec)))
-png("../../../../out/fig/Writeup10/sns_invip_esvd2_volcano_calibrate_noposterior.png", height = 1200, width = 1200,
-    units = "px", res = 300)
-plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
-     main = "Volcano plot for IN-VIP (No posterior)",
-     xlab = "Log2 fold change (i.e., Log2 mean difference)", ylab = "-Log10(P value)")
-for(x in seq(-x_max, x_max,by=0.5)){
-  lines(rep(x,2), c(-1e5,1e5), lty = 2, col = "gray", lwd = 0.5)
-}
-lines(rep(0,2), c(-1e5,1e5), col = "gray")
-for(y in seq(0,y_max,by=20)){
-  lines(c(-1e5,1e5), rep(y,2), lty = 2, col = "gray", lwd = 0.5)
-}
-points(x = x_vec[-unique(c(hk_idx,de_idx))],
-       y = neglog10_pval[-unique(c(hk_idx,de_idx))],
-       pch = 16, col = col_vec[-unique(c(hk_idx,de_idx))])
-points(x = x_vec[shuf_idx],
-       y = neglog10_pval[shuf_idx],
-       pch = 16, col = "white", cex = 1.5)
-points(x = x_vec[shuf_idx],
-       y = neglog10_pval[shuf_idx],
-       pch = 16, col = col_vec[shuf_idx])
-lines(x = c(-2*x_max, 2*x_max), y = rep(min(neglog10_pval[idx]),2),
       col = 2, lwd = 2, lty = 2)
 legend("topleft", c("Published DE gene", "Other interest gene", "Housekeeping gene", "Other"),
        fill = c(2,4,3,rgb(0.5,0.5,0.5)), cex = 0.5)

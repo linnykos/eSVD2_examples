@@ -18,7 +18,8 @@ compute_twosample_pvalue <- function(factor_vec,
   stat_list <- .gather_graph_statistics(factor_vec = factor_vec,
                                         sparse_mat = sparse_mat)
   pval <- stats::pnorm(-stat_list[["Zw"]])
-  pval
+
+  list(test_stat = stat_list[["Zw"]], pval = pval)
 }
 
 ## https://djalil.chafai.net/blog/2010/04/30/wasserstein-distance-between-two-gaussians/
@@ -68,7 +69,7 @@ compute_twosample_pvalue <- function(factor_vec,
   N <- nrow(sparse_mat)
 
   idx1 <- which(factor_vec == levels(factor_vec)[1])
-  idx2 <- setdiff(1:n, idx1)
+  idx2 <- setdiff(1:N, idx1)
 
   n1 <- length(idx1)
   n2 <- length(idx2)
@@ -92,7 +93,7 @@ compute_twosample_pvalue <- function(factor_vec,
   Zw <- (n2*(R1-mu1)+n1*(R2-mu2)) / sqrt(n2^2*V1 + n1^2*V2 + 2*n1*n2*V12)
 
   tmp <- list(R1 = R1, R2 = R2,
-              n1 = n1, n2 = n2, n = n,
+              n1 = n1, n2 = n2, N = N,
               nE = nE, nEi = nEi,
               mu1 = mu1, mu2 = mu2,
               V1 = V1, V2 = V2, V12 = V12,
