@@ -64,20 +64,32 @@ individual_stats <- lapply(1:ncol(mat), function(j){
        control_gaussians = control_gaussians)
 })
 
-factor_vec <- factor(c(rep("case", length(case_individuals)),
-                       rep("control", length(control_individuals))))
-teststat_vec <- sapply(1:length(individual_stats), function(j){
-  if(j %% floor(ncol(mat)/10) == 0) cat('*')
+# see https://stats.stackexchange.com/questions/16608/what-is-the-variance-of-the-weighted-mixture-of-two-gaussians
+group_stats <- lapply(1:length(individual_stats), function(j){
+  case_gaussians <- individual_stats[[j]]$case_gaussians
+  control_gaussians <- individual_stats[[j]]$control_gaussians
 
-  mean_vec <- c(individual_stats[[j]]$case_gaussians["mean_val",],
-                individual_stats[[j]]$control_gaussians["mean_val",])
-  var_vec <- c(individual_stats[[j]]$case_gaussians["var_val",],
-                individual_stats[[j]]$control_gaussians["var_val",])
+  case_gaussian <- list(mean_val = mean(case_gaussians[1,]),
+                        var_val = mean(case_gaussians[2,]) + mean(case_gaussians[1,]^2) - (mean(case_gaussians[1,]))^2,
+                        n = ncol(case_gaussians))
+  control_gaussian <- list(mean_val = mean(control_gaussians[1,]),
+                           var_val = mean(control_gaussians[2,]) + mean(control_gaussians[1,]^2) - (mean(control_gaussians[1,]))^2,
+                           n = ncol(control_gaussians))
 
-  compute_twosample_pvalue(factor_vec = factor_vec,
-                           mean_vec = mean_vec,
-                           var_vec = var_vec,
-                           k = 3, verbose = 0)$test_stat
+  list(case_gaussian = case_gaussian,
+       control_gaussian = control_gaussian)
+})
+
+teststat_vec <- sapply(1:length(group_stats), function(j){
+  case_gaussian <- group_stats[[j]]$case_gaussian
+  control_gaussian <- group_stats[[j]]$control_gaussian
+
+  n1 <- control_gaussian$n; n2 <- case_gaussian$n
+  mean1 <- control_gaussian$mean_val; mean2 <- case_gaussian$mean_val
+  cov1 <- control_gaussian$var_val; cov2 <- control_gaussian$var_val
+
+  combined_cov <- cov1/n1 + cov2/n2
+  (mean2 - mean1)/sqrt(combined_cov)
 })
 
 ##########
@@ -114,7 +126,7 @@ colnames(mat)[order(abs(teststat_vec), decreasing = T)[1:20]]
 
 teststat_vec <- pmax(pmin(teststat_vec, 30), -30)
 max_val <- max(abs(teststat_vec))
-png("../../../../out/fig/Writeup11/sns_invip_esvd_graphbased_teststat_histogram.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup11/sns_invip_esvd_teststat_histogram.png", height = 1200, width = 1200,
     units = "px", res = 300)
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
@@ -130,7 +142,7 @@ legend("topright", c("Published DE gene", "Other interest gene", "Housekeeping g
        fill = c(2,4,3), cex = 0.6)
 graphics.off()
 
-png("../../../../out/fig/Writeup11/sns_invip_esvd_graphbased_teststat_histogram_separate.png",
+png("../../../../out/fig/Writeup11/sns_invip_esvd_teststat_histogram_separate.png",
     height = 1000, width = 3000,
     units = "px", res = 300)
 par(mfrow = c(1,3), mar = c(4,4,4,0.5))
@@ -159,11 +171,11 @@ null_res <- logcondens::logConDens(teststat_vec[hk_idx],
                                             1.5*max(teststat_vec),
                                             length.out = 1000))
 dens_val <- null_res$f.smoothed
-dens_val <- dens_val * 150/max(dens_val)
+dens_val <- dens_val * 400/max(dens_val)
 max_val <- max(abs(teststat_vec))
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
-png("../../../../out/fig/Writeup11/sns_invip_esvd_graphbased_teststat_histogram_logconcave.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup11/sns_invip_esvd_teststat_histogram_logconcave.png", height = 1200, width = 1200,
     units = "px", res = 300)
 hist(teststat_vec, breaks = break_vec,
      xlim = c(-max_val, max_val),
@@ -184,6 +196,12 @@ multtest_res <- multttest_calibrate(teststat_vec = teststat_vec,
                                     null_x = null_res$xs,
                                     fdr_cutoff = 0.05,
                                     two_sided = T)
+
+length(multtest_res$idx)
+length(intersect(multtest_res$idx, de_gene_specific))
+length(intersect(multtest_res$idx, de_genes))
+length(intersect(multtest_res$idx, sfari_genes))
+length(intersect(multtest_res$idx, hk_genes))
 
 #########
 
@@ -206,7 +224,7 @@ x_vec <- sapply(1:ncol(mat_avg), function(j){
 quantile(multtest_res$neglog_p_val)
 y_max <- 20
 x_max <- ceiling(max(abs(x_vec)))
-png("../../../../out/fig/Writeup10/sns_invip_esvd_graphbased_volcano_calibrate.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup11/sns_invip_esvd_volcano_calibrate.png", height = 1200, width = 1200,
     units = "px", res = 300)
 plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
      main = "Volcano plot for IN-VIP",
