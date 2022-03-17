@@ -17,25 +17,6 @@ covariate_df[,"region"] <- as.factor(covariate_df[,"region"])
 covariate_df[,"diagnosis"] <- factor(covariate_df[,"diagnosis"], levels = c("Control", "ASD"))
 covariate_df[,"sex"] <- as.factor(covariate_df[,"sex"])
 covariate_df[,"Seqbatch"] <- as.factor(covariate_df[,"Seqbatch"])
-
-idx_list <- lapply(unique(covariate_df[,"individual"]), function(indiv){
-  which(covariate_df[,"individual"] == indiv)
-})
-names(idx_list) <- unique(covariate_df[,"individual"])
-indiv_status <- t(sapply(unique(covariate_df[,"individual"]), function(indiv){
-  diagnosis <- covariate_df[which(covariate_df[,"individual"] == indiv)[1],"diagnosis"]
-  c(as.character(indiv), as.character(diagnosis))
-}))
-set.seed(10)
-indiv_status[,2] <- sample(indiv_status[,2])
-diagnosis_vec <- as.character(covariate_df[,"diagnosis"])
-table(diagnosis_vec, covariate_df[,"individual"])
-for(i in 1:length(idx_list)){
-  diagnosis_vec[idx_list[[i]]] <- indiv_status[i,2]
-}
-table(diagnosis_vec, covariate_df[,"individual"])
-covariate_df[,"diagnosis"] <- factor(diagnosis_vec, levels = c("Control", "ASD"))
-
 covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
                                         mixed_effect_variables = c("individual", "Seqbatch"))
