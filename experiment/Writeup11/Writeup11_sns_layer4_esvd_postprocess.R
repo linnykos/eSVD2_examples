@@ -1,6 +1,6 @@
 rm(list=ls())
 library(Seurat)
-load("../../../../out/Writeup11/Writeup11_sns_invip_esvd2.RData")
+load("../../../../out/Writeup11/Writeup11_sns_layer4_esvd.RData")
 source("../Writeup10/multiple_testing.R")
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
@@ -115,13 +115,9 @@ col_vec[de_idx] <- 2
 shuf_idx <- c(hk_idx, de_idx, other_idx)
 shuf_idx <- shuf_idx[sample(length(shuf_idx))]
 
-quantile(teststat_vec)
-quantile(teststat_vec, probs = seq(0.9, 1, length.out=11))
-colnames(mat)[order(abs(teststat_vec), decreasing = T)[1:20]]
-
 teststat_vec <- pmax(pmin(teststat_vec, 30), -30)
 max_val <- max(abs(teststat_vec))
-png("../../../../out/fig/Writeup11/sns_invip_esvd2_teststat_histogram.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup11/sns_layer4_esvd_teststat_histogram.png", height = 1200, width = 1200,
     units = "px", res = 300)
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
@@ -137,7 +133,7 @@ legend("topright", c("Published DE gene", "Other interest gene", "Housekeeping g
        fill = c(2,4,3), cex = 0.6)
 graphics.off()
 
-png("../../../../out/fig/Writeup11/sns_invip_esvd2_teststat_histogram_separate.png",
+png("../../../../out/fig/Writeup11/sns_layer4_esvd_teststat_histogram_separate.png",
     height = 1000, width = 3000,
     units = "px", res = 300)
 par(mfrow = c(1,3), mar = c(4,4,4,0.5))
@@ -166,11 +162,11 @@ null_res <- logcondens::logConDens(teststat_vec[hk_idx],
                                             1.5*max(teststat_vec),
                                             length.out = 1000))
 dens_val <- null_res$f.smoothed
-dens_val <- dens_val * 400/max(dens_val)
+dens_val <- dens_val * 300/max(dens_val)
 max_val <- max(abs(teststat_vec))
 break_vec <- seq(-max_val-0.05, max_val+0.05, by = 0.1)
 break_vec[1] <- -max_val-0.05; break_vec[length(break_vec)] <- max_val+0.05
-png("../../../../out/fig/Writeup11/sns_invip_esvd2_teststat_histogram_logconcave.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup11/sns_layer4_esvd_teststat_histogram_logconcave.png", height = 1200, width = 1200,
     units = "px", res = 300)
 hist(teststat_vec, breaks = break_vec,
      xlim = c(-max_val, max_val),
@@ -189,7 +185,7 @@ names(teststat_vec) <- colnames(mat)
 multtest_res <- multttest_calibrate(teststat_vec = teststat_vec,
                                     null_dens = null_res$f.smoothed,
                                     null_x = null_res$xs,
-                                    fdr_cutoff = 0.05,
+                                    fdr_cutoff = 0.01,
                                     two_sided = T)
 
 multtest_res$idx
@@ -197,6 +193,7 @@ length(multtest_res$idx)
 length(intersect(multtest_res$idx, de_gene_specific))
 length(intersect(multtest_res$idx, de_genes))
 length(intersect(multtest_res$idx, sfari_genes))
+length(intersect(multtest_res$idx, unique(c(de_gene_specific, de_genes, sfari_genes))))
 length(intersect(multtest_res$idx, hk_genes))
 
 #########
@@ -220,7 +217,7 @@ x_vec <- sapply(1:ncol(mat_avg), function(j){
 quantile(multtest_res$neglog_p_val)
 y_max <- 20
 x_max <- ceiling(max(abs(x_vec)))
-png("../../../../out/fig/Writeup11/sns_invip_esvd2_volcano_calibrate.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup11/sns_layer4_esvd_volcano_calibrate.png", height = 1200, width = 1200,
     units = "px", res = 300)
 plot(NA, xlim = c(-x_max, x_max), ylim = range(0, y_max), bty = "n",
      main = "Volcano plot for IN-VIP",
@@ -246,3 +243,19 @@ lines(x = c(-2*x_max, 2*x_max), y = rep(min(multtest_res$neglog_p_val[multtest_r
 legend("topleft", c("Published DE gene", "Other interest gene", "Housekeeping gene", "Other"),
        fill = c(2,4,3,rgb(0.5,0.5,0.5)), cex = 0.5)
 graphics.off()
+
+########################
+
+write_genes(multtest_res$idx,
+            file = "../../../../out/Writeup11/Writeup11_sns_layer4_esvd_de.txt")
+
+set.seed(10)
+ego <-  clusterProfiler::enrichGO(gene = multtest_res$idx,
+                                  universe = colnames(mat),
+                                  OrgDb = org.Hs.eg.db::org.Hs.eg.db,
+                                  keyType = "SYMBOL",
+                                  ont = "BP",
+                                  pAdjustMethod = "BH",
+                                  pvalueCutoff  = 0.05,
+                                  qvalueCutoff  = 0.05)
+
