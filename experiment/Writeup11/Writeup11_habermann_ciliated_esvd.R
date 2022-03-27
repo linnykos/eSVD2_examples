@@ -43,9 +43,9 @@ habermann <- subset(habermann, keep == 1)
 
 Seurat::DefaultAssay(habermann) <- "RNA"
 habermann <- Seurat::NormalizeData(habermann,
-                               normalization.method = "LogNormalize", scale.factor = 10000)
+                                   normalization.method = "LogNormalize", scale.factor = 10000)
 habermann <- Seurat::FindVariableFeatures(habermann,
-                                      selection.method = "vst", nfeatures = 5000)
+                                          selection.method = "vst", nfeatures = 5000)
 
 df_mat <- read.csv("~/project/eSVD/data/GSE135893_habermann_lung/Table_S4_DEG_analysis/Disease_vs_Control/Ciliated_disease_vs_control_.csv",
                    sep = ",")
@@ -67,51 +67,53 @@ all_genes <- unique(c(Seurat::VariableFeatures(habermann),
 all_available_genes <- intersect(rownames(adams), rownames(habermann))
 all_genes <- intersect(all_available_genes, all_genes)
 
-adams[["RNA"]]@var.features <- all_genes
+habermann[["RNA"]]@var.features <- all_genes
 
 #############################
 
-mat <- as.matrix(Matrix::t(adams[["RNA"]]@counts[adams[["RNA"]]@var.features,]))
-covariate_dat <- adams@meta.data[,c("percent.mt", "Disease_Identity", "Subject_Identity",
-                                    "Gender", "Age", "Ethnicity", "Tobacco")]
+mat <- as.matrix(Matrix::t(habermann[["RNA"]]@counts[habermann[["RNA"]]@var.features,]))
+covariate_dat <- habermann@meta.data[,c("Diagnosis", "Sample_Name", "Sample_Source",
+                                        "percent.mt", "Gender", "Age", "Ethnicity", "Tobacco")]
 tmp <- as.character(covariate_dat$Ethnicity)
-tmp[tmp != "white"] <- "nonwhite"
+tmp[tmp != "Caucasian"] <- "nonCaucasian"
 covariate_dat$Ethnicity <- as.factor(tmp)
 covariate_df <- data.frame(covariate_dat)
 covariate_df[,"Gender"] <- as.factor(covariate_df[,"Gender"])
 covariate_df[,"Ethnicity"] <- as.factor(covariate_df[,"Ethnicity"])
-covariate_df[,"Disease_Identity"] <- factor(covariate_df[,"Disease_Identity"], levels = c("Control", "IPF"))
+covariate_df[,"Diagnosis"] <- factor(covariate_df[,"Diagnosis"], levels = c("Control", "IPF"))
 covariate_df[,"Tobacco"] <- as.factor(covariate_df[,"Tobacco"])
-covariate_df[,"Subject_Identity"] <- as.factor(covariate_df[,"Subject_Identity"])
+covariate_df[,"Sample_Name"] <- as.factor(covariate_df[,"Sample_Name"])
+covariate_df[,"Sample_Source"] <- as.factor(covariate_df[,"Sample_Source"])
 
 covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
-                                        mixed_effect_variables = c("Subject_Identity"))
+                                        mixed_effect_variables = c("Sample_Name", "Sample_Source"))
 
 #####################
-mixed_effect_variables <- colnames(covariates)[grep("^Subject_Identity_", colnames(covariates))]
+mixed_effect_variables <- c(colnames(covariates)[grep("^Sample_Name", colnames(covariates))],
+                            colnames(covariates)[grep("^Sample_Source", colnames(covariates))])
 
 time_start1 <- Sys.time()
 esvd_init <- eSVD2:::initialize_esvd(dat = mat,
                                      covariates = covariates,
-                                     case_control_variable = "Disease_Identity_IPF",
+                                     case_control_variable = "Diagnosis",
                                      k = 30,
                                      lambda = 0.1,
                                      mixed_effect_variables = mixed_effect_variables,
                                      offset_variables = "Log_UMI",
                                      verbose = 2,
-                                     tmp_path = "../../../../out/Writeup11/Writeup11_adams_ciliated_esvd_tmp.RData")
+                                     tmp_path = "../../../../out/Writeup11/Writeup11_habermann_ciliated_esvd_tmp.RData")
 time_end1 <- Sys.time()
 
-save(date_of_run, session_info, adams, covariate_df,
+save(date_of_run, session_info, habermann, covariate_df,
      esvd_init, time_start1, time_end1,
-     file = "../../../../out/Writeup11/Writeup11_adams_ciliated_esvd.RData")
+     file = "../../../../out/Writeup11/Writeup11_habermann_ciliated_esvd.RData")
 
 #############
 
 print("Starting first eSVD fit")
 
-case_control_variable <- "Disease_Identity_IPF"
+case_control_variable <- "Diagnosis"
 offset_var <- setdiff(colnames(esvd_init$covariates), case_control_variable)
 offset_mat <- tcrossprod(esvd_init$covariates[,offset_var], esvd_init$b_mat[,offset_var])
 covariate_init <- esvd_init$covariates[,case_control_variable,drop = F]
@@ -139,10 +141,10 @@ esvd_res <- eSVD2::opt_esvd(esvd_init$x_mat,
                             verbose = 1)
 time_end2 <- Sys.time()
 
-save(date_of_run, session_info, adams, covariate_df,
+save(date_of_run, session_info, habermann, covariate_df,
      esvd_init, time_start1, time_end1,
      esvd_res, time_start2, time_end2,
-     file = "../../../../out/Writeup11/Writeup11_adams_ciliated_esvd.RData")
+     file = "../../../../out/Writeup11/Writeup11_habermann_ciliated_esvd.RData")
 
 ##################
 
@@ -173,11 +175,11 @@ esvd_res_full <- eSVD2::opt_esvd(esvd_res$x_mat,
                                  verbose = 1)
 time_end3 <- Sys.time()
 
-save(date_of_run, session_info, adams, covariate_df,
+save(date_of_run, session_info, habermann, covariate_df,
      esvd_init, time_start1, time_end1,
      esvd_res, time_start2, time_end2,
      esvd_res_full, time_start3, time_end3,
-     file = "../../../../out/Writeup11/Writeup11_adams_ciliated_esvd.RData")
+     file = "../../../../out/Writeup11/Writeup11_habermann_ciliated_esvd.RData")
 
 ###########
 
@@ -203,11 +205,11 @@ nuisance_vec <- sapply(1:ncol(mat), function(j){
 })
 time_end4 <- Sys.time()
 
-save(date_of_run, session_info, adams, covariate_df,
+save(date_of_run, session_info, habermann, covariate_df,
      esvd_init, time_start1, time_end1,
      esvd_res, time_start2, time_end2,
      esvd_res_full, time_start3, time_end3,
      nuisance_vec, time_start4, time_end4,
-     file = "../../../../out/Writeup11/Writeup11_adams_ciliated_esvd.RData")
+     file = "../../../../out/Writeup11/Writeup11_habermann_ciliated_esvd.RData")
 
 print("Finished")
