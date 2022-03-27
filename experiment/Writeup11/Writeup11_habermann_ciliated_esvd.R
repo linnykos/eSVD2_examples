@@ -96,7 +96,7 @@ mixed_effect_variables <- c(colnames(covariates)[grep("^Sample_Name", colnames(c
 time_start1 <- Sys.time()
 esvd_init <- eSVD2:::initialize_esvd(dat = mat,
                                      covariates = covariates,
-                                     case_control_variable = "Diagnosis",
+                                     case_control_variable = "Diagnosis_IPF",
                                      k = 30,
                                      lambda = 0.1,
                                      mixed_effect_variables = mixed_effect_variables,
@@ -113,7 +113,7 @@ save(date_of_run, session_info, habermann, covariate_df,
 
 print("Starting first eSVD fit")
 
-case_control_variable <- "Diagnosis"
+case_control_variable <- "Diagnosis_IPF"
 offset_var <- setdiff(colnames(esvd_init$covariates), case_control_variable)
 offset_mat <- tcrossprod(esvd_init$covariates[,offset_var], esvd_init$b_mat[,offset_var])
 covariate_init <- esvd_init$covariates[,case_control_variable,drop = F]
