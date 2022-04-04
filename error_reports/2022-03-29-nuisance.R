@@ -5,8 +5,8 @@ for(i in 1:length(nuisance_error_list$error)){
   print(i)
   testthat::expect_error(
     eSVD2:::gamma_rate(x = nuisance_error_list$error[[i]][,"x"],
-                     mu = nuisance_error_list$error[[i]][,"mu"],
-                     s = nuisance_error_list$error[[i]][,"s"])
+                       mu = nuisance_error_list$error[[i]][,"mu"],
+                       s = nuisance_error_list$error[[i]][,"s"])
   )
 }
 
@@ -19,6 +19,10 @@ for(i in 1:length(nuisance_error_list$nan)){
                              s = nuisance_error_list$nan[[i]][,"s"])
   stopifnot(is.nan(val))
 }
+
+quantile(nuisance_error_list$nan[[1]][,"x"])
+quantile(nuisance_error_list$nan[[1]][,"mu"])
+quantile(nuisance_error_list$nan[[1]][,"s"])
 
 ####
 
