@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/Writeup10/Writeup10_sns_invip_processed2.RData")
+load("../../../../out/Writeup10/Writeup10_sns_layer23_processed2.RData")
 
 library(Seurat)
 library(eSVD2)
@@ -60,13 +60,13 @@ for(replication_idx in 1:replication_total){
                                        mixed_effect_variables = mixed_effect_variables,
                                        offset_variables = "Log_UMI",
                                        verbose = 2,
-                                       tmp_path = paste0("../../../../out/Writeup11/Writeup11_sns_invip_esvd_resample_tmp_",
+                                       tmp_path = paste0("../../../../out/Writeup11/Writeup11_sns_layer23_esvd_resample_tmp_",
                                                          replication_idx, ".RData"))
   time_end1 <- Sys.time()
 
   save(date_of_run, session_info, sns, covariate_df,
        esvd_init, time_start1, time_end1,
-       file = paste0("../../../../out/Writeup11/Writeup11_sns_invip_esvd_resample_", replication_idx, ".RData"))
+       file = paste0("../../../../out/Writeup11/Writeup11_sns_layer23_esvd_resample_", replication_idx, ".RData"))
 
   #############
 
@@ -104,7 +104,7 @@ for(replication_idx in 1:replication_total){
   save(date_of_run, session_info, sns, covariate_df,
        esvd_init, time_start1, time_end1,
        esvd_res, time_start2, time_end2,
-       file = paste0("../../../../out/Writeup11/Writeup11_sns_invip_esvd_resample_", replication_idx, ".RData"))
+       file = paste0("../../../../out/Writeup11/Writeup11_sns_layer23_esvd_resample_", replication_idx, ".RData"))
 
   ##################
 
@@ -139,7 +139,7 @@ for(replication_idx in 1:replication_total){
        esvd_init, time_start1, time_end1,
        esvd_res, time_start2, time_end2,
        esvd_res_full, time_start3, time_end3,
-       file = paste0("../../../../out/Writeup11/Writeup11_sns_invip_esvd_resample_", replication_idx, ".RData"))
+       file = paste0("../../../../out/Writeup11/Writeup11_sns_layer23_esvd_resample_", replication_idx, ".RData"))
 
   ###########
 
@@ -170,7 +170,7 @@ for(replication_idx in 1:replication_total){
        esvd_res, time_start2, time_end2,
        esvd_res_full, time_start3, time_end3,
        nuisance_vec, time_start4, time_end4,
-       file = paste0("../../../../out/Writeup11/Writeup11_sns_invip_esvd_resample_", replication_idx, ".RData"))
+       file = paste0("../../../../out/Writeup11/Writeup11_sns_layer23_esvd_resample_", replication_idx, ".RData"))
 
   print("Finished")
 }
