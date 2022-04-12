@@ -1,7 +1,7 @@
-# try with no pvalue-initialization-test and no ethnicity/batch covariate
 rm(list=ls())
 load("../../../../out/Writeup11/Writeup11_adams_epithelial_preprocessed.RData")
 load("../../../../out/Writeup11/Writeup11_habermann_epithelial_preprocessed.RData")
+# try with no pvalue-initialization-test and no ethnicity/batch covariate
 
 library(Seurat)
 library(eSVD2)
