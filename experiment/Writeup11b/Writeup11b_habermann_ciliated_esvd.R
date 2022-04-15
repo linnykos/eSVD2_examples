@@ -74,9 +74,6 @@ habermann[["RNA"]]@var.features <- all_genes
 mat <- as.matrix(Matrix::t(habermann[["RNA"]]@counts[habermann[["RNA"]]@var.features,]))
 covariate_dat <- habermann@meta.data[,c("Diagnosis", "Sample_Name",
                                         "percent.mt", "Gender", "Age", "Tobacco")]
-tmp <- as.character(covariate_dat$Ethnicity)
-tmp[tmp != "Caucasian"] <- "nonCaucasian"
-covariate_dat$Ethnicity <- as.factor(tmp)
 covariate_df <- data.frame(covariate_dat)
 covariate_df[,"Gender"] <- as.factor(covariate_df[,"Gender"])
 covariate_df[,"Diagnosis"] <- factor(covariate_df[,"Diagnosis"], levels = c("Control", "IPF"))
