@@ -82,7 +82,7 @@ graphics.off()
 
 vec1 <- esvd_res_full$b_mat[,case_control_variable]
 names(vec1) <- colnames(mat)
-vec2 <- log1p(esvd_init$pval_vec)
+vec2 <- esvd_init$log_pval_vec
 names(vec2) <- colnames(mat)
 png("../../../../out/fig/Writeup11b/habermann_epithelial_esvd2_additional_histogram.png",
     height = 1000, width = 2000,
@@ -90,7 +90,7 @@ png("../../../../out/fig/Writeup11b/habermann_epithelial_esvd2_additional_histog
 par(mfrow = c(1,2), mar = c(4,4,4,0.5))
 histogram_plot(col_template_vec = c(2,4,3),
                gene_list = gene_list,
-               teststat_vec = vec1,
+               teststat_vec = vec2,
                hist_spacing = 0.5,
                main = "Habermann: Initial p-value")
 
