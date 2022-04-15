@@ -77,7 +77,6 @@ covariate_dat <- adams@meta.data[,c("percent.mt", "Disease_Identity", "Subject_I
                                     "Gender", "Age", "Tobacco")]
 covariate_df <- data.frame(covariate_dat)
 covariate_df[,"Gender"] <- as.factor(covariate_df[,"Gender"])
-covariate_df[,"Ethnicity"] <- as.factor(covariate_df[,"Ethnicity"])
 covariate_df[,"Disease_Identity"] <- factor(covariate_df[,"Disease_Identity"], levels = c("Control", "IPF"))
 covariate_df[,"Tobacco"] <- as.factor(covariate_df[,"Tobacco"])
 covariate_df[,"Subject_Identity"] <- as.factor(covariate_df[,"Subject_Identity"])
