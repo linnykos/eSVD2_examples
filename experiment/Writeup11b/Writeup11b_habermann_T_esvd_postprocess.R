@@ -4,6 +4,23 @@ library(Seurat)
 source("multiple_testing.R")
 source("plotting.R")
 
+
+# reparameterize the results
+nat_mat <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat) +
+  tcrossprod(esvd_res_full$covariates, esvd_res_full$b_mat)
+esvd_res_full2 <- final_reparameterization(esvd_res = esvd_res_full,
+                                           exclude_vars = colnames(esvd_res_full$covariates)[grep("^Sample_Name", colnames(esvd_res_full$covariates))])
+nat_mat2 <- tcrossprod(esvd_res_full2$x_mat, esvd_res_full2$y_mat) +
+  tcrossprod(esvd_res_full2$covariates, esvd_res_full2$b_mat)
+sum(abs(nat_mat - nat_mat2))
+tmp <- crossprod(esvd_res_full2$x_mat); diag(tmp) <- 0
+sum(abs(tmp))
+tmp <- stats::cor(esvd_res_full2$x_mat); diag(tmp) <- 0
+sum(abs(tmp))
+tmp <- crossprod(esvd_res_full2$x_mat, esvd_res_full2$covariates[,-grep("^Sample_Name", colnames(esvd_res_full2$covariates))])
+sum(abs(tmp))
+esvd_res_full <- esvd_res_full2
+
 mat <- as.matrix(Matrix::t(habermann[["RNA"]]@counts[habermann[["RNA"]]@var.features,]))
 case_control_variable <- "Diagnosis_IPF"
 nuisance_vec[is.na(nuisance_vec)] <- 0
