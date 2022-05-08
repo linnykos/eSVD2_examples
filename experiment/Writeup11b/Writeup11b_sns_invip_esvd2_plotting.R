@@ -1,15 +1,15 @@
 rm(list=ls())
 load("../../../../out/Writeup11/Writeup11_sns_invip_esvd2.RData")
+source("reparameterization.R")
 
+esvd_res_full2 <- final_reparameterization(esvd_res = esvd_res_full,
+                                           exclude_vars = colnames(esvd_res_full$covariates)[c(
+                                             grep("^individual_", colnames(esvd_res_full$covariates)),
+                                             grep("^Seqbatch_", colnames(esvd_res_full$covariates))
+                                           )])
+esvd_res_full <- esvd_res_full2
 
 mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
-tmp <- compute_posterior(mat = mat,
-                         esvd_res = esvd_res_full,
-                         nuisance_vec = nuisance_vec,
-                         case_control_variable = "diagnosis_ASD",
-                         alpha_max = 50,
-                         nuisance_lower_quantile = 0.01)
-
 set.seed(10)
 png("../../../../out/fig/Writeup11b/Writeup11b_sns_invip_scatterplot_mean.png",
     height = 1800, width = 3500,
@@ -28,11 +28,13 @@ plot_scatterplot_mean(mat = mat,
                       esvd_res = esvd_res_full,
                       nuisance_vec = nuisance_vec,
                       case_control_variable = "diagnosis_ASD",
-                      bool_logscale = T,
                       mean_type = "posterior",
+                      bool_logscale = T,
+                      only_nonzero = T,
                       main = "IN-VIP (Observed vs. posterior)",
                       xlab = "Posterior value (Log-scale)",
-                      ylab = "Depth-normalized observed value (Log-scale)")
+                      ylab = "Depth-normalized observed value (Log-scale)",
+                      asp = F)
 graphics.off()
 
 ###########
@@ -88,8 +90,8 @@ mean_mat_nolib <- exp(nat_mat_nolib)
 set.seed(10)
 res2 <- compute_gene_librarysize(mat = mean_mat_nolib,
                                  avg_expression = avg_expression,
-                                library_size_vec = Matrix::rowSums(mat),
-                                verbose = 1)
+                                 library_size_vec = Matrix::rowSums(mat),
+                                 verbose = 1)
 png("../../../../out/fig/Writeup11b/Writeup11b_sns_invip_gene_librarysize_esvd.png",
     height = 2000, width = 3000,
     units = "px", res = 300)
@@ -98,3 +100,40 @@ plot_gene_librarysize(res2,
                       xlab = "Library size",
                       ylab = "Denoised gene expression")
 graphics.off()
+
+######################
+
+mat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
+sparsity_vec <- apply(mat, 2, function(x){length(which(x == 0))})
+idx <- order(sparsity_vec, decreasing = T)[1:50]
+gene_names <- colnames(mat)[idx]
+
+set.seed(10)
+png("../../../../out/fig/Writeup11b/Writeup11b_sns_invip_scatterplot_mean_sparsegenes.png",
+    height = 1800, width = 3500,
+    units = "px", res = 300)
+par(mfrow = c(1,2))
+plot_scatterplot_mean(mat = mat,
+                      esvd_res = esvd_res_full,
+                      nuisance_vec = nuisance_vec,
+                      case_control_variable = "diagnosis_ASD",
+                      gene_names = gene_names,
+                      mean_type = "predicted",
+                      main = "IN-VIP (Observed vs. predicted)\nSparse genes",
+                      xlab = "Predicted value",
+                      ylab = "Observed value")
+
+plot_scatterplot_mean(mat = mat,
+                      esvd_res = esvd_res_full,
+                      nuisance_vec = nuisance_vec,
+                      case_control_variable = "diagnosis_ASD",
+                      gene_names = gene_names,
+                      mean_type = "posterior",
+                      bool_logscale = T,
+                      only_nonzero = T,
+                      main = "IN-VIP (Observed vs. posterior)\nSparse genes",
+                      xlab = "Posterior value (Log-scale)",
+                      ylab = "Depth-normalized observed value (Log-scale)",
+                      asp = F)
+graphics.off()
+

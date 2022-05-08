@@ -3,7 +3,7 @@ load("../../../../out/Writeup11b/Writeup11b_habermann_T_esvd.RData")
 library(Seurat)
 source("multiple_testing.R")
 source("plotting.R")
-
+source("reparameterization.R")
 
 # reparameterize the results
 nat_mat <- tcrossprod(esvd_res_full$x_mat, esvd_res_full$y_mat) +
@@ -202,11 +202,14 @@ for(i in 1:length(idx_list)){
   col_vec[idx_list[[i]]] <- col_template_vec[i]
 }
 
+xlim <- quantile(habermann_teststat_vec, probs = c(0.01, 0.99))*1.1
+ylim <- quantile(adams_teststat_vec, probs = c(0.01, 0.99))*1.1
+
 png("../../../../out/fig/Writeup11b/habermann_adams_teststatistic.png",
     height = 2500, width = 2500, res = 300, units = "px")
 plot(habermann_teststat_vec, adams_teststat_vec,
      xlab = "Habermann", ylab = "Adams", pch = 16, col = col_vec,
-     xlim = c(-10,10), ylim = c(-10,10))
+     xlim = xlim, ylim = ylim)
 graphics.off()
 
 png("../../../../out/fig/Writeup11b/habermann_adams_teststatistic_separate.png",
@@ -215,7 +218,7 @@ par(mfrow = c(1,3))
 for(i in 1:length(idx_list)){
   plot(habermann_teststat_vec[idx_list[[i]]], adams_teststat_vec[idx_list[[i]]],
        xlab = "Habermann", ylab = "Adams", pch = 16, col = col_template_vec[i],
-       xlim = c(-10,10), ylim = c(-10,10))
+       xlim = xlim, ylim = ylim)
   lines(c(-15,15), rep(0,2), lwd = 2, lty = 2)
   lines(rep(0,2), c(-15,15), lwd = 2, lty = 2)
 }
