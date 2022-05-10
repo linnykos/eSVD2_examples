@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/Writeup10/Writeup10_sns_layer4_processed2.RData")
+load("../../../../out/Writeup10/Writeup10_sns_invip_processed2.RData")
 
 library(Seurat)
 library(eSVD2)
@@ -77,7 +77,7 @@ save(date_of_run, session_info, sns, covariate_df,
      eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
-     file = "../../../../out/Writeup11c/Writeup11c_sns_layer4_esvd.RData")
+     file = "../../../../out/Writeup11c/Writeup11c_sns_invip_esvd.RData")
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj)
 metadata <- sns@meta.data
@@ -94,7 +94,7 @@ save(date_of_run, session_info, sns, covariate_df,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../../out/Writeup11c/Writeup11c_sns_layer4_esvd.RData")
+     file = "../../../../out/Writeup11c/Writeup11c_sns_invip_esvd.RData")
 
 
 
