@@ -38,7 +38,8 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                    verbose = 1)
 time_end1 <- Sys.time()
 
-pval_thres <- min(10^(quantile(eSVD_obj$initial_Reg$log_pval, probs = 0.05)), 1e-5)
+# pval_thres <- min(10^(quantile(eSVD_obj$initial_Reg$log_pval, probs = 0.05)), 1e-5)
+pval_thres <- 0.001
 eSVD_obj <- eSVD2:::apply_initial_threshold(eSVD_obj = eSVD_obj,
                                             pval_thres = pval_thres,
                                             verbose = 1)
