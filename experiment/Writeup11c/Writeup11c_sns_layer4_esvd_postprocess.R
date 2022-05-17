@@ -8,6 +8,7 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
+eSVD_obj$param$init_pval_thres
 quantile(eSVD_obj$fit_Second$nuisance_vec)
 
 load("../../../../data/sns_autism/velmeshev_genes.RData")
