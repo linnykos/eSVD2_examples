@@ -8,6 +8,20 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
+eSVD_obj$fit_Second$posterior_mean_mat <- NULL
+eSVD_obj$fit_Second$posterior_var_mat <- NULL
+
+eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
+                                      library_size_variable = "Log_UMI")
+metadata <- sns@meta.data
+metadata[,"individual"] <- as.factor(metadata[,"individual"])
+time_start5 <- Sys.time()
+eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
+                                           covariate_individual = "individual",
+                                           metadata = metadata,
+                                           verbose = 2)
+time_end5 <- Sys.time()
+
 eSVD_obj$param$init_pval_thres
 quantile(eSVD_obj$fit_Second$nuisance_vec)
 
