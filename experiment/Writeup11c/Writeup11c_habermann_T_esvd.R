@@ -84,7 +84,7 @@ covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
                                         mixed_effect_variables = "Sample_Name")
 
-case_control_variable <- "Diagnosis"
+case_control_variable <- "Diagnosis_IPF"
 library_size_variable <- "Log_UMI"
 mixed_effect_variables <- c(colnames(covariates)[grep("^Sample_Name", colnames(covariates))])
 
