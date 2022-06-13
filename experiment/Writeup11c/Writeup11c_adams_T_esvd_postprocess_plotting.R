@@ -9,6 +9,19 @@ date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 eSVD_obj$param$init_library_size_variable <- "Log_UMI"
 
+eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
+                                      verbose = 1)
+
+eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
+                                      library_size_variable = library_size_variable)
+metadata <- adams@meta.data
+metadata[,"Subject_Identity"] <- as.factor(metadata[,"Subject_Identity"])
+eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
+                                           covariate_individual = "Subject_Identity",
+                                           metadata = metadata,
+                                           verbose = 2)
+
+
 df_mat <- read.csv("~/project/eSVD/data/GSE136831_adams_lung/aba1983_Data_S8.txt",
                    sep = "\t")
 adams_df_genes <- df_mat$gene[which(df_mat$cellType == "T")]
@@ -36,6 +49,7 @@ indiv_controls <- rownames(tab)[which(tab[,"Control"] != 0)]
 indiv_vec <- factor(as.character(adams$Subject_Identity))
 
 round(apply(eSVD_obj$fit_Second$z_mat, 2, quantile), 2)
+quantile(eSVD_obj$fit_Second$z_mat[,"Gender_Male"], probs = seq(0,1,length.out=11))
 
 #########################################
 
