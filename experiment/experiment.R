@@ -1,130 +1,98 @@
-set.seed(123)
-n <- 100
-p <- 150
-k <- 5
-x_mat <- matrix(abs(rnorm(n * k))/10, nrow = n, ncol = k)
-y_mat <- matrix(abs(rnorm(p * k))/10, nrow = p, ncol = k)
-covariates <- cbind(sample(c(0,1), size = n, replace = T),
-                    matrix(rnorm(n * 3, mean = 1, sd = 0.1), nrow = n, ncol = 3))
-colnames(covariates) <- paste0("covariate_", 1:4)
-z_mat <- cbind(c(rep(0, p/2), rep(100, p/2)), rep(10,p), rep(10,p), rep(1,p))
-colnames(z_mat) <- paste0("covariate_", 1:4)
-nat_mat <- tcrossprod(x_mat, y_mat) + tcrossprod(covariates, z_mat)/50
+plot(eSVD_obj$fit_First$z_mat[,"covariate_1"])
 
-# Simulate data
-dat <- generate_data(nat_mat,
-                     family = "poisson",
-                     nuisance_param_vec = NA,
-                     library_size_vec = 1)
-dat <- Matrix::Matrix(dat, sparse = T)
-colnames(dat) <- paste0("g", 1:ncol(dat))
-rownames(dat) <- paste0("c", 1:nrow(dat))
+nat_mat1 <- tcrossprod(eSVD_obj$fit_First$x_mat, eSVD_obj$fit_First$y_mat)
+nat_mat2 <- tcrossprod(eSVD_obj$covariates, eSVD_obj$fit_First$z_mat)
+pred_mat <- exp(nat_mat1 + nat_mat2)
+image(pred_mat)
 
-# res <- .initialize_coefficient(bool_intercept = T,
-#                                case_control_variable = "covariate_1",
-#                                covariates = covariates,
-#                                dat = dat,
-#                                lambda = 0.1,
-#                                mixed_effect_variables = c("covariate_2", "covariate_3"),
-#                                offset_variables = NULL)
+esvd_res <- eSVD_obj$fit_First
+covariates <- eSVD_obj$covariates
+library_size_variable <- "Log_UMI"
+library_idx <- which(colnames(covariates) %in% c("Intercept", library_size_variable))
+nat_mat1 <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat)
+nat_mat2 <- tcrossprod(covariates[,-library_idx],
+                       esvd_res$z_mat[,-library_idx])
+# image(nat_mat1 + nat_mat2)
 
-#############
-bool_intercept = T
-case_control_variable = "covariate_1"
-lambda = 0.1
-mixed_effect_variables = c("covariate_2", "covariate_3")
-offset_variables = NULL
-verbose = 2
+pred_mat <- exp(nat_mat1 + nat_mat2)
+image(pred_mat)
+image(log(pred_mat))
 
-n <- nrow(dat); p <- ncol(dat)
-covariates_nooffset <- covariates[,which(!colnames(covariates) %in% offset_variables)]
-offset_vec <- Matrix::rowSums(covariates[,offset_variables,drop = F])
+plot(esvd_res$z_mat[,"covariate_1"])
+plot(esvd_res$z_mat[,"covariate_2"])
+plot(esvd_res$z_mat[,"covariate_3"])
+plot(esvd_res$z_mat[,"covariate_4"])
+plot(esvd_res$z_mat[,"Intercept"])
+plot(esvd_res$z_mat[,"Log_UMI"])
 
-log_pval <- rep(NA, p)
-names(log_pval) <- colnames(dat)
+esvd_res <- eSVD_obj$fit_Init
+plot(eSVD_obj$initial_Reg$z_mat1[,"covariate_1"])
+plot(eSVD_obj$initial_Reg$log_pval)
+plot(esvd_res$z_mat[,"covariate_1"])
+plot(esvd_res$z_mat[,"covariate_2"])
+plot(esvd_res$z_mat[,"covariate_3"])
+plot(esvd_res$z_mat[,"covariate_4"])
+plot(esvd_res$z_mat[,"Intercept"])
+plot(esvd_res$z_mat[,"Log_UMI"])
 
-if(bool_intercept){
-  colnames_vec <- c("Intercept", colnames(covariates_nooffset))
-} else {
-  colnames_vec <- colnames(covariates_nooffset)
-}
 
-z_mat1 <- matrix(NA, nrow = p, ncol = length(colnames_vec))
-z_mat2 <- matrix(NA, nrow = p, ncol = length(colnames_vec))
-colnames(z_mat1) <- colnames_vec
-colnames(z_mat2) <- colnames_vec
-rownames(z_mat2) <- colnames(dat)
-rownames(z_mat1) <- colnames(dat)
+###################
 
-# for(j in 1:p){
-#   print(j)
-#   if(verbose == 1 && p >= 10 && j %% floor(p/10) == 0) cat('*')
-#   if(verbose >= 2) print(paste0("Finished variable ", j , " of ", p))
-#   tmp <- .lrt_coefficient(bool_intercept = bool_intercept,
-#                           case_control_variable = case_control_variable,
-#                           covariates = covariates_nooffset,
-#                           lambda = lambda,
-#                           mixed_effect_variables = mixed_effect_variables,
-#                           offset_vec = offset_vec,
-#                           vec = as.numeric(dat[,j]),
-#                           verbose = verbose)
-#   z_mat1[j,] <- tmp$coef_vec1
-#   z_mat2[j,] <- tmp$coef_vec2
-#   log_pval[j] <- tmp$log_pval
-# }
+plot(eSVD_obj$fit_First$nuisance_vec, jitter(nuisance_vec))
 
-##############
+zz <- eSVD_obj$fit_First$posterior_mean_mat
+plot(zz[,1])
+plot(zz[,100])
+plot(zz[,150])
+plot(zz[,90])
 
-covariates = covariates_nooffset
-vec = as.numeric(dat[,j])
+image(eSVD_obj$fit_First$posterior_mean_mat)
+image(eSVD_obj$fit_First$posterior_var_mat)
+image(log(eSVD_obj$fit_First$posterior_mean_mat))
+image(log(eSVD_obj$fit_First$posterior_var_mat))
+zz <- eSVD_obj$fit_First$posterior_mean_mat
+zz <- pmin(zz, 1)
+image(zz)
 
-penalty_factor1 <- rep(0, ncol(covariates))
-penalty_factor1[colnames(covariates) %in% mixed_effect_variables] <- 1
-glm_fit1 <- glmnet::glmnet(x = covariates,
-                           y = vec,
-                           alpha = 0,
-                           family = "poisson",
-                           intercept = bool_intercept,
-                           lambda = exp(seq(log(1e4), log(lambda), length.out = 100)),
-                           offset = offset_vec,
-                           penalty.factor = penalty_factor1,
-                           standardize = F)
+eSVD_obj2 <- compute_posterior(input_obj = eSVD_obj,
+                               bool_adjust_covariates = F)
+image(eSVD_obj2$fit_First$posterior_mean_mat)
+zz <- eSVD_obj2$fit_First$posterior_mean_mat
+zz <- pmin(zz, 1)
+image(zz)
 
-if(bool_intercept){
-  coef_vec1 <- c(glm_fit1$a0[length(glm_fit1$a0)], glm_fit1$beta[,ncol(glm_fit1$beta)])
-  mean_vec1 <- exp(covariates %*% coef_vec1[-1] + offset_vec + coef_vec1[1])
-} else {
-  coef_vec1 <- glm_fit1$beta[,ncol(glm_fit1$beta)]
-  mean_vec1 <- exp(covariates %*% coef_vec1 + offset_vec)
-}
+######################
+case_control_variable <- "covariate_1"
+case_control_idx <- which(colnames(covariates) == case_control_variable)
+esvd_res <- eSVD_obj2$fit_First
+covariates <- eSVD_obj2$covariates
+library_size_variable <- "Log_UMI"
+library_idx <- which(colnames(covariates) %in% c("Intercept", library_size_variable))
 
-log_vec <- vec/mean_vec1; log_vec[vec != 0] <- log(log_vec[vec != 0])
-deviance1 <- 2*sum(vec*log_vec - (vec - mean_vec1))
+hist(covariates[,library_size_variable])
+hist(esvd_res$z_mat[,library_size_variable])
+hist(esvd_res$z_mat[,library_size_variable])
 
-covariates2 <- covariates[,which(colnames(covariates) != case_control_variable), drop = F]
-penalty_factor2 <- rep(0, ncol(covariates2))
-penalty_factor2[colnames(covariates2) %in% mixed_effect_variables] <- 1
-glm_fit2 <- glmnet::glmnet(x = covariates2,
-                           y = vec,
-                           alpha = 0,
-                           family = "poisson",
-                           intercept = bool_intercept,
-                           lambda = exp(seq(log(1e4), log(lambda), length.out = 100)),
-                           offset = offset_vec,
-                           penalty.factor = penalty_factor2,
-                           standardize = F)
-if(bool_intercept){
-  coef_vec2 <- c(glm_fit2$a0[length(glm_fit2$a0)], glm_fit2$beta[,ncol(glm_fit2$beta)])
-  mean_vec2 <- exp(covariates2 %*% coef_vec2[-1] + offset_vec + coef_vec2[1])
-} else {
-  coef_vec2 <- glm_fit2$beta[,ncol(glm_fit2$beta)]
-  mean_vec2 <- exp(covariates2 %*% coef_vec2 + offset_vec)
-}
-log_vec <- vec/mean_vec2; log_vec[vec != 0] <- log(log_vec[vec != 0])
-deviance2 <- 2*sum(vec*log_vec - (vec - mean_vec2))
+nat_mat1 <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat)
+nat_mat2 <- tcrossprod(covariates[,-library_idx],
+                       esvd_res$z_mat[,-library_idx])
+nat_mat_nolib <- nat_mat1 + nat_mat2
+mean_mat_nolib <- exp(nat_mat_nolib)
+library_tmp <- tcrossprod(
+  covariates[,library_idx], esvd_res$z_mat[,library_idx]
+)
+library_mat <- exp(library_tmp)
+library_mat <- pmin(library_mat, 500)
 
-residual_deviance <- max(deviance2 - deviance1, 0)
-log_pval <- stats::pchisq(residual_deviance, df = 1,
-                          lower.tail = FALSE,
-                          log.p = T)
+plot(as.numeric(library_mat), rep(Matrix::rowSums(dat), times = p), asp = T)
+plot(as.numeric(library_mat), rep(Matrix::rowSums(dat), times = p))
+
+#########
+
+library_tmp <- tcrossprod(
+  covariates[,"Log_UMI"], esvd_res$z_mat[,"Log_UMI"]
+)
+library_mat <- exp(library_tmp)
+library_mat <- pmin(library_mat, 500)
+plot(as.numeric(library_mat), rep(Matrix::rowSums(dat), times = p))
 
