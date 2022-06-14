@@ -148,12 +148,65 @@ plot(AplusAlpha[,90])
 ##########################
 ##########################
 
+k <- 150
+plot(eSVD_obj$fit_First$posterior_mean_mat[,k],
+     eSVD_obj$fit_First$posterior_var_mat[,k], asp = T,
+     col = covariates[,"case_control"]+1,
+     main = k)
 
-nat_mat1 <- tcrossprod(eSVD_obj$fit_First$x_mat, eSVD_obj$fit_First$y_mat)
-nat_mat2 <- tcrossprod(eSVD_obj$covariates[,c(1,2,6)], eSVD_obj$fit_First$z_mat[,c(1,2,6)])
-pred_mat <- exp(nat_mat1 + nat_mat2)
-image(pred_mat)
-plot(pred_mat[,1])
-plot(pred_mat[,10])
-plot(pred_mat[,100])
-plot(pred_mat[,150])
+##########################
+##########################
+
+input_obj <- eSVD_obj
+esvd_res <- eSVD_obj$fit_First
+nuisance_vec <- esvd_res$nuisance_vec
+case_control_variable <- .get_object(eSVD_obj = input_obj, what_obj = "init_case_control_variable", which_fit = "param")
+covariates <- .get_object(eSVD_obj = input_obj, what_obj = "covariates", which_fit = NULL)
+cc_vec <- covariates[,case_control_variable]
+cc_levels <- sort(unique(cc_vec), decreasing = F)
+stopifnot(length(cc_levels) == 2)
+control_idx <- which(cc_vec == cc_levels[1])
+case_idx <- which(cc_vec == cc_levels[2])
+
+covariate_individual = "individual"
+individual_vec <- metadata[,covariate_individual]
+control_individuals <- unique(individual_vec[control_idx])
+case_individuals <- unique(individual_vec[case_idx])
+stopifnot(length(intersect(control_individuals, case_individuals)) == 0)
+
+latest_Fit <- .get_object(eSVD_obj = input_obj, what_obj = "latest_Fit", which_fit = NULL)
+relevant_idx <- which(colnames(covariates) %in% "case_control")
+nat_mat1 <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat)
+nat_mat2 <- tcrossprod(covariates[,relevant_idx], esvd_res$z_mat[,relevant_idx])
+nat_mat_nolib <- nat_mat1 + nat_mat2
+mean_mat_nolib <- exp(nat_mat_nolib)
+library_mat <- exp(tcrossprod(
+  covariates[,-relevant_idx], esvd_res$z_mat[,-relevant_idx]
+))
+nuisance_vec <- pmax(nuisance_vec,
+                     stats::quantile(nuisance_vec, probs = 0.01))
+Alpha <- sweep(mean_mat_nolib, MARGIN = 2,
+               STATS = nuisance_vec, FUN = "*")
+AplusAlpha <- as.matrix(eSVD_obj$dat) + Alpha
+SplusBeta <- sweep(library_mat, MARGIN = 2,
+                   STATS = nuisance_vec, FUN = "+")
+posterior_mean_mat <- AplusAlpha/SplusBeta
+posterior_var_mat <- AplusAlpha/SplusBeta^2
+
+teststat_vec <- compute_test_statistic.default(
+  input_obj = posterior_mean_mat,
+  posterior_var_mat = posterior_var_mat,
+  case_individuals = case_individuals,
+  control_individuals = control_individuals,
+  covariate_individual = covariate_individual,
+  metadata = metadata,
+  verbose = 1
+)
+
+plot(teststat_vec,
+     pch = 16,
+     col = true_cc_status)
+
+k <- 100
+plot(posterior_mean_mat[,k], posterior_var_mat[,k], asp = T,
+     col = covariates[,"case_control"]+1)

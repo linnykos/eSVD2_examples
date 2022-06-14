@@ -92,7 +92,7 @@ mixed_effect_variables <- colnames(covariates)[grep("^Subject_Identity_", colnam
 print("Initializing")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    bool_intercept = F,
+                                    bool_intercept = T,
                                     covariates = covariates,
                                     case_control_variable = case_control_variable,
                                     k = 30,
@@ -102,7 +102,7 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     verbose = 1)
 time_end1 <- Sys.time()
 
-pval_thres <- min(10^(quantile(eSVD_obj$initial_Reg$log_pval, probs = 0.05)), 1e-5)
+pval_thres <- min(exp(quantile(eSVD_obj$initial_Reg$log_pval, probs = 0.05)), 1e-5)
 # pval_thres <- 0.001
 eSVD_obj <- eSVD2:::apply_initial_threshold(eSVD_obj = eSVD_obj,
                                             pval_thres = pval_thres,
@@ -143,24 +143,6 @@ save(date_of_run, session_info, adams, covariate_df,
      eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
-     file = "../../../../out/Writeup11d/Writeup11d_adams_T_esvd.RData")
-
-eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
-                                      library_size_variable = library_size_variable)
-metadata <- adams@meta.data
-metadata[,"Subject_Identity"] <- as.factor(metadata[,"Subject_Identity"])
-time_start5 <- Sys.time()
-eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                           covariate_individual = "Subject_Identity",
-                                           metadata = metadata,
-                                           verbose = 2)
-time_end5 <- Sys.time()
-
-save(date_of_run, session_info, adams, covariate_df,
-     eSVD_obj,
-     time_start1, time_end1, time_start2, time_end2,
-     time_start3, time_end3, time_start4, time_end4,
-     time_start5, time_end5,
      file = "../../../../out/Writeup11d/Writeup11d_adams_T_esvd.RData")
 
 
