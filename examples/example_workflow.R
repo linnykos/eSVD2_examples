@@ -5,6 +5,7 @@ set.seed(123)
 n <- 100
 p <- 150
 k <- 5
+de_percentage <- 0.05
 x_mat <- matrix(abs(rnorm(n * k))*.5, nrow = n, ncol = k)
 y_mat <- matrix(abs(rnorm(p * k))*.5, nrow = p, ncol = k)
 covariates <- cbind(c(rep(0, n/2), rep(1, n/2)),

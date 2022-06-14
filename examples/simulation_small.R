@@ -26,6 +26,7 @@ z_mat <- cbind(
   rnorm(p),
   rep(1,p)
 )
+true_cc_status <- ifelse(z_mat[,"case_control"] > 1e-6, 2, 1)
 for(i in 1:num_indiv){
   tmp <- rnorm(p, mean = 0, sd = 1)
   z_mat <- cbind(z_mat, tmp)
@@ -52,6 +53,7 @@ for(i in 1:n){
 dat <- pmin(dat, 200)
 covariates[,"Log_UMI"] <- scale(log(Matrix::rowSums(dat)))
 quantile(dat)
+length(which(dat == 0))/prod(dim(dat))
 image(dat)
 dat <- Matrix::Matrix(dat, sparse = T)
 rownames(dat) <- paste0("c", 1:n)
@@ -68,25 +70,37 @@ eSVD_obj <- eSVD2::initialize_esvd(dat = dat,
                                    mixed_effect_variables = colnames(covariates)[grep("individual", colnames(covariates))],
                                    offset_variables = NULL,
                                    verbose = 1)
-eSVD_obj <- eSVD2::apply_initial_threshold(eSVD_obj = eSVD_obj,
-                                           pval_thres = 0.1)
+logp_quant <- quantile(eSVD_obj$initial_Reg$log_pval, probs = 0.25)
+eSVD_obj <- eSVD2:::apply_initial_threshold(eSVD_obj = eSVD_obj,
+                                    pval_thres = exp(logp_quant))
 eSVD_obj <- eSVD2::opt_esvd(input_obj = eSVD_obj,
                             max_iter = 50,
                             verbose = 1)
+# pred_mat <- exp(tcrossprod(eSVD_obj$fit_First$x_mat, eSVD_obj$fit_First$y_mat) + tcrossprod(eSVD_obj$covariates, eSVD_obj$fit_First$z_mat)); image(pred_mat)
+# plot(eSVD_obj$fit_First$z_mat[,"case_control"])
 eSVD_obj <- eSVD2::estimate_nuisance(input_obj = eSVD_obj,
+                                     bool_library_includes_interept = T,
                                      verbose = 1)
+# plot(eSVD_obj$fit_First$nuisance_vec, jitter(nuisance_vec), asp = T)
 eSVD_obj <- eSVD2::compute_posterior(input_obj = eSVD_obj,
-                                     library_size_variable = "Log_UMI")
+                                     bool_adjust_covariates = T)
 eSVD_obj <- eSVD2::compute_test_statistic(input_obj = eSVD_obj,
                                           covariate_individual = "individual",
                                           metadata = metadata)
 
 plot(eSVD_obj$teststat_vec,
      pch = 16,
-     col = ifelse(z_mat[,"case_control"] > 1e-6, 2, 1))
+     col = true_cc_status)
 plot(eSVD_obj$fit_First$z_mat[,"case_control"],
      pch = 16,
-     col = ifelse(z_mat[,"case_control"] > 1e-6, 2, 1))
+     col = true_cc_status)
+plot(eSVD_obj$fit_First$posterior_mean_mat[,145],
+     pch = 16,
+     col = covariates[,"case_control"]+1)
+hist(eSVD_obj$teststat_vec, breaks = 25)
+
+# bool_library_includes_interept = F and bool_adjust_covariates = T looks best, but not centered around 0
+# bool_library_includes_interept = T and bool_adjust_covariates = T looks reasonable too
 
 ###############
 
