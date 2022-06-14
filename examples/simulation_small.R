@@ -1,7 +1,9 @@
 rm(list=ls())
-library(eSVD2)
 
 set.seed(123)
+date_of_run <- Sys.time()
+session_info <- devtools::session_info()
+
 num_indiv <- 20
 n_per_indiv <- 100
 p <- 150
@@ -22,21 +24,23 @@ for(i in 1:num_indiv){
   colnames(covariates)[ncol(covariates)] <- paste0("individual_", i)
 }
 z_mat <- cbind(
-  c(rep(0, .9*p), rep(.5, 2/3*(.1*p)), rep(1, 1/3*(.1*p))),
+  c(rep(0, .9*p), rep(1, 2/3*(.1*p)), rep(2, 1/3*(.1*p))),
   rnorm(p),
   rep(1,p)
 )
-true_cc_status <- ifelse(z_mat[,"case_control"] > 1e-6, 2, 1)
 for(i in 1:num_indiv){
-  tmp <- rnorm(p, mean = 0, sd = 1)
+  tmp <- rnorm(p, mean = 0, sd = .2)
   z_mat <- cbind(z_mat, tmp)
 }
 colnames(z_mat) <-  colnames(covariates)
+true_cc_status <- ifelse(z_mat[,"case_control"] > 1e-6, 2, 1)
 case_control_variable <- colnames(covariates)[1]
 case_control_idx <- which(colnames(z_mat) == case_control_variable)
-intercept <- .5
-nat_mat_nolib <- tcrossprod(x_mat, y_mat) + tcrossprod(covariates[,case_control_idx], z_mat[,case_control_idx]) + intercept
-library_mat <- exp(tcrossprod(covariates[,"Log_UMI"], z_mat[,"Log_UMI"]))
+library_idx <- which(colnames(z_mat) == "Log_UMI")
+
+intercept <- -.5
+nat_mat_nolib <- tcrossprod(x_mat, y_mat) + tcrossprod(covariates[,-library_idx], z_mat[,-library_idx])
+library_mat <- exp(tcrossprod(covariates[,library_idx], z_mat[,library_idx]) + intercept)
 nuisance_vec <- rep(c(5, 1, 1/5), times = p/3)
 
 # Simulate data
@@ -52,9 +56,9 @@ for(i in 1:n){
 }
 dat <- pmin(dat, 200)
 covariates[,"Log_UMI"] <- scale(log(Matrix::rowSums(dat)))
-quantile(dat)
-length(which(dat == 0))/prod(dim(dat))
-image(dat)
+# quantile(dat)
+# length(which(dat == 0))/prod(dim(dat))
+# image(dat)
 dat <- Matrix::Matrix(dat, sparse = T)
 rownames(dat) <- paste0("c", 1:n)
 colnames(dat) <- paste0("g", 1:p)
@@ -77,30 +81,29 @@ eSVD_obj <- eSVD2::opt_esvd(input_obj = eSVD_obj,
                             max_iter = 50,
                             verbose = 1)
 # pred_mat <- exp(tcrossprod(eSVD_obj$fit_First$x_mat, eSVD_obj$fit_First$y_mat) + tcrossprod(eSVD_obj$covariates, eSVD_obj$fit_First$z_mat)); image(pred_mat)
-# plot(eSVD_obj$fit_First$z_mat[,"case_control"])
+# plot(eSVD_obj$fit_First$z_mat[,"case_control"], col = true_cc_status)
 eSVD_obj <- eSVD2::estimate_nuisance(input_obj = eSVD_obj,
                                      bool_library_includes_interept = T,
                                      verbose = 1)
 # plot(eSVD_obj$fit_First$nuisance_vec, jitter(nuisance_vec), asp = T)
 eSVD_obj <- eSVD2::compute_posterior(input_obj = eSVD_obj,
-                                     bool_adjust_covariates = T)
+                                     bool_adjust_covariates = F,
+                                     bool_covariates_as_library = T)
 eSVD_obj <- eSVD2::compute_test_statistic(input_obj = eSVD_obj,
                                           covariate_individual = "individual",
                                           metadata = metadata)
 
-plot(eSVD_obj$teststat_vec,
-     pch = 16,
-     col = true_cc_status)
-plot(eSVD_obj$fit_First$z_mat[,"case_control"],
-     pch = 16,
-     col = true_cc_status)
-plot(eSVD_obj$fit_First$posterior_mean_mat[,145],
-     pch = 16,
-     col = covariates[,"case_control"]+1)
-hist(eSVD_obj$teststat_vec, breaks = 25)
+plot(eSVD_obj$teststat_vec, pch = 16, col = true_cc_status)
+plot(eSVD_obj$fit_First$z_mat[,"case_control"], pch = 16, col = true_cc_status)
+plot(eSVD_obj$fit_First$posterior_mean_mat[,10], pch = 16, col = covariates[,"case_control"]+1)
+plot(eSVD_obj$fit_First$posterior_mean_mat[,149], pch = 16, col = covariates[,"case_control"]+1)
+hist(eSVD_obj$teststat_vec, breaks = 25); rug(eSVD_obj$teststat_vec[which(true_cc_status == 2)], col = 2, lwd = 3)
 
-# bool_library_includes_interept = F and bool_adjust_covariates = T looks best, but not centered around 0
-# bool_library_includes_interept = T and bool_adjust_covariates = T looks reasonable too
+plot(eSVD_obj$fit_First$z_mat[,"case_control"], pch = 16, col = true_cc_status)
+plot(eSVD_obj$fit_First$z_mat[,"gender"], pch = 16, col = true_cc_status)
+plot(eSVD_obj$fit_First$z_mat[,"Intercept"], pch = 16, col = true_cc_status)
+plot(eSVD_obj$fit_First$z_mat[,"Log_UMI"], pch = 16, col = true_cc_status)
+plot(eSVD_obj$covariates[,"Log_UMI"], pch = 16, col = covariates[,"case_control"]+1)
 
 ###############
 

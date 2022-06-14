@@ -7,6 +7,8 @@ image(pred_mat)
 plot(pred_mat[,1])
 plot(pred_mat[,10])
 plot(pred_mat[,100])
+plot(pred_mat[,120])
+plot(pred_mat[,145])
 plot(pred_mat[,150])
 
 esvd_res <- eSVD_obj$fit_First

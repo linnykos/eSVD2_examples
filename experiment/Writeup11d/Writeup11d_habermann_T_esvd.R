@@ -140,8 +140,21 @@ eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       verbose = 1)
 time_end4 <- Sys.time()
 
+eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
+                                      bool_adjust_covariates = F,
+                                      bool_covariates_as_library = T)
+metadata <- habermann@meta.data
+metadata[,"Sample_Name"] <- as.factor(metadata[,"Sample_Name"])
+time_start5 <- Sys.time()
+eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
+                                           covariate_individual = "Sample_Name",
+                                           metadata = metadata,
+                                           verbose = 2)
+time_end5 <- Sys.time()
+
 save(date_of_run, session_info, habermann, covariate_df,
      eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
+     time_start5, time_end5,
      file = "../../../../out/Writeup11d/Writeup11d_habermann_T_esvd.RData")
