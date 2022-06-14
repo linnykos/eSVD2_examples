@@ -136,6 +136,7 @@ time_end3 <- Sys.time()
 print("Nuisance estimation")
 time_start4 <- Sys.time()
 eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
+                                      bool_library_includes_interept = T,
                                       verbose = 1)
 time_end4 <- Sys.time()
 
