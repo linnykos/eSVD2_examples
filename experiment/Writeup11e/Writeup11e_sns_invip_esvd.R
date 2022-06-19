@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../../out/Writeup10/Writeup10_sns_layer23_processed2.RData")
+load("../../../../out/Writeup10/Writeup10_sns_invip_processed2.RData")
 
 library(Seurat)
 library(eSVD2)
@@ -44,13 +44,12 @@ eSVD_obj <- eSVD2:::apply_initial_threshold(eSVD_obj = eSVD_obj,
                                             pval_thres = pval_thres,
                                             verbose = 1)
 
-offset_variables <- setdiff(colnames(eSVD_obj$covariates), case_control_variable)
 print("First fit")
 time_start2 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              l2pen = 0.1,
                              max_iter = 100,
-                             offset_variables = offset_variables,
+                             offset_variables = colnames(eSVD_obj$covariates),
                              tol = 1e-6,
                              verbose = 1,
                              fit_name = "fit_First",
@@ -69,12 +68,23 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              fit_previous = "fit_First")
 time_end3 <- Sys.time()
 
-print("Nuisance estimation")
+print("Nuisance estimation (Alternative)")
 time_start4 <- Sys.time()
 eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
+                                      bool_covariates_as_library = T,
                                       bool_library_includes_interept = T,
                                       verbose = 1)
 time_end4 <- Sys.time()
+nuisance_vec_alt <- eSVD_obj[["fit_Second"]]$nuisance_vec
+
+print("Nuisance estimation")
+time_start4 <- Sys.time()
+eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
+                                      bool_covariates_as_library = F,
+                                      bool_library_includes_interept = T,
+                                      verbose = 1)
+time_end4 <- Sys.time()
+
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
@@ -89,11 +99,11 @@ eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
 time_end5 <- Sys.time()
 
 save(date_of_run, session_info, sns, covariate_df,
-     eSVD_obj,
+     eSVD_obj, nuisance_vec_alt,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../../out/Writeup11d/Writeup11d_sns_layer23_esvd.RData")
+     file = "../../../../out/Writeup11e/Writeup11e_sns_invip_esvd.RData")
 
 
 
