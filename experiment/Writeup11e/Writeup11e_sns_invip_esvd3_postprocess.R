@@ -3,6 +3,21 @@ library(Seurat)
 library(eSVD2)
 
 load("../../../../out/Writeup11e/Writeup11e_sns_invip_esvd3.RData")
+eSVD_obj$fit_Second$nuisance_vec <- nuisance_vec_alt
+eSVD_obj$param$nuisance_bool_covariates_as_library <- T
+eSVD_obj$teststat_vec <- NULL
+eSVD_obj$fit_Second$posterior_mean_mat <- NULL
+eSVD_obj$fit_Second$posterior_var_mat <- NULL
+
+eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
+                                      bool_adjust_covariates = F,
+                                      bool_covariates_as_library = T)
+metadata <- sns@meta.data
+metadata[,"individual"] <- as.factor(metadata[,"individual"])
+eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
+                                           covariate_individual = "individual",
+                                           metadata = metadata,
+                                           verbose = 1)
 
 set.seed(10)
 date_of_run <- Sys.time()
