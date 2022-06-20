@@ -40,7 +40,7 @@ initialize_esvd2 <- function(dat,
                               lambda = exp(seq(log(10000), log(0.01), length.out = 100)))
 
     ## [[note to self: can be improved using the stat helper functions]]
-    c(glm_fit$alpha[length(glm_fit$alpha)], glm_fit$beta[,ncol(glm_fit$beta)])
+    c(glm_fit$a0[length(glm_fit$a0)], glm_fit$beta[,ncol(glm_fit$beta)])
   }))
   colnames(coef_mat) <- c("Intercept", colnames(covariates_tmp))
   rownames(coef_mat) <- colnames(dat)
