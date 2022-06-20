@@ -90,7 +90,7 @@ eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
 time_end5 <- Sys.time()
 
 save(date_of_run, session_info, sns, covariate_df,
-     eSVD_obj, nuisance_vec_alt,
+     eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
