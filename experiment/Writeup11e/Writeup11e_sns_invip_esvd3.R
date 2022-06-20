@@ -58,7 +58,7 @@ nuisance_vec_alt <- eSVD_obj[["fit_Second"]]$nuisance_vec
 print("Nuisance estimation")
 time_start4 <- Sys.time()
 eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
-                                      bool_covariates_as_library = F,
+                                      bool_covariates_as_library = T,
                                       bool_library_includes_interept = T,
                                       verbose = 1)
 time_end4 <- Sys.time()
