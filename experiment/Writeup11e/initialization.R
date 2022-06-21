@@ -2,6 +2,7 @@ initialize_esvd2 <- function(dat,
                              k,
                              covariates = NULL,
                              bool_intercept = T,
+                             rescale_vars = "nFeature_RNA",
                              tol = 1e-3,
                              verbose = 0){
   stopifnot(all(is.null(covariates)) || is.matrix(covariates),
@@ -9,11 +10,15 @@ initialize_esvd2 <- function(dat,
   stopifnot(colnames(covariates)[1] == "Intercept")
 
   # step: compute the proper covariate matrix
+  if(length(rescale_vars) > 0){
+    for(var_name in rescale_vars){
+      covariates[,var_name] <- scale(covariates[,var_name],
+                                     center = F,
+                                     scale = T)
+    }
+  }
   offset_vec <- covariates[,which(colnames(covariates) == "Log_UMI")]
   covariates <- covariates[,-which(colnames(covariates) == "Log_UMI")]
-  covariates[,"nFeature_RNA"] <- scale(covariates[,"nFeature_RNA"],
-                                       center = F,
-                                       scale = T)
   # move all the individual covariates to the end
   col_idx1 <- grep("individual_", colnames(covariates))
   col_idx2 <- c(grep("Capbatch_", colnames(covariates)),
