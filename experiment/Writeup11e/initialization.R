@@ -1,6 +1,7 @@
 initialize_esvd2 <- function(dat,
                              k,
                              covariates = NULL,
+                             bool_intercept = T,
                              tol = 1e-3,
                              verbose = 0){
   stopifnot(all(is.null(covariates)) || is.matrix(covariates),
@@ -21,6 +22,7 @@ initialize_esvd2 <- function(dat,
                       covariates[,col_idx2],
                       covariates[,col_idx1])
   covariates_tmp <- covariates[,-which(colnames(covariates) == "Intercept")]
+  if(!bool_intercept) covariates <- covariates_tmp;
 
   n <- nrow(dat); p <- ncol(dat)
   dat <- as.matrix(dat)
@@ -36,13 +38,23 @@ initialize_esvd2 <- function(dat,
                               offset = offset_vec,
                               alpha = 0,
                               standardize = F,
-                              intercept = T,
+                              intercept = bool_intercept,
                               lambda = exp(seq(log(10000), log(0.01), length.out = 100)))
 
     ## [[note to self: can be improved using the stat helper functions]]
-    c(glm_fit$a0[length(glm_fit$a0)], glm_fit$beta[,ncol(glm_fit$beta)])
+    if(bool_intercept){
+      c(glm_fit$a0[length(glm_fit$a0)], glm_fit$beta[,ncol(glm_fit$beta)])
+    } else {
+      glm_fit$beta[,ncol(glm_fit$beta)]
+    }
+
   }))
-  colnames(coef_mat) <- c("Intercept", colnames(covariates_tmp))
+
+  if(bool_intercept){
+    colnames(coef_mat) <- c("Intercept", colnames(covariates_tmp))
+  } else {
+    colnames(coef_mat) <- colnames(covariates_tmp)
+  }
   rownames(coef_mat) <- colnames(dat)
 
   ######

@@ -36,7 +36,7 @@ shuf_idx <- shuf_idx[sample(length(shuf_idx))]
 
 teststat_vec <- pmax(pmin(eSVD_obj$teststat_vec, 30), -30)
 max_val <- max(abs(eSVD_obj$teststat_vec))
-png("../../../../out/fig/Writeup11e/Writeup11e_sns_invip_esvd3_teststat_histogram.png", height = 1200, width = 1200,
+png("../../../../out/fig/Writeup11e/Writeup11e_sns_invip_esvd4_teststat_histogram.png", height = 1200, width = 1200,
     units = "px", res = 300)
 break_vec <- seq(-max_val-0.15, max_val+0.15, by = 0.1)
 hist(teststat_vec, breaks = break_vec,
@@ -51,7 +51,7 @@ legend("topright", c("Published DE gene", "Other interest gene", "Housekeeping g
        fill = c(2,4,3), cex = 0.6)
 graphics.off()
 
-png("../../../../out/fig/Writeup11e/Writeup11e_sns_invip_esvd3_teststat_histogram_separate.png",
+png("../../../../out/fig/Writeup11e/Writeup11e_sns_invip_esvd4_teststat_histogram_separate.png",
     height = 1000, width = 3000,
     units = "px", res = 300)
 par(mfrow = c(1,3), mar = c(4,4,4,0.5))
