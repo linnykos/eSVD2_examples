@@ -26,8 +26,14 @@ colnames(covariates)[ncol(covariates)] <- "Log_UMI"
 eSVD_obj$covariates <- covariates
 eSVD_obj$fit_Init$x_mat <- init_res$x_mat
 eSVD_obj$fit_Init$y_mat <- init_res$y_mat
-eSVD_obj$fit_Init$z_mat <- cbind(init_res$b_mat, 1)
+eSVD_obj$fit_Init$z_mat <- cbind(init_res$z_mat, 1)
 colnames(eSVD_obj$fit_Init$z_mat)[ncol(eSVD_obj$fit_Init$z_mat)] <- "Log_UMI"
+
+
+save(date_of_run, session_info, sns,
+     eSVD_obj,
+     file = "../../../../out/Writeup11e/Writeup11e_sns_invip_esvd4.RData")
+
 
 print("First fit")
 time_start2 <- Sys.time()
@@ -74,7 +80,7 @@ eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
                                            verbose = 1)
 time_end5 <- Sys.time()
 
-save(date_of_run, session_info, sns, covariate_df,
+save(date_of_run, session_info, sns,
      eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
