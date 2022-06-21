@@ -2,6 +2,7 @@ initialize_esvd2 <- function(dat,
                              k,
                              covariates = NULL,
                              bool_intercept = T,
+                             lib_coef = NULL,
                              rescale_vars = "nFeature_RNA",
                              tol = 1e-3,
                              verbose = 0){
@@ -10,6 +11,14 @@ initialize_esvd2 <- function(dat,
   stopifnot(colnames(covariates)[1] == "Intercept")
 
   # step: compute the proper covariate matrix
+  if(is.null(lib_coef)){
+    if("Log_UMI" %in% rescale_vars){
+      n <- nrow(dat)
+      lib_coef <- sqrt(sum(covariates[,"Log_UMI"]^2)/(n-1))
+    } else {
+      lib_coef <- 1
+    }
+  }
   if(length(rescale_vars) > 0){
     for(var_name in rescale_vars){
       covariates[,var_name] <- scale(covariates[,var_name],
@@ -17,7 +26,7 @@ initialize_esvd2 <- function(dat,
                                      scale = T)
     }
   }
-  offset_vec <- covariates[,which(colnames(covariates) == "Log_UMI")]
+  offset_vec <- lib_coef*covariates[,which(colnames(covariates) == "Log_UMI")]
   covariates <- covariates[,-which(colnames(covariates) == "Log_UMI")]
   # move all the individual covariates to the end
   col_idx1 <- grep("individual_", colnames(covariates))
@@ -83,6 +92,7 @@ initialize_esvd2 <- function(dat,
 
   structure(list(x_mat = x_init, y_mat = y_init, z_mat = coef_mat,
                  covariates = covariates,
-                 offset_vec = offset_vec),
+                 offset_vec = offset_vec,
+                 offset_coef = lib_coef),
             class = "eSVD")
 }

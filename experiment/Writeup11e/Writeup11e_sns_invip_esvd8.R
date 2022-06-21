@@ -1,4 +1,5 @@
 # try no intercept, but rescaling many covariates besides nFeature_RNA
+# but not Log_UMI
 
 rm(list=ls())
 library(Seurat)
@@ -16,7 +17,7 @@ dat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 init_res <- initialize_esvd2(dat = dat,
                              k = 50,
                              covariates = covariates,
-                             rescale_vars = c("Log_UMI", "age", "nFeature_RNA", "percent.mt", "post.mortem.hours"),
+                             rescale_vars = c("age", "nFeature_RNA", "percent.mt", "post.mortem.hours"),
                              bool_intercept = F,
                              verbose = 1)
 
@@ -50,7 +51,7 @@ colnames(covariates)[ncol(covariates)] <- "Log_UMI"
 eSVD_obj$covariates <- covariates
 eSVD_obj$fit_Init$x_mat <- init_res$x_mat
 eSVD_obj$fit_Init$y_mat <- init_res$y_mat
-eSVD_obj$fit_Init$z_mat <- cbind(init_res$z_mat, 1)
+eSVD_obj$fit_Init$z_mat <- cbind(init_res$z_mat, init_res$offset_coef)
 colnames(eSVD_obj$fit_Init$z_mat)[ncol(eSVD_obj$fit_Init$z_mat)] <- "Log_UMI"
 
 print("First fit")
@@ -103,7 +104,7 @@ save(date_of_run, session_info, sns,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../../out/Writeup11e/Writeup11e_sns_invip_esvd7.RData")
+     file = "../../../../out/Writeup11e/Writeup11e_sns_invip_esvd8.RData")
 
 
 
