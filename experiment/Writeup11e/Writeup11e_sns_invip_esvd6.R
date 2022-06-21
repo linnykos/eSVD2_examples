@@ -1,4 +1,4 @@
-# try no intercept
+# try yes intercept, but it's frozen as an offset like Log_UMI
 
 rm(list=ls())
 library(Seurat)
@@ -12,12 +12,12 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
-# doing the initialization as in Writeup10
+# doing the initialization as in Writeup10, but now with an intercept
 dat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
 init_res <- initialize_esvd2(dat = dat,
                              k = 50,
                              covariates = covariates,
-                             bool_intercept = F,
+                             bool_intercept = T,
                              verbose = 1)
 
 # replace eSVD_obj with the appropriate things
@@ -37,7 +37,7 @@ time_start2 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              l2pen = 0.01,
                              max_iter = 100,
-                             offset_variables = "Log_UMI",
+                             offset_variables = c("Intercept", "Log_UMI"),
                              tol = 1e-6,
                              verbose = 1,
                              fit_name = "fit_First",
@@ -82,7 +82,7 @@ save(date_of_run, session_info, sns,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../../out/Writeup11e/Writeup11e_sns_invip_esvd5.RData")
+     file = "../../../../out/Writeup11e/Writeup11e_sns_invip_esvd6.RData")
 
 
 
