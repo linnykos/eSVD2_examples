@@ -1,28 +1,48 @@
-# try no intercept, but rescaling many covariates besides nFeature_RNA
-# but not Log_UMI
-
 rm(list=ls())
-library(Seurat)
 
-load("../../../../out/Writeup11d/Writeup11d_sns_layer4_esvd.RData")
-load("../../../../out/Writeup10/Writeup10_sns_layer4_processed2.RData")
+load("../../../../out/Writeup11d/Writeup11d_adams_T_esvd.RData")
 source("initialization.R")
 
 set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
-dat <- as.matrix(Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]))
+var_features <- colnames(eSVD_obj$dat)
+mat <- Matrix::t(adams[["RNA"]]@counts[var_features,])
+categorical_var <- c("Disease_Identity", "Subject_Identity", "Gender", "Tobacco")
+numerical_var <- c("percent.mt", "Age", "nFeature_RNA")
+n <- nrow(mat)
+metadata <- adams@meta.data
+covariates <- as.matrix(metadata[,numerical_var])
+covariates <- cbind(1, log(Matrix::rowSums(mat)), covariates)
+colnames(covariates)[1:2] <- c("Intercept", "Log_UMI")
+
+for(variable in categorical_var){
+  vec <- metadata[,variable]
+  uniq_level <- unique(vec)
+  for(i in uniq_level[-1]){
+    tmp <- rep(0, n)
+    tmp[which(vec == i)] <- 1
+
+    var_name <- paste0(variable, "_", i)
+    covariates <- cbind(covariates, tmp)
+    colnames(covariates)[ncol(covariates)] <- var_name
+  }
+}
+
+dat <- as.matrix(Matrix::t(adams[["RNA"]]@counts[var_features,]))
 init_res <- initialize_esvd2(dat = dat,
-                             k = 50,
+                             k = 30,
                              covariates = covariates,
-                             rescale_vars = c("age", "nFeature_RNA", "percent.mt", "post.mortem.hours"),
+                             rescale_vars = c("Age", "nFeature_RNA", "percent.mt"),
+                             batches_names = NULL,
                              bool_intercept = F,
-                             verbose = 1)
+                             subject_names = "Subject_Identity_",
+                             verbose = 2)
 
 # replace eSVD_obj with the appropriate things
 eSVD_obj$param$init_bool_intercept <- F
-eSVD_obj$param$init_k <- 50
+eSVD_obj$param$init_k <- 30
 
 eSVD_obj$param$init_lambda <- NULL
 eSVD_obj$param$init_mixed_effect_variables <- NULL
@@ -92,21 +112,22 @@ time_end4 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
                                       bool_covariates_as_library = T)
-metadata <- sns@meta.data
-metadata[,"individual"] <- as.factor(metadata[,"individual"])
+metadata <- adams@meta.data
+metadata[,"Subject_Identity"] <- as.factor(metadata[,"Subject_Identity"])
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                           covariate_individual = "individual",
+                                           covariate_individual = "Subject_Identity",
                                            metadata = metadata,
                                            verbose = 1)
 time_end5 <- Sys.time()
 
-save(date_of_run, session_info, sns,
+save(date_of_run, session_info, adams,
      eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../../out/Writeup11e/Writeup11e_sns_layer4_esvd9.RData")
+     file = "../../../../out/Writeup11e/Writeup11e_adams_T_esvd9.RData")
+
 
 
 
