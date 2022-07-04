@@ -26,9 +26,11 @@ covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
                                         subject_variable = "individual")
 
+print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariates,
+                                    case_control_variable = "diagnosis_ASD",
                                     subject_variables = colnames(covariates)[grep("^individual_", colnames(covariates))],
                                     k = 50,
                                     verbose = 1)
@@ -65,7 +67,6 @@ eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       bool_library_includes_interept = T,
                                       verbose = 1)
 time_end4 <- Sys.time()
-
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
