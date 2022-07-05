@@ -1,22 +1,17 @@
 rm(list=ls())
+library(Seurat)
+library(eSVD2)
 
-load("../../../out/Writeup11e/Writeup11e_sns_invip_esvd9.RData")
-eSVD_obj2 <- eSVD_obj
-rm(list = "eSVD_obj")
 load("../../../out/main/sns_invip_esvd.RData")
+eSVD_obj2 <- eSVD_obj
 
-head(eSVD_obj$covariates[,c("Log_UMI", "age", "RNA.Integrity.Number", "post.mortem.hours", "percent.mt", "nFeature_RNA")])
-head(eSVD_obj2$covariates[,c("Log_UMI", "age", "RNA.Integrity.Number", "post.mortem.hours", "percent.mt", "nFeature_RNA")])
+load("../../../out/Writeup11f/Writeup11f_sns_invip_esvd.RData")
 
-col_names <- colnames(eSVD_obj$covariates)[which(colnames(eSVD_obj$covariates) %in% colnames(eSVD_obj2$covariates))]
-sum(abs(eSVD_obj$covariates[,col_names] - eSVD_obj2$covariates[,col_names]))
+colnames(eSVD_obj2$covariates)[which(!colnames(eSVD_obj2$covariates) %in% colnames(eSVD_obj$covariates))]
+colnames(eSVD_obj$covariates)[which(!colnames(eSVD_obj$covariates) %in% colnames(eSVD_obj2$covariates))]
 
-for(col_name in col_names){
-  print(col_name)
-  print(sum(abs(eSVD_obj$covariates[,col_name] - eSVD_obj2$covariates[,col_name])))
-  print("====")
+var_names <- colnames(eSVD_obj$covariates)[which(colnames(eSVD_obj$covariates) %in% colnames(eSVD_obj2$covariates))]
+for(var_name in var_names){
+  print(var_name)
+  print(sum(abs(eSVD_obj$covariates[,var_name] - eSVD_obj2$covariates[,var_name])))
 }
-
-######################
-
-covariates2 <- eSVD_obj$covariates
