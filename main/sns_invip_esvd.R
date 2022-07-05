@@ -19,12 +19,12 @@ covariate_df <- data.frame(covariate_dat)
 covariate_df[,"individual"] <- as.factor(covariate_df[,"individual"])
 covariate_df[,"region"] <- as.factor(covariate_df[,"region"])
 covariate_df[,"diagnosis"] <- factor(covariate_df[,"diagnosis"], levels = c("Control", "ASD"))
-covariate_df[,"sex"] <- as.factor(covariate_df[,"sex"])
+covariate_df[,"sex"] <- factor(covariate_df[,"sex"], levels = c("M", "F"))
 covariate_df[,"Seqbatch"] <- as.factor(covariate_df[,"Seqbatch"])
 covariate_df[,"Capbatch"] <- as.factor(covariate_df[,"Capbatch"])
 covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
-                                        subject_variable = "individual")
+                                        variables_enumerate_all = c("individual", "Seqbatch", "Capbatch"))
 
 print("Initialization")
 time_start1 <- Sys.time()
