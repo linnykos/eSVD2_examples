@@ -69,3 +69,4 @@ for(kk in 1:length(uniq_col_vec)){
   rug(teststat_vec[idx], col = col_vec[idx], lwd = 2)
 }
 graphics.off()
+
