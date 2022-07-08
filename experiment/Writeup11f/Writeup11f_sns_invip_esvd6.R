@@ -42,7 +42,7 @@ time_start2 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              l2pen = 0.01,
                              max_iter = 100,
-                             offset_variables = c("Intercept", "Log_UMI"),
+                             offset_variables = "Log_UMI",
                              tol = 1e-6,
                              verbose = 1,
                              fit_name = "fit_First",
@@ -65,7 +65,7 @@ print("Nuisance estimation")
 time_start4 <- Sys.time()
 eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       bool_covariates_as_library = T,
-                                      bool_library_includes_interept = T,
+                                      bool_library_includes_interept = F,
                                       verbose = 1)
 time_end4 <- Sys.time()
 
