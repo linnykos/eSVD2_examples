@@ -29,13 +29,13 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 
 print("Initialization")
 time_start1 <- Sys.time()
-eSVD_obj <- initialize_esvd(dat = mat,
+eSVD_obj <- initialize_esvd2(dat = mat,
                             covariates = covariates,
                             case_control_variable = "diagnosis_ASD",
                             subject_variables = colnames(covariates)[grep("^individual_", colnames(covariates))],
-                            k = 50,
+                            k = 30,
                             lambda = 0.1,
-                            verbose = 1)
+                            verbose = 2)
 time_end1 <- Sys.time()
 
 print("First fit")

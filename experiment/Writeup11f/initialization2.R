@@ -16,8 +16,7 @@ initialize_esvd2 <- function(dat,
             is.null(case_control_variable) || case_control_variable %in% colnames(covariates),
             all(subject_variables %in% colnames(covariates)),
             "Intercept" %in% colnames(covariates))
-  stopifnot(all(is.null(offset_variables)) ||
-              (all(offset_variables %in% colnames(covariates)) && !"Intercept" %in% offset_variables))
+  stopifnot(all(is.null(offset_variables)) || all(offset_variables %in% colnames(covariates)))
 
   n <- nrow(dat); p <- ncol(dat)
   if(is.matrix(dat)) dat[is.na(dat)] <- 0
@@ -70,12 +69,13 @@ initialize_esvd2 <- function(dat,
   rownames(z_mat) <- colnames(dat)
 
   stopifnot(!all(is.null(offset_variables)))
-  covariates_tmp <- covariates_tmp[,which(!colnames(covariates_tmp) %in% offset_variables), drop=F]
+  covariates_tmp <- covariates[,which(!colnames(covariates) %in% offset_variables), drop=F]
   z_mat[,"Intercept"] <- log(Matrix::colMeans(dat))
 
   for(j in 1:p){
     if(verbose == 1 && p >= 10 && j %% floor(p/10) == 0) cat('*')
-    if(verbose >= 2) print(paste0("Working on variable ", j , " of ", p))
+    if(verbose >= 2) print(paste0("Working on variable ", j , " of ", p, ": Intercept of ",
+                                  round(z_mat[j,"Intercept"], 2)))
 
     offset_vec <- as.numeric(tcrossprod(covariates[,offset_variables], z_mat[j,offset_variables,drop = F]))
 
