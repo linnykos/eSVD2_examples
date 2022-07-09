@@ -29,12 +29,6 @@ gene_names <- names(eSVD_obj$teststat_vec)
 cycling_idx <- which(gene_names %in% cycling_genes)
 de_idx <- which(gene_names %in% de_genes)
 
-tab <- table(adams$Subject_Identity, adams$Disease_Identity)
-indiv_cases <- rownames(tab)[which(tab[,"IPF"] != 0)]
-indiv_controls <- rownames(tab)[which(tab[,"Control"] != 0)]
-indiv_vec <- factor(as.character(adams$Subject_Identity))
-
-# round(apply(eSVD_obj$fit_Second$z_mat, 2, quantile), 2)
 
 #########################################
 
@@ -72,11 +66,15 @@ eSVD2:::gene_plot(eSVD_obj,
 
 graphics.off()
 
+
+max_val <- max(abs(eSVD_obj$teststat_vec))
+break_vec <- seq(-max_val-0.15, max_val+0.15, by = 0.1)
 png(paste0("../../../out/fig/main/habermann_T_diagnostic_gene_histogram.png"),
     height = 1500, width = 2500,
     units = "px", res = 300)
 eSVD2:::gene_plot(eSVD_obj,
                   what_1 = "teststat",
+                  breaks = break_vec,
                   gene_list = list(gene_names[cycling_idx],
                                    gene_names[de_idx]),
                   color_palette = c(3,2))

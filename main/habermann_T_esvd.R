@@ -25,7 +25,7 @@ time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariates,
                                     case_control_variable = "Diagnosis_IPF",
-                                    k = 30,
+                                    k = 15,
                                     lambda = 0.1,
                                     verbose = 1)
 time_end1 <- Sys.time()

@@ -29,8 +29,8 @@ gene_names <- names(eSVD_obj$teststat_vec)
 cycling_idx <- which(gene_names %in% cycling_genes)
 de_idx <- which(gene_names %in% de_genes)
 
-xlim <- quantile(eSVD_obj_adams$teststat_vec, probs = c(0.01, 0.99))
-ylim <- quantile(eSVD_obj_habermann$teststat_vec, probs = c(0.01, 0.99))
+xlim <- quantile(eSVD_obj_adams$teststat_vec, probs = c(0.001, 0.999))
+ylim <- quantile(eSVD_obj_habermann$teststat_vec, probs = c(0.001, 0.999))
 mean_x <- mean(eSVD_obj_adams$teststat_vec)
 mean_y <- mean(eSVD_obj_habermann$teststat_vec)
 
@@ -72,5 +72,45 @@ graphics.off()
 
 #########################################
 
+xlim <- quantile(eSVD_obj_adams$fit_Second$z_mat[,"Disease_Identity_IPF"], probs = c(0.001, 0.999))
+ylim <- quantile(eSVD_obj_habermann$fit_Second$z_mat[,"Diagnosis_IPF"], probs = c(0.001, 0.999))
+mean_x <- mean(eSVD_obj_adams$fit_Second$z_mat[,"Disease_Identity_IPF"])
+mean_y <- mean(eSVD_obj_habermann$fit_Second$z_mat[,"Diagnosis_IPF"])
+
+png(paste0("../../../out/fig/main/adams_habermann_T_coefficient.png"),
+    height = 1500, width = 3500,
+    units = "px", res = 300)
+par(mfrow = c(1,3))
+plot(x = eSVD_obj_adams$fit_Second$z_mat[,"Disease_Identity_IPF"],
+     y = eSVD_obj_habermann$fit_Second$z_mat[,"Diagnosis_IPF"],
+     xlab = "Adams", ylab = "Habermann", pch = 16, col = rgb(0.5, 0.5, 0.5, 0.1),
+     main = "All genes", asp = T,
+     xlim = xlim, ylim = ylim)
+lines(c(-100,100), rep(0,2), col = 2, lwd = 2, lty = 2)
+lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
+lines(c(-100,100), rep(mean_y,2), col = 1, lwd = 2, lty = 2)
+lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
+
+plot(x = eSVD_obj_adams$fit_Second$z_mat[,"Disease_Identity_IPF"][gene_names[cycling_idx]],
+     y = eSVD_obj_habermann$fit_Second$z_mat[,"Diagnosis_IPF"][gene_names[cycling_idx]],
+     xlab = "Adams", ylab = "Habermann", pch = 16, col = 3,
+     main = "Cycling genes", asp = T,
+     xlim = xlim, ylim = ylim)
+lines(c(-100,100), rep(0,2), col = 2, lwd = 2, lty = 2)
+lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
+lines(c(-100,100), rep(mean_y,2), col = 1, lwd = 2, lty = 2)
+lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
+
+plot(x = eSVD_obj_adams$fit_Second$z_mat[,"Disease_Identity_IPF"][gene_names[de_idx]],
+     y = eSVD_obj_habermann$fit_Second$z_mat[,"Diagnosis_IPF"][gene_names[de_idx]],
+     xlab = "Adams", ylab = "Habermann", pch = 16, col = 2,
+     main = "DE genes", asp = T,
+     xlim = xlim, ylim = ylim)
+lines(c(-100,100), rep(0,2), col = 2, lwd = 2, lty = 2)
+lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
+lines(c(-100,100), rep(mean_y,2), col = 1, lwd = 2, lty = 2)
+lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
+
+graphics.off()
 
 
