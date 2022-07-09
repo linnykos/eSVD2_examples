@@ -10,7 +10,7 @@ session_info <- devtools::session_info()
 var_features <- Seurat::VariableFeatures(habermann)
 mat <- Matrix::t(habermann[["RNA"]]@counts[var_features,])
 covariate_dat <- habermann@meta.data[,c("Diagnosis", "Sample_Name", "Gender",
-                                    "Tobacco","percent.mt", "Age", "nFeature_RNA")]
+                                    "Tobacco","percent.mt", "Age")]
 covariate_df <- data.frame(covariate_dat)
 covariate_df[,"Diagnosis"] <- as.factor(covariate_df[,"Diagnosis"])
 covariate_df[,"Gender"] <- as.factor(covariate_df[,"Gender"])
@@ -18,24 +18,24 @@ covariate_df[,"Tobacco"] <- droplevels(as.factor(covariate_df[,"Tobacco"]))
 covariate_df[,"Sample_Name"] <- factor(covariate_df[,"Sample_Name"], levels = names(sort(table(covariate_df[,"Sample_Name"]), decreasing = F)))
 covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
-                                        rescale_numeric_variables = c("percent.mt", "Age", "nFeature_RNA"))
+                                        rescale_numeric_variables = c("percent.mt", "Age"))
 
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariates,
                                     case_control_variable = "Diagnosis_IPF",
-                                    subject_variables = colnames(covariates)[grep("^Sample_Name_", colnames(covariates))],
                                     k = 30,
+                                    lambda = 0.1,
                                     verbose = 1)
 time_end1 <- Sys.time()
 
 print("First fit")
 time_start2 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
-                             l2pen = 0.01,
+                             l2pen = 0.1,
                              max_iter = 100,
-                             offset_variables = c("Intercept", "Log_UMI"),
+                             offset_variables = setdiff(colnames(eSVD_obj$covariates), "Diagnosis_IPF"),
                              tol = 1e-6,
                              verbose = 1,
                              fit_name = "fit_First",
@@ -45,7 +45,7 @@ time_end2 <- Sys.time()
 print("Second fit")
 time_start3 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
-                             l2pen = 0.01,
+                             l2pen = 0.1,
                              max_iter = 100,
                              offset_variables = NULL,
                              tol = 1e-6,
