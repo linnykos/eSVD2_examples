@@ -3,7 +3,7 @@ library(Seurat)
 library(eSVD2)
 
 load("../../../../out/main/sns_layer4_processed.RData")
-source(reparameterization2)
+source("reparameterization.R")
 
 set.seed(10)
 date_of_run <- Sys.time()
