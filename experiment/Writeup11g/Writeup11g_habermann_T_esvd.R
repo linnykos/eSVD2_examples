@@ -2,7 +2,7 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../../../out/main/habermann_T_preprocessed.RData")
+load("../../../../out/main/habermann_T_preprocessed.RData")
 source("reparameterization.R")
 
 set.seed(10)

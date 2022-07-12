@@ -2,7 +2,7 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../../../out/main/sns_layer23_processed.RData")
+load("../../../../out/main/sns_layer23_processed.RData")
 source("reparameterization.R")
 
 set.seed(10)
