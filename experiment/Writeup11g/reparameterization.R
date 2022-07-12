@@ -35,4 +35,6 @@ reparameterization2 <- function(eSVD_obj,
   eSVD_obj[[fit_name]]$x_mat <- x_mat
   eSVD_obj[[fit_name]]$y_mat <- y_mat
   eSVD_obj[[fit_name]]$z_mat <- z_mat
+
+  eSVD_obj
 }
