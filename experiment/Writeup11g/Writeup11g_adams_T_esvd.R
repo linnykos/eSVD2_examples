@@ -78,6 +78,7 @@ eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       verbose = 1)
 time_end4 <- Sys.time()
 
+eSVD_obj$fit_Second$nuisance_vec <- pmax(eSVD_obj$fit_Second$nuisance_vec, 1e-4)
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
                                       bool_covariates_as_library = T)
