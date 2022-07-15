@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../../../out/main/sns_layer4_processed.RData")
+load("../../../out/main/sns_opc_processed.RData")
 
 library(Seurat)
 library(eSVD2)
@@ -106,7 +106,7 @@ save(date_of_run, session_info, sns,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../out/main/sns_layer4_esvd.RData")
+     file = "../../../out/main/sns_opc_esvd.RData")
 
 
 

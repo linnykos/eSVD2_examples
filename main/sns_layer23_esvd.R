@@ -36,6 +36,15 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     verbose = 1)
 time_end1 <- Sys.time()
 
+omitted_variables <- colnames(eSVD_obj$covariates)[c(grep("individual", colnames(eSVD_obj$covariates)),
+                                                     grep("Seqbatch", colnames(eSVD_obj$covariates)),
+                                                     grep("Capbatch", colnames(eSVD_obj$covariates)))]
+eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
+  eSVD_obj = eSVD_obj,
+  fit_name = "fit_Init",
+  omitted_variables = c("Log_UMI", omitted_variables)
+)
+
 print("First fit")
 time_start2 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
@@ -48,6 +57,12 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              fit_previous = "fit_Init")
 time_end2 <- Sys.time()
 
+eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
+  eSVD_obj = eSVD_obj,
+  fit_name = "fit_First",
+  omitted_variables = c("Log_UMI", omitted_variables)
+)
+
 print("Second fit")
 time_start3 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
@@ -59,6 +74,12 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              fit_name = "fit_Second",
                              fit_previous = "fit_First")
 time_end3 <- Sys.time()
+
+eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
+  eSVD_obj = eSVD_obj,
+  fit_name = "fit_Second",
+  omitted_variables = omitted_variables
+)
 
 print("Nuisance estimation")
 time_start4 <- Sys.time()
