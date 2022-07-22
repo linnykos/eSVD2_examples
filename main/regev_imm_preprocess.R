@@ -84,6 +84,7 @@ set.seed(10)
 regevImm <- Seurat::RunPCA(regevImm, verbose = F)
 set.seed(10)
 regevImm <- Seurat::RunUMAP(regevImm, dims = 1:50)
+regevImm[["percent.mt"]] <- Seurat::PercentageFeatureSet(regevImm, pattern = "^MT-")
 
 group_vec <- c("Celltype", "Subject", "Sample_Health", "Sample_Location", "Subject_Disease", "Subject_Gender", "Subject_Smoking")
 for(group in group_vec){
