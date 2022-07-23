@@ -30,6 +30,13 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     verbose = 1)
 time_end1 <- Sys.time()
 
+omitted_variables <- colnames(eSVD_obj$covariates)[grep("Sample_Name", colnames(eSVD_obj$covariates))]
+eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
+  eSVD_obj = eSVD_obj,
+  fit_name = "fit_Init",
+  omitted_variables = c("Log_UMI", omitted_variables)
+)
+
 print("First fit")
 time_start2 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
@@ -41,6 +48,13 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              fit_name = "fit_First",
                              fit_previous = "fit_Init")
 time_end2 <- Sys.time()
+
+eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
+  eSVD_obj = eSVD_obj,
+  fit_name = "fit_First",
+  omitted_variables = c("Log_UMI", omitted_variables)
+)
+
 
 print("Second fit")
 time_start3 <- Sys.time()
@@ -54,13 +68,29 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              fit_previous = "fit_First")
 time_end3 <- Sys.time()
 
+eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
+  eSVD_obj = eSVD_obj,
+  fit_name = "fit_Second",
+  omitted_variables = omitted_variables
+)
+
 print("Nuisance estimation")
 time_start4 <- Sys.time()
+eSVD_obj2 <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
+                                       bool_covariates_as_library = T,
+                                       bool_library_includes_interept = T,
+                                       bool_use_log = T,
+                                       verbose = 1)
+log_nuisance <- eSVD_obj$fit_Second$nuisance_vec
+time_end4 <- Sys.time()
+
+time_start4b <- Sys.time()
 eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       bool_covariates_as_library = T,
                                       bool_library_includes_interept = T,
+                                      bool_use_log = F,
                                       verbose = 1)
-time_end4 <- Sys.time()
+time_end4b <- Sys.time()
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
@@ -75,9 +105,10 @@ eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
 time_end5 <- Sys.time()
 
 save(date_of_run, session_info, habermann,
-     eSVD_obj,
+     eSVD_obj, log_nuisance,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
+     time_start4b, time_end4b,
      time_start5, time_end5,
      file = "../../../out/main/habermann_T_esvd.RData")
 
