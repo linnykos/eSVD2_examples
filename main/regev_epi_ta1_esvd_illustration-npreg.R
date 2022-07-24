@@ -1,0 +1,47 @@
+rm(list=ls())
+library(Seurat)
+library(eSVD2)
+
+load("../../../out/main/regevEpi_ta1-inflamed_esvd.RData")
+
+set.seed(10)
+date_of_run <- Sys.time()
+session_info <- devtools::session_info()
+
+lib_vec <- eSVD_obj$covariates[,"Log_UMI"]
+set.seed(10)
+kmean_res <- stats::kmeans(lib_vec, centers = 6)
+
+dat <- as.matrix(eSVD_obj$dat)
+p <- ncol(dat)
+before_npreg_list <- sapply(1:p, function(j){
+  print(j)
+
+  tmp_df <- data.frame(y = dat[,j], x = lib_vec)
+  reg_res <- npregfast::frfast(y ~ x, data = tmp_df)
+  x_vec <- lib_vec
+  y_vec <- stats::predict(object = reg_res, newdata = data.frame(x = x_vec))
+  y_vec$Estimation[,"Pred"]
+})
+
+save(before_npreg_list, lib_vec, kmean_res,
+     date_of_run, session_info,
+     file = "../../../out/main/regevEpi_ta1_esvd_illustration-npreg.RData")
+
+nat_mat1 <- tcrossprod(eSVD_obj$fit_Second$x_mat, eSVD_obj$fit_Second$y_mat)
+nat_mat2 <- tcrossprod(eSVD_obj$covariates[,"Subject_Disease_Colitis"], eSVD_obj$fit_Second$z_mat[,"Subject_Disease_Colitis"])
+mean_mat_nolib <- exp(nat_mat1 + nat_mat2)
+after_npreg_list <- sapply(1:p, function(j){
+  print(j)
+
+  tmp_df <- data.frame(y = mean_mat_nolib[,j], x = lib_vec)
+  reg_res <- npregfast::frfast(y ~ x, data = tmp_df)
+  x_vec <- lib_vec
+  y_vec <- stats::predict(object = reg_res, newdata = data.frame(x = x_vec))
+  y_vec$Estimation[,"Pred"]
+})
+
+save(before_npreg_list, after_npreg_list, lib_vec, kmean_res,
+     date_of_run, session_info,
+     file = "../../../out/main/regevEpi_ta1_esvd_illustration-npreg.RData")
+
