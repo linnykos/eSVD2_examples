@@ -14,20 +14,20 @@ regevImm$keep <- keep_vec
 regevImm <- subset(regevImm, keep == 1)
 
 # take only half of the healthy subjects
-tab <- table(regevEpi$Subject, regevEpi$Subject_Disease)
+tab <- table(regevImm$Subject, regevImm$Subject_Disease)
 healthy_subj <- rownames(tab[tab[,"HC"] != 0,])
 set.seed(10)
 split1 <- sample(healthy_subj, size = round(length(healthy_subj)/2), replace = F)
 split2 <- setdiff(healthy_subj, split1)
-keep_vec <- rep(1, ncol(regevEpi))
+keep_vec <- rep(1, ncol(regevImm))
 # Non-inflamed analysis uses split1, Inflamed uses split2
-if(any(regevEpi$Sample_Health == "Non-inflamed")){
-  keep_vec[which(regevEpi$Subject %in% split2)] <- 0
+if(any(regevImm$Sample_Health == "Non-inflamed")){
+  keep_vec[which(regevImm$Subject %in% split2)] <- 0
 } else {
-  keep_vec[which(regevEpi$Subject %in% split1)] <- 0
+  keep_vec[which(regevImm$Subject %in% split1)] <- 0
 }
-regevEpi$keep <- keep_vec
-regevEpi <- subset(regevEpi, keep == 1)
+regevImm$keep <- keep_vec
+regevImm <- subset(regevImm, keep == 1)
 
 regevImm[["percent.mt"]] <- Seurat::PercentageFeatureSet(regevImm, pattern = "^MT-")
 
