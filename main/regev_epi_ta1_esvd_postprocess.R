@@ -3,8 +3,10 @@ library(Seurat)
 library(eSVD2)
 
 load("../../../out/main/regevEpi_ta1-inflamed_esvd.RData")
+regevEpi_inflamed <- regevEpi
 eSVD_obj_inflamed <- eSVD_obj
 load("../../../out/main/regevEpi_ta1-noninflamed_esvd.RData")
+regevEpi_noninflamed <- regevEpi
 eSVD_obj_noninflamed <- eSVD_obj
 
 set.seed(10)
@@ -150,5 +152,245 @@ lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
 graphics.off()
 
 
+##########################################
 
+# make volcano plots
 
+# first for inflamed
+eSVD_obj_inflamed$fit_Second$posterior_mean_mat <- NULL
+eSVD_obj_inflamed$fit_Second$posterior_var_mat <- NULL
+eSVD_obj_inflamed$teststat_vec <- NULL
+eSVD_obj_inflamed <- eSVD2:::compute_posterior(input_obj = eSVD_obj_inflamed,
+                                               bool_adjust_covariates = F,
+                                               alpha_max = NULL,
+                                               bool_covariates_as_library = T)
+metadata <- regevEpi_inflamed@meta.data
+metadata[,"Sample"] <- as.factor(metadata[,"Sample"])
+eSVD_obj_inflamed <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj_inflamed,
+                                                    covariate_individual = "Sample",
+                                                    metadata = metadata,
+                                                    verbose = 1)
+
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_inflamed,
+                             metadata = regevEpi_inflamed@meta.data,
+                             covariate_individual = "Sample")
+teststat_vec <- eSVD_obj_inflamed$teststat_vec
+p <- length(teststat_vec)
+gaussian_teststat_inflamed <- sapply(1:p, function(j){
+  qnorm(pt(teststat_vec[j], df = df_vec[j]))
+})
+
+locfdr_res_inflamed <- locfdr::locfdr(gaussian_teststat_inflamed, plot = 0)
+fdr_vec <- locfdr_res_inflamed$fdr
+names(fdr_vec) <- names(gaussian_teststat_inflamed)
+null_mean <- locfdr_res_inflamed$fp0["mlest", "delta"]
+null_sd <- locfdr_res_inflamed$fp0["mlest", "sigma"]
+logpvalue_vec_inflamed <- sapply(gaussian_teststat_inflamed, function(x){
+  if(x < null_mean) {
+    Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
+  } else {
+    Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
+  }
+})
+logpvalue_vec_inflamed <- -(logpvalue_vec_inflamed/log10(exp(1)) + log10(2))
+idx_inflamed <- order(logpvalue_vec_inflamed, decreasing = T)[1:length(inf_de_idx)]
+length(idx_inflamed)
+length(intersect(idx_inflamed, c(inf_de_idx)))
+length(intersect(idx_inflamed, c(inf_de_idx, noninf_de_idx)))
+
+x_vec <- log2(eSVD_obj_inflamed$case_mean) - log2(eSVD_obj_inflamed$control_mean)
+xlim <- range(x_vec)
+xlim <- c(-1,1)*max(abs(xlim))
+y_vec <- abs(eSVD_obj_inflamed$teststat_vec)
+ylim <- range(y_vec)
+
+png("../../../out/fig/main/regevEpi_ta1-inflamed_volcano.png",
+    height = 2500, width = 2500,
+    units = "px", res = 500)
+par(mar = c(3,3,0.4,0.1))
+plot(x = x_vec, y = y_vec,
+     xaxt = "n", yaxt = "n", bty = "n",
+     ylim = ylim, xlim = xlim,
+     cex.lab = 1.25, type = "n")
+for(j in seq(0,10,by = 1)){
+  lines(x = c(-1e4,1e4), y = rep(j, 2), col = "gray", lty = 2, lwd = 1)
+}
+points(x = x_vec, y = y_vec,
+       col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
+points(x = x_vec[idx_inflamed], y = y_vec[idx_inflamed],
+       col = 2, pch = 16, cex = 1.5)
+points(x = x_vec[hk_idx], y = y_vec[hk_idx],
+       col = "white", pch = 16, cex = 1)
+points(x = x_vec[hk_idx], y = y_vec[hk_idx],
+       col = rgb(34, 151, 230, 255*.35, maxColorValue = 255), pch = 16, cex = 1)
+points(x = x_vec[intersect(idx_inflamed, inf_de_idx)], y = y_vec[intersect(idx_inflamed, inf_de_idx)],
+       col = "white", pch = 1, cex = 2, lwd = 3)
+points(x = x_vec[intersect(idx_inflamed, inf_de_idx)], y = y_vec[intersect(idx_inflamed, inf_de_idx)],
+       col = 3, pch = 1, cex = 2, lwd = 2)
+axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
+graphics.off()
+
+###########
+
+# next for non-inflamed
+eSVD_obj_noninflamed$fit_Second$posterior_mean_mat <- NULL
+eSVD_obj_noninflamed$fit_Second$posterior_var_mat <- NULL
+eSVD_obj_noninflamed$teststat_vec <- NULL
+eSVD_obj_noninflamed <- eSVD2:::compute_posterior(input_obj = eSVD_obj_noninflamed,
+                                                  bool_adjust_covariates = F,
+                                                  alpha_max = NULL,
+                                                  bool_covariates_as_library = T)
+metadata <- regevEpi@meta.data
+metadata[,"Sample"] <- as.factor(metadata[,"Sample"])
+eSVD_obj_noninflamed <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj_noninflamed,
+                                                       covariate_individual = "Sample",
+                                                       metadata = metadata,
+                                                       verbose = 1)
+
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_noninflamed,
+                             metadata = regevEpi_noninflamed@meta.data,
+                             covariate_individual = "Sample")
+teststat_vec <- eSVD_obj_noninflamed$teststat_vec
+p <- length(teststat_vec)
+gaussian_teststat_noninflamed <- sapply(1:p, function(j){
+  qnorm(pt(teststat_vec[j], df = df_vec[j]))
+})
+
+locfdr_res_noninflamed <- locfdr::locfdr(gaussian_teststat_noninflamed, plot = 0)
+fdr_vec <- locfdr_res_noninflamed$fdr
+names(fdr_vec) <- names(gaussian_teststat_noninflamed)
+null_mean <- locfdr_res_noninflamed$fp0["mlest", "delta"]
+null_sd <- locfdr_res_noninflamed$fp0["mlest", "sigma"]
+logpvalue_vec_noninflamed <- sapply(gaussian_teststat_noninflamed, function(x){
+  if(x < null_mean) {
+    Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
+  } else {
+    Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
+  }
+})
+logpvalue_vec_noninflamed <- -(logpvalue_vec_noninflamed/log10(exp(1)) + log10(2))
+idx_noninflamed <- order(logpvalue_vec_noninflamed, decreasing = T)[1:length(noninf_de_idx)]
+length(idx_noninflamed)
+length(intersect(idx_noninflamed, c(noninf_de_idx)))
+length(intersect(idx_noninflamed, c(inf_de_idx, noninf_de_idx)))
+
+x_vec <- log2(eSVD_obj_noninflamed$case_mean) - log2(eSVD_obj_noninflamed$control_mean)
+xlim <- range(x_vec) # quantile(x_vec, probs = c(0.01,0.99))
+xlim <- c(-1,1)*max(abs(xlim))
+y_vec <- abs(eSVD_obj_noninflamed$teststat_vec)
+ylim <- range(y_vec)
+
+png("../../../out/fig/main/regevEpi_ta1-noninflamed_volcano.png",
+    height = 2500, width = 2500,
+    units = "px", res = 500)
+par(mar = c(3,3,0.4,0.1))
+plot(x = x_vec, y = y_vec,
+     xaxt = "n", yaxt = "n", bty = "n",
+     ylim = ylim, xlim = xlim,
+     cex.lab = 1.25, type = "n")
+for(j in seq(0,10,by = 1)){
+  lines(x = c(-1e4,1e4), y = rep(j, 2), col = "gray", lty = 2, lwd = 1)
+}
+points(x = x_vec, y = y_vec,
+       col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
+points(x = x_vec[idx_noninflamed], y = y_vec[idx_noninflamed],
+       col = 2, pch = 16, cex = 1.5)
+points(x = x_vec[hk_idx], y = y_vec[hk_idx],
+       col = "white", pch = 16, cex = 1)
+points(x = x_vec[hk_idx], y = y_vec[hk_idx],
+       col = rgb(34, 151, 230, 255*.35, maxColorValue = 255), pch = 16, cex = 1)
+points(x = x_vec[intersect(idx_noninflamed, noninf_de_idx)], y = y_vec[intersect(idx_noninflamed, noninf_de_idx)],
+       col = "white", pch = 1, cex = 2, lwd = 3)
+points(x = x_vec[intersect(idx_noninflamed, noninf_de_idx)], y = y_vec[intersect(idx_noninflamed, noninf_de_idx)],
+       col = 3, pch = 1, cex = 2, lwd = 2)
+axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
+graphics.off()
+
+###############################
+
+# png("../../../out/fig/main/regevEpi_ta1-agreement_lfdr-genes.png",
+#     height = 2000, width = 2000,
+#     units = "px", res = 500)
+# par(mar = c(3,3,0.1,0.1))
+# y1 <- gaussian_teststat_inflamed[unique(c(idx_inflamed, idx_noninflamed))]
+# names(y1) <- NULL
+# y2 <- gaussian_teststat_noninflamed[unique(c(idx_inflamed, idx_noninflamed))]
+# names(y2) <- NULL
+# bin <- hexbin::hexbin(y1, y2, xbins=20)
+# my_colors <- colorRampPalette(viridis::viridis(11))
+# hexbin::plot(bin, main="", colramp=my_colors , legend=F,
+#               xlab = "", ylab = "")
+# graphics.off()
+
+png("../../../out/fig/main/regevEpi_ta1-agreement_de-genes.png",
+    height = 1750, width = 1750,
+    units = "px", res = 500)
+y1 <- gaussian_teststat_inflamed[unique(c(inf_de_idx, noninf_de_idx))]
+y2 <- gaussian_teststat_noninflamed[unique(c(inf_de_idx, noninf_de_idx))]
+xbnds <- range(gaussian_teststat_inflamed[c(inf_de_idx, noninf_de_idx, hk_idx)])
+ybnds <- range(gaussian_teststat_noninflamed[c(inf_de_idx, noninf_de_idx, hk_idx)])
+bin <- hexbin::hexbin(y1, y2, xbins = 15, xbnds = xbnds, ybnds = ybnds)
+my_colors <- colorRampPalette(viridis::viridis(11))
+hexbin::plot(bin, colramp=my_colors , legend=F,
+             xlab = "", ylab = "",
+             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "spearman"), 2)))
+graphics.off()
+
+# hk_idx2 <- setdiff(hk_idx, c(idx_inflamed, idx_noninflamed, noninf_de_genes, inf_de_genes, other_de_genes))
+png("../../../out/fig/main/regevEpi_ta1-agreement_hk-genes.png",
+    height = 1750, width = 1750,
+    units = "px", res = 500)
+y1 <- gaussian_teststat_inflamed[hk_idx]
+y2 <- gaussian_teststat_noninflamed[hk_idx]
+xbnds <- range(gaussian_teststat_inflamed[c(inf_de_idx, noninf_de_idx, hk_idx)])
+ybnds <- range(gaussian_teststat_noninflamed[c(inf_de_idx, noninf_de_idx, hk_idx)])
+bin <- hexbin::hexbin(y1, y2, xbins = 15, xbnds = xbnds, ybnds = ybnds)
+my_colors <- colorRampPalette(viridis::viridis(11))
+hexbin::plot(bin, colramp=my_colors , legend=F,
+             xlab = "", ylab = "",
+             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "spearman"), 2)))
+graphics.off()
+
+##############################################
+
+tab <- table(regevEpi_inflamed$Sample, regevEpi_inflamed$Subject_Disease)
+sample_names <- rownames(tab)
+sample_names <- sample_names[which(rowSums(tab) >= 150)]
+subject_names <- sapply(sample_names, function(x){
+  strsplit(x, split = "\\.")[[1]][1]
+})
+valid_subject_names <- names(table(subject_names)[which(table(subject_names) == 2)])
+column_pairs <- lapply(valid_subject_names, function(subject_name){
+  grep(paste0("Sample_", subject_name, "\\."), colnames(eSVD_obj_inflamed$covariates))
+})
+names(column_pairs) <- valid_subject_names
+column_pairs <- column_pairs[which(sapply(column_pairs, length) == 2)]
+mat_inflamed <- do.call(rbind, lapply(column_pairs, function(vec){
+  zz <- cbind(eSVD_obj_inflamed$fit_Second$z_mat[,vec])
+  idx1 <- intersect(which(zz[,1] >= quantile(zz[,1], probs = 0.01)),
+                    which(zz[,1] <= quantile(zz[,1], probs = 0.99)))
+  idx2 <- intersect(which(zz[,2] >= quantile(zz[,2], probs = 0.01)),
+                    which(zz[,2] <= quantile(zz[,2], probs = 0.99)))
+  zz <- zz[intersect(idx1, idx2),]
+  scale(zz)
+  print(cor(zz[,1], zz[,2]))
+  zz
+}))
+cor(mat_inflamed[,1], mat_inflamed[,2])
+
+png("../../../out/fig/main/regevEpi_ta1-sample-agreement.png",
+    height = 1750, width = 1750,
+    units = "px", res = 500)
+par(mar = c(3,3,0.5,0.5))
+plot(mat_inflamed[,1], mat_inflamed[,2],
+     type = "n", xlab = "", ylab = "",
+     xaxt = "n", yaxt = "n", bty = "n", asp = T)
+lines(c(-1e4,1e4), c(-1e4,1e4), col = 2, lwd = 2, lty = 2)
+points(mat_inflamed[,1], mat_inflamed[,2], col = "gray", pch = 16)
+axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+graphics.off()

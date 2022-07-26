@@ -42,7 +42,7 @@ graphics.off()
 
 #######################3
 
-df_vec <- compute_df(input_obj = eSVD_obj,
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj,
                      metadata = regevEpi@meta.data,
                      covariate_individual = "Subject")
 teststat_vec <- eSVD_obj$teststat_vec

@@ -9,9 +9,6 @@ date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
 lib_vec <- eSVD_obj$covariates[,"Log_UMI"]
-set.seed(10)
-kmean_res <- stats::kmeans(lib_vec, centers = 6)
-
 dat <- as.matrix(eSVD_obj$dat)
 p <- ncol(dat)
 before_npreg_list <- sapply(1:p, function(j){
@@ -24,7 +21,7 @@ before_npreg_list <- sapply(1:p, function(j){
   y_vec$Estimation[,"Pred"]
 })
 
-save(before_npreg_list, lib_vec, kmean_res,
+save(before_npreg_list, lib_vec,
      date_of_run, session_info,
      file = "../../../out/main/regevEpi_ta1_esvd_illustration-npreg.RData")
 
@@ -41,7 +38,7 @@ after_npreg_list <- sapply(1:p, function(j){
   y_vec$Estimation[,"Pred"]
 })
 
-save(before_npreg_list, after_npreg_list, lib_vec, kmean_res,
+save(before_npreg_list, after_npreg_list, lib_vec,
      date_of_run, session_info,
      file = "../../../out/main/regevEpi_ta1_esvd_illustration-npreg.RData")
 

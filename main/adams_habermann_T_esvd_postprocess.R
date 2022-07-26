@@ -3,9 +3,35 @@ library(Seurat)
 library(eSVD2)
 
 load("../../../out/main/habermann_T_esvd.RData")
+eSVD_obj$fit_Second$posterior_mean_mat <- NULL
+eSVD_obj$fit_Second$posterior_var_mat <- NULL
+eSVD_obj$teststat_vec <- NULL
+eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
+                                      bool_adjust_covariates = F,
+                                      alpha_max = NULL,
+                                      bool_covariates_as_library = T)
+metadata <- habermann@meta.data
+metadata[,"Sample_Name"] <- as.factor(metadata[,"Sample_Name"])
+eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
+                                           covariate_individual = "Sample_Name",
+                                           metadata = metadata,
+                                           verbose = 1)
 eSVD_obj_habermann <- eSVD_obj
 
 load("../../../out/main/adams_T_esvd.RData")
+eSVD_obj$fit_Second$posterior_mean_mat <- NULL
+eSVD_obj$fit_Second$posterior_var_mat <- NULL
+eSVD_obj$teststat_vec <- NULL
+eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
+                                      bool_adjust_covariates = F,
+                                      alpha_max = NULL,
+                                      bool_covariates_as_library = T)
+metadata <- adams@meta.data
+metadata[,"Subject_Identity"] <- as.factor(metadata[,"Subject_Identity"])
+eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
+                                           covariate_individual = "Subject_Identity",
+                                           metadata = metadata,
+                                           verbose = 1)
 eSVD_obj_adams <- eSVD_obj
 
 df_mat <- read.csv("~/project/eSVD/data/GSE136831_adams_lung/aba1983_Data_S8.txt",
@@ -178,6 +204,115 @@ lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
 lines(c(-100,100), rep(mean_y,2), col = 1, lwd = 2, lty = 2)
 lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
 
+graphics.off()
+
+
+##########################################
+
+##########################################
+
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_adams,
+                             metadata = adams@meta.data,
+                             covariate_individual = "Subject_Identity")
+teststat_vec <- eSVD_obj_adams$teststat_vec
+p <- length(teststat_vec)
+gaussian_teststat_adams <- sapply(1:p, function(j){
+  qnorm(pt(teststat_vec[j], df = df_vec[j]))
+})
+
+locfdr_res_adams <- locfdr::locfdr(gaussian_teststat_adams, plot = 0)
+fdr_vec <- locfdr_res_adams$fdr
+names(fdr_vec) <- names(gaussian_teststat_adams)
+null_mean <- locfdr_res_adams$fp0["mlest", "delta"]
+null_sd <- locfdr_res_adams$fp0["mlest", "sigma"]
+pvalue_vec <- sapply(gaussian_teststat_adams, function(x){
+  if(x < null_mean) {
+    stats::pnorm(x, mean = null_mean, sd = null_sd)*2
+  } else {
+    (1-stats::pnorm(x, mean = null_mean, sd = null_sd))*2
+  }
+})
+logpvalue_vec <- -log10(pvalue_vec)
+idx_adams <- which(fdr_vec < 0.005)
+idx_adams2 <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adam_idx, habermann_idx)))]
+length(idx_adams)
+length(idx_adams2)
+
+##
+
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_habermann,
+                             metadata = habermann@meta.data,
+                             covariate_individual = "Sample_Name")
+teststat_vec <- eSVD_obj_habermann$teststat_vec
+p <- length(teststat_vec)
+gaussian_teststat_habermann <- sapply(1:p, function(j){
+  qnorm(pt(teststat_vec[j], df = df_vec[j]))
+})
+
+locfdr_res_habermann <- locfdr::locfdr(gaussian_teststat_habermann, plot = 0)
+fdr_vec <- locfdr_res_habermann$fdr
+names(fdr_vec) <- names(gaussian_teststat_habermann)
+null_mean <- locfdr_res_habermann$fp0["mlest", "delta"]
+null_sd <- locfdr_res_habermann$fp0["mlest", "sigma"]
+pvalue_vec <- sapply(gaussian_teststat_habermann, function(x){
+  if(x < null_mean) {
+    stats::pnorm(x, mean = null_mean, sd = null_sd)*2
+  } else {
+    (1-stats::pnorm(x, mean = null_mean, sd = null_sd))*2
+  }
+})
+logpvalue_vec <- -log10(pvalue_vec)
+idx_habermann <- which(fdr_vec < 0.005)
+idx_habermann2 <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adam_idx, habermann_idx)))]
+length(idx_habermann)
+length(idx_habermann2)
+
+###############################
+
+# png("../../../out/fig/main/adams_habermann_T-agreement_lfdr-genes.png",
+#     height = 2000, width = 2000,
+#     units = "px", res = 500)
+# y1 <- gaussian_teststat_adams[unique(c(idx_adams, idx_habermann))]
+# # y1 <- gaussian_teststat_adams[unique(c(idx_adams2, idx_habermann2))]
+# # y1 <- eSVD_obj_adams$fit_Second$z_mat[unique(c(idx_adams, idx_habermann)),"Disease_Identity_IPF"]
+# y2 <- gaussian_teststat_habermann[unique(c(idx_adams, idx_habermann))]
+# # y2 <- gaussian_teststat_habermann[unique(c(idx_adams2, idx_habermann2))]
+# # y2 <- eSVD_obj_habermann$fit_Second$z_mat[unique(c(idx_adams, idx_habermann)),"Diagnosis_IPF"]
+# bin <- hexbin::hexbin(y1, y2, xbins=20)
+# my_colors <- colorRampPalette(viridis::viridis(11))
+# hexbin::plot(bin, colramp=my_colors , legend=F,
+#              xlab = "", ylab = "",
+#              main = paste0("Cor: ", round(stats::cor(y1, y2), 2)))
+# graphics.off()
+
+png("../../../out/fig/main/adams_habermann_T-agreement_de-genes.png",
+    height = 1750, width = 1750,
+    units = "px", res = 500)
+y1 <- gaussian_teststat_adams[unique(c(adam_idx, habermann_idx))]
+y2 <- gaussian_teststat_habermann[unique(c(adam_idx, habermann_idx))]
+xbnds <- range(gaussian_teststat_adams[c(adam_idx, habermann_idx, hk_idx)])
+ybnds <- range(gaussian_teststat_habermann[c(adam_idx, habermann_idx, hk_idx)])
+bin <- hexbin::hexbin(y1, y2, xbins = 15, xbnds = xbnds, ybnds = ybnds)
+my_colors <- colorRampPalette(viridis::viridis(11))
+hexbin::plot(bin, colramp=my_colors , legend=F,
+             xlab = "", ylab = "",
+             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "spearman"), 2)))
+graphics.off()
+
+# hk_idx2 <- setdiff(hk_idx, c(idx_inflamed, idx_noninflamed, noninf_de_genes, inf_de_genes, other_de_genes))
+png("../../../out/fig/main/adams_habermann_T-agreement_hk-genes.png",
+    height = 1750, width = 1750,
+    units = "px", res = 500)
+par(mar = c(3,3,0.1,0.1))
+y1 <- gaussian_teststat_adams[hk_idx]
+y2 <- gaussian_teststat_habermann[hk_idx]
+xbnds <- range(gaussian_teststat_adams[c(adam_idx, habermann_idx, hk_idx)])
+ybnds <- range(gaussian_teststat_habermann[c(adam_idx, habermann_idx, hk_idx)])
+bin <- hexbin::hexbin(y1, y2, xbins = 15, xbnds = xbnds, ybnds = ybnds)
+my_colors <- colorRampPalette(viridis::viridis(11))
+hexbin::plot(bin, colramp=my_colors , legend=F,
+             xlab = "", ylab = "",
+             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "spearman"), 2)))
 graphics.off()
 
 
