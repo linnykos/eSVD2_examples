@@ -45,6 +45,7 @@ levels(regevEpi)
 Seurat::DefaultAssay(regevEpi) <- "SCT"
 de_result <- Seurat::FindMarkers(regevEpi, ident.1 = "Colitis", ident.2 = "HC",
                                  slot = "scale.data",
+                                 features = regevEpi[["RNA"]]@var.features,
                                  test.use = "wilcox",
                                  logfc.threshold = 0,
                                  min.pct = 0,

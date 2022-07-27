@@ -19,6 +19,7 @@ levels(adams)
 Seurat::DefaultAssay(adams) <- "SCT"
 de_result <- Seurat::FindMarkers(adams, ident.1 = "IPF", ident.2 = "Control",
                                  slot = "scale.data",
+                                 features = adams[["RNA"]]@var.features,
                                  test.use = "wilcox",
                                  logfc.threshold = 0,
                                  min.pct = 0,
