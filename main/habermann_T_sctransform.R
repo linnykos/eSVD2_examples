@@ -16,7 +16,9 @@ habermann <- Seurat::SCTransform(habermann, method = "glmGamPoi",
 Seurat::Idents(habermann) <- "Diagnosis"
 levels(habermann)
 
+Seurat::DefaultAssay(habermann) <- "SCT"
 de_result <- Seurat::FindMarkers(habermann, ident.1 = "IPF", ident.2 = "Control",
+                                 slot = "scale.data",
                                  test.use = "wilcox",
                                  logfc.threshold = 0,
                                  min.pct = 0,
