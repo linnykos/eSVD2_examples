@@ -24,7 +24,7 @@ categorical_var <- c("Diagnosis", "Sample_Name", "Gender", "Tobacco")
 numerical_var <- c("Age", "percent.mt")
 metadata <- habermann@meta.data[,c(categorical_var, numerical_var)]
 for(var in categorical_var){
-  metadata[,var] <- as.factor( metadata[,var])
+  metadata[,var] <- as.factor(metadata[,var])
 }
 metadata[,"Diagnosis"] <- stats::relevel(metadata[,"Diagnosis"], "Control")
 
@@ -42,7 +42,7 @@ CD$cngeneson <- CD$ngeneson-mean(ngeneson)
 SummarizedExperiment::colData(sca) <- CD
 
 set.seed(10)
-mast_res <- MAST::zlm(formula = ~ grp.Diagnosis + (1 | grp.Sample_Name) + cngeneson + grp.Gender + grp.Tobacco + grp.Age + grp.percent.mt,
+mast_res <- MAST::zlm(formula = ~ grp.Diagnosis + cngeneson + grp.Gender + grp.Tobacco + grp.Age + grp.percent.mt,
                       sca = sca,
                       method = "glmer",
                       ebayes = FALSE,
@@ -52,7 +52,7 @@ save(habermann, sca, mast_res,
      file = "../../../out/main/habermann_T_mast.RData")
 
 set.seed(10)
-mast_lrt <- MAST::lrTest(mast_res, "grp.Disease_Identity")
+mast_lrt <- MAST::lrTest(mast_res, "grp.Diagnosis")
 mast_pval_glmer <- apply(mast_lrt, 1, function(x){x[3,3]})
 save(habermann, sca, mast_res, mast_lrt, mast_pval_glmer,
      date_of_run, session_info,
