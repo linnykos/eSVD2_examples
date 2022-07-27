@@ -37,6 +37,7 @@ regevEpi$Subject_Smoking <- factor(regevEpi$Subject_Smoking)
 regevEpi$Subject_Location <- factor(regevEpi$Subject_Location)
 set.seed(10)
 regevEpi <- Seurat::SCTransform(regevEpi, method = "glmGamPoi",
+                                residual.features = regevEpi[["RNA"]]@var.features,
                                 vars.to.regress = c("Subject_Gender", "percent.mt", "Subject_Location", "Subject_Smoking"),
                                 verbose = T)
 Seurat::Idents(regevEpi) <- "Subject_Disease"
@@ -45,7 +46,6 @@ levels(regevEpi)
 Seurat::DefaultAssay(regevEpi) <- "SCT"
 de_result <- Seurat::FindMarkers(regevEpi, ident.1 = "Colitis", ident.2 = "HC",
                                  slot = "scale.data",
-                                 features = regevEpi[["RNA"]]@var.features,
                                  test.use = "wilcox",
                                  logfc.threshold = 0,
                                  min.pct = 0,

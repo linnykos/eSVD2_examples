@@ -11,6 +11,7 @@ adams$Gender <- factor(adams$Gender)
 adams$Tobacco <- factor(adams$Tobacco)
 set.seed(10)
 adams <- Seurat::SCTransform(adams, method = "glmGamPoi",
+                             residual.features = adams[["RNA"]]@var.features,
                              vars.to.regress = c("Gender", "percent.mt", "Tobacco", "Age"),
                              verbose = T)
 Seurat::Idents(adams) <- "Disease_Identity"
@@ -19,7 +20,6 @@ levels(adams)
 Seurat::DefaultAssay(adams) <- "SCT"
 de_result <- Seurat::FindMarkers(adams, ident.1 = "IPF", ident.2 = "Control",
                                  slot = "scale.data",
-                                 features = adams[["RNA"]]@var.features,
                                  test.use = "wilcox",
                                  logfc.threshold = 0,
                                  min.pct = 0,
