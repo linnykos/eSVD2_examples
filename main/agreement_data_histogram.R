@@ -145,22 +145,25 @@ minor_gap <- 0.5
 major_gap <- 1.5
 
 png("../../../out/fig/main/regevEpi_sample_histogram.png",
-    height = 3000, width = 1500,
+    height = 2700, width = 1500,
     units = "px", res = 500)
+par(bg = NA)
 histogram_function(tab_regevEpi_list,
                    width = width, minor_gap = minor_gap, major_gap = major_gap)
 graphics.off()
 
 png("../../../out/fig/main/regevImm_sample_histogram.png",
-    height = 1500, width = 1500,
+    height = 1350, width = 1500,
     units = "px", res = 500)
+par(bg = NA)
 histogram_function(tab_regevImm_list,
                    width = width, minor_gap = minor_gap, major_gap = major_gap)
 graphics.off()
 
 png("../../../out/fig/main/lung_sample_histogram.png",
-    height = 800, width = 1500,
+    height = 720, width = 1500,
     units = "px", res = 500)
+par(bg = NA)
 histogram_function(tab_lung_list,
                    width = width, minor_gap = minor_gap, major_gap = major_gap)
 graphics.off()

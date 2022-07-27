@@ -157,5 +157,42 @@ length(intersect(sctransform_habermann_degenes, hk_genes))
 
 length(intersect(sctransform_adams_degenes, sctransform_habermann_degenes))
 
+##################
 
+input <- c(
+  a.reported = 1800,
+  h.reported = 1500,
+  a.esvd = 1300,
+  h.esvd = 1000,
+  a.sct = 500,
+  h.sct = 200,
+  # "a.reported&a.esvd" = max(length(intersect(adams_df_genes, eSVD_adams_de)), 1),
+  "h.reported&a.esvd" = max(length(intersect(habermann_df_genes, eSVD_adams_de)), 1),
+  "a.reported&h.esvd" = max(length(intersect(adams_df_genes, eSVD_habermann_de)), 1),
+  "a.esvd&h.esvd" = max(length(intersect(eSVD_adams_de, eSVD_habermann_de)), 1),
+  # "h.reported&h.esvd" = max(length(intersect(habermann_df_genes, eSVD_habermann_de)), 1),
+  "h.reported&a.sct" = length(intersect(habermann_df_genes, sctransform_adams_degenes)),
+  "a.reported&h.sct" = length(intersect(adams_df_genes, sctransform_habermann_degenes)),
+  "h.sct&a.sct" =  length(intersect(sctransform_adams_degenes, sctransform_habermann_degenes))
+)
+input_mat <- UpSetR::fromExpression(input)
+# input_mat <- input_mat[-c(1:(length(adams_df_genes)+length(habermann_df_genes)+length(eSVD_adams_de)+length(eSVD_habermann_de)+length(sctransform_adams_degenes)+length(sctransform_habermann_degenes))),]
 
+png("../../../out/fig/main/adams_habermann_T_upset.png",
+    height = 2000, width = 2000,
+    units = "px", res = 500)
+UpSetR::upset(input_mat,
+              nsets = 6,
+              intersections = list(list("h.reported", "a.esvd"),
+                                   list("a.reported", "h.esvd"),
+                                   list("a.esvd", "h.esvd"),
+                                   list("h.reported", "a.sct"),
+                                   list("h.reported", "a.sct"),
+                                   list("a.reported", "h.sct"),
+                                   list("h.sct", "a.sct")),
+              number.angles = 0,
+              mb.ratio = c(0.5, 0.5),
+              text.scale = 1.5,
+              point.size = 2.8,
+              line.size = 1)
+graphics.off()
