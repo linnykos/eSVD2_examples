@@ -42,7 +42,7 @@ CD$cngeneson <- CD$ngeneson-mean(ngeneson)
 SummarizedExperiment::colData(sca) <- CD
 
 set.seed(10)
-mast_res <- MAST::zlm(formula = ~ grp.Diagnosis + cngeneson + grp.Gender + grp.Tobacco + grp.Age + grp.percent.mt,
+mast_res <- MAST::zlm(formula = ~ grp.Diagnosis + (1 | grp.Sample_Name) + cngeneson + grp.Gender + grp.Age + grp.percent.mt,
                       sca = sca,
                       method = "glmer",
                       ebayes = FALSE,
