@@ -196,3 +196,30 @@ UpSetR::upset(input_mat,
               point.size = 2.8,
               line.size = 1)
 graphics.off()
+
+#######################################
+
+load("../../../out/main/adams_T_deseq2.RData")
+deseq_adams <- deseq2_res
+load("../../../out/main/habermann_T_deseq2.RData")
+deseq_habermann <- deseq2_res
+
+deseq_adams2 <- deseq_adams[!is.na(deseq_adams$pvalue),]
+deseq_adams_degenes <- rownames(deseq_adams2)[order(deseq_adams2[,"pvalue"], decreasing = F)[1:length(unique(c(adams_df_genes, habermann_df_genes)))]]
+deseq_habermann2 <- deseq_habermann[!is.na(deseq_habermann$pvalue),]
+deseq_habermann_degenes <- rownames(deseq_habermann2)[order(deseq_habermann2[,"pvalue"], decreasing = F)[1:length(unique(c(adams_df_genes, habermann_df_genes)))]]
+
+length(deseq_adams_degenes)
+length(intersect(deseq_adams_degenes, habermann_df_genes))
+length(intersect(deseq_adams_degenes, adams_df_genes))
+length(intersect(deseq_adams_degenes, de_vec))
+length(intersect(deseq_adams_degenes, hk_genes))
+
+length(deseq_habermann_degenes)
+length(intersect(deseq_habermann_degenes, adams_df_genes))
+length(intersect(deseq_habermann_degenes, habermann_df_genes))
+length(intersect(deseq_habermann_degenes, de_vec))
+length(intersect(deseq_habermann_degenes, hk_genes))
+
+length(intersect(deseq_adams_degenes, deseq_habermann_degenes))
+
