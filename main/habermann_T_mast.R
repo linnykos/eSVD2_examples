@@ -10,6 +10,10 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
+# table(habermann$Sample_Name, habermann$Diagnosis)
+# table(habermann$Diagnosis, habermann$Gender)
+# table(habermann$Diagnosis, habermann$Tobacco)
+
 # see https://github.com/Sun-lab/ideas_pipeline/blob/main/simulation/step2_evaluate_methods.R
 # following the analysis in https://github.com/himelmallick/BenchmarkSingleCell/blob/master/Library/run_MAST.R
 # and https://www.bioconductor.org/packages/release/bioc/vignettes/MAST/inst/doc/MAITAnalysis.html
@@ -26,6 +30,7 @@ metadata <- habermann@meta.data[,c(categorical_var, numerical_var)]
 for(var in categorical_var){
   metadata[,var] <- as.factor(metadata[,var])
 }
+metadata[,"Tobacco"] <- droplevels(metadata[,"Tobacco"])
 metadata[,"Diagnosis"] <- stats::relevel(metadata[,"Diagnosis"], "Control")
 
 # create the SingleCellAssay (sca) object. See https://www.rdocumentation.org/packages/MAST/versions/0.931/topics/SingleCellAssay
