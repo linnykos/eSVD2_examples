@@ -10,6 +10,11 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
+# keep_vec <- rep(1, ncol(habermann))
+# keep_vec[which(habermann$Sample_Name %in% c("TILD028", "VUILD61"))] <- 0
+# habermann$keep <- keep_vec
+# habermann <- subset(habermann, keep == 1)
+
 # table(habermann$Sample_Name, habermann$Diagnosis)
 # table(habermann$Diagnosis, habermann$Gender)
 # table(habermann$Diagnosis, habermann$Tobacco)
@@ -19,6 +24,9 @@ session_info <- devtools::session_info()
 # and https://www.bioconductor.org/packages/release/bioc/vignettes/MAST/inst/doc/MAITAnalysis.html
 
 mat <- as.matrix(habermann[["RNA"]]@counts[habermann[["RNA"]]@var.features,])
+dim(mat)
+mat <- mat[rowSums(mat) >= 10,]
+dim(mat)
 rds <- colSums(mat)
 med_rds <- median(rds)
 mat <- t(t(mat)/rds)*med_rds
@@ -47,8 +55,7 @@ CD$cngeneson <- CD$ngeneson-mean(ngeneson)
 SummarizedExperiment::colData(sca) <- CD
 
 set.seed(10)
-# mast_res <- MAST::zlm(formula = ~ grp.Diagnosis + (1 | grp.Sample_Name) + cngeneson + grp.Gender + grp.Tobacco + grp.Age + grp.percent.mt,
-mast_res <- MAST::zlm(formula = ~ grp.Diagnosis + (1 | grp.Sample_Name) + cngeneson,
+mast_res <- MAST::zlm(formula = ~ grp.Diagnosis + (1 | grp.Sample_Name) + cngeneson + grp.Gender + grp.Tobacco + grp.Age + grp.percent.mt,
                       sca = sca,
                       method = "glmer",
                       ebayes = FALSE,
