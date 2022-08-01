@@ -70,4 +70,4 @@ mast_lrt <- MAST::lrTest(mast_res, "grp.Diagnosis")
 mast_pval_glmer <- apply(mast_lrt, 1, function(x){x[3,3]})
 save(habermann, sca, mast_res, mast_lrt, mast_pval_glmer,
      date_of_run, session_info,
-     file = "../../../../out/main/habermann_T_mast.RData")
+     file = "../../../out/main/habermann_T_mast.RData")

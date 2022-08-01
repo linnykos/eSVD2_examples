@@ -124,15 +124,16 @@ eSVD_obj$fit_Second$posterior_mean_mat <- NULL
 eSVD_obj$fit_Second$posterior_var_mat <- NULL
 eSVD_obj$teststat_vec <- NULL
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
-                                               bool_adjust_covariates = F,
-                                               alpha_max = NULL,
-                                               bool_covariates_as_library = T)
+                                      bool_adjust_covariates = F,
+                                      alpha_max = NULL,
+                                      bool_covariates_as_library = T,
+                                      library_min = 1e-4)
 metadata <- adams@meta.data
 metadata[,"Subject_Identity"] <- as.factor(metadata[,"Subject_Identity"])
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                                    covariate_individual = "Subject_Identity",
-                                                    metadata = metadata,
-                                                    verbose = 1)
+                                           covariate_individual = "Subject_Identity",
+                                           metadata = metadata,
+                                           verbose = 1)
 
 df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj,
                              metadata = adams@meta.data,
@@ -160,6 +161,13 @@ idx <- order(logpvalue_vec, decreasing = T)[1:length(adams_df_genes)]
 length(idx)
 length(intersect(idx, c(adam_idx)))
 length(intersect(idx, c(adam_idx, habermann_idx)))
+
+## https://www.pathwaycommons.org/guide/primers/statistics/fishers_exact_test/
+m <- length(adam_idx)
+n <- length(gaussian_teststat) - m
+k <- length(idx)
+x <- length(intersect(idx, c(adam_idx)))
+fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
 
 # tab <- table(adams$Subject_Identity, adams$Disease_Identity)
 # indiv_cases <- rownames(tab)[which(tab[,"IPF"] != 0)]
@@ -192,6 +200,8 @@ points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[idx], y = y_vec[idx],
        col = 2, pch = 16, cex = 1.5)
+points(x = x_vec[setdiff(habermann_idx, idx)], y = y_vec[setdiff(habermann_idx, idx)],
+       col = 3, pch = 16, cex = 1, lwd = 2)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
@@ -203,5 +213,14 @@ points(x = x_vec[intersect(idx, adam_idx)], y = y_vec[intersect(idx, adam_idx)],
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
+graphics.off()
+
+
+png("../../../out/fig/main/adams_T_volcano-stats.png",
+    height = 2500, width = 2500,
+    units = "px", res = 500)
+plot(x = 1:10, y = 1:10, type = "n",
+     main = paste0("Fisher = ", fisher, "\nTotal: ",
+                   length(adam_idx), ", inter: ", length(intersect(idx, adam_idx))))
 graphics.off()
 

@@ -1,11 +1,18 @@
 rm(list=ls())
 library(Seurat)
 library(eSVD2)
+library(SummarizedExperiment)
+library(DESeq2)
 
 load("../../../out/main/adams_T_sctransform.RData")
 sctransform_adams <- de_result
 load("../../../out/main/habermann_T_sctransform.RData")
 sctransform_habermann <- de_result
+
+load("../../../out/main/adams_T_deseq2.RData")
+adams_deseq2 <- deseq2_res
+load("../../../out/main/habermann_T_deseq2.RData")
+habermann_deseq2 <- deseq2_res
 
 load("../../../out/main/habermann_T_esvd.RData")
 eSVD_obj$fit_Second$posterior_mean_mat <- NULL
@@ -14,7 +21,8 @@ eSVD_obj$teststat_vec <- NULL
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
                                       alpha_max = NULL,
-                                      bool_covariates_as_library = T)
+                                      bool_covariates_as_library = T,
+                                      library_min = 1e-4)
 metadata <- habermann@meta.data
 metadata[,"Sample_Name"] <- as.factor(metadata[,"Sample_Name"])
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
@@ -30,7 +38,8 @@ eSVD_obj$teststat_vec <- NULL
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
                                       alpha_max = NULL,
-                                      bool_covariates_as_library = T)
+                                      bool_covariates_as_library = T,
+                                      library_min = 1e-4)
 metadata <- adams@meta.data
 metadata[,"Subject_Identity"] <- as.factor(metadata[,"Subject_Identity"])
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
@@ -63,6 +72,7 @@ de_genes_others <- setdiff(de_genes_others, de_genes)
 cycling_genes <- setdiff(cycling_genes, c(de_genes_others, de_genes))
 hk_genes <- setdiff(hk_genes, c(cycling_genes, de_genes_others, de_genes))
 
+target_length <- length(unique(c(adams_df_genes, habermann_df_genes)))
 #####################
 
 df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_adams,
@@ -79,15 +89,15 @@ fdr_vec <- locfdr_res_adams$fdr
 names(fdr_vec) <- names(gaussian_teststat_adams)
 null_mean <- locfdr_res_adams$fp0["mlest", "delta"]
 null_sd <- locfdr_res_adams$fp0["mlest", "sigma"]
-pvalue_vec <- sapply(gaussian_teststat_adams, function(x){
+logpvalue_vec <- sapply(gaussian_teststat_adams, function(x){
   if(x < null_mean) {
-    stats::pnorm(x, mean = null_mean, sd = null_sd)*2
+    Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
   } else {
-    (1-stats::pnorm(x, mean = null_mean, sd = null_sd))*2
+    Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
   }
 })
-logpvalue_vec <- -log10(pvalue_vec)
-idx_adams <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adams_df_genes, habermann_df_genes)))]
+logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
+idx_adams <- order(logpvalue_vec, decreasing = T)[1:target_length]
 eSVD_adams_de <- names(teststat_vec)[idx_adams]
 
 ####
@@ -106,21 +116,24 @@ fdr_vec <- locfdr_res_habermann$fdr
 names(fdr_vec) <- names(gaussian_teststat_habermann)
 null_mean <- locfdr_res_habermann$fp0["mlest", "delta"]
 null_sd <- locfdr_res_habermann$fp0["mlest", "sigma"]
-pvalue_vec <- sapply(gaussian_teststat_habermann, function(x){
+logpvalue_vec <- sapply(gaussian_teststat_habermann, function(x){
   if(x < null_mean) {
-    stats::pnorm(x, mean = null_mean, sd = null_sd)*2
+    Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
   } else {
-    (1-stats::pnorm(x, mean = null_mean, sd = null_sd))*2
+    Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
   }
 })
-logpvalue_vec <- -log10(pvalue_vec)
-idx_habermann <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adams_df_genes, habermann_df_genes)))]
+logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
+idx_habermann <- order(logpvalue_vec, decreasing = T)[1:target_length]
 eSVD_habermann_de <- names(teststat_vec)[idx_habermann]
 
 ###############################
 
-sctransform_adams_degenes <- rownames(sctransform_adams)[order(sctransform_adams[,"p_val"], decreasing = F)[1:length(unique(c(adams_df_genes, habermann_df_genes)))]]
-sctransform_habermann_degenes <- rownames(sctransform_habermann)[order(sctransform_habermann[,"p_val"], decreasing = F)[1:length(unique(c(adams_df_genes, habermann_df_genes)))]]
+deseq_adams_degenes <- rownames(adams_deseq2)[order(adams_deseq2[,"pvalue"], decreasing = F)[1:target_length]]
+deseq_habermann_degenes <- rownames(habermann_deseq2)[order(habermann_deseq2[,"pvalue"], decreasing = F)[1:target_length]]
+
+sctransform_adams_degenes <- rownames(sctransform_adams)[order(sctransform_adams[,"p_val"], decreasing = F)[1:target_length]]
+sctransform_habermann_degenes <- rownames(sctransform_habermann)[order(sctransform_habermann[,"p_val"], decreasing = F)[1:target_length]]
 
 de_vec <- unique(c(adams_df_genes, habermann_df_genes))
 
@@ -129,6 +142,7 @@ length(adams_df_genes)
 length(habermann_df_genes)
 length(intersect(adams_df_genes, habermann_df_genes))
 
+##
 length(eSVD_adams_de)
 length(intersect(eSVD_adams_de, habermann_df_genes))
 length(intersect(eSVD_adams_de, adams_df_genes))
@@ -143,6 +157,7 @@ length(intersect(eSVD_habermann_de, hk_genes))
 
 length(intersect(eSVD_adams_de, eSVD_habermann_de))
 
+##
 length(sctransform_adams_degenes)
 length(intersect(sctransform_adams_degenes, habermann_df_genes))
 length(intersect(sctransform_adams_degenes, adams_df_genes))
@@ -157,58 +172,7 @@ length(intersect(sctransform_habermann_degenes, hk_genes))
 
 length(intersect(sctransform_adams_degenes, sctransform_habermann_degenes))
 
-##################
-
-input <- c(
-  a.reported = 1800,
-  h.reported = 1500,
-  a.esvd = 1300,
-  h.esvd = 1000,
-  a.sct = 500,
-  h.sct = 200,
-  # "a.reported&a.esvd" = max(length(intersect(adams_df_genes, eSVD_adams_de)), 1),
-  "h.reported&a.esvd" = max(length(intersect(habermann_df_genes, eSVD_adams_de)), 1),
-  "a.reported&h.esvd" = max(length(intersect(adams_df_genes, eSVD_habermann_de)), 1),
-  "a.esvd&h.esvd" = max(length(intersect(eSVD_adams_de, eSVD_habermann_de)), 1),
-  # "h.reported&h.esvd" = max(length(intersect(habermann_df_genes, eSVD_habermann_de)), 1),
-  "h.reported&a.sct" = length(intersect(habermann_df_genes, sctransform_adams_degenes)),
-  "a.reported&h.sct" = length(intersect(adams_df_genes, sctransform_habermann_degenes)),
-  "h.sct&a.sct" =  length(intersect(sctransform_adams_degenes, sctransform_habermann_degenes))
-)
-input_mat <- UpSetR::fromExpression(input)
-# input_mat <- input_mat[-c(1:(length(adams_df_genes)+length(habermann_df_genes)+length(eSVD_adams_de)+length(eSVD_habermann_de)+length(sctransform_adams_degenes)+length(sctransform_habermann_degenes))),]
-
-png("../../../out/fig/main/adams_habermann_T_upset.png",
-    height = 2000, width = 2000,
-    units = "px", res = 500)
-UpSetR::upset(input_mat,
-              nsets = 6,
-              intersections = list(list("h.reported", "a.esvd"),
-                                   list("a.reported", "h.esvd"),
-                                   list("a.esvd", "h.esvd"),
-                                   list("h.reported", "a.sct"),
-                                   list("h.reported", "a.sct"),
-                                   list("a.reported", "h.sct"),
-                                   list("h.sct", "a.sct")),
-              number.angles = 0,
-              mb.ratio = c(0.5, 0.5),
-              text.scale = 1.5,
-              point.size = 2.8,
-              line.size = 1)
-graphics.off()
-
-#######################################
-
-load("../../../out/main/adams_T_deseq2.RData")
-deseq_adams <- deseq2_res
-load("../../../out/main/habermann_T_deseq2.RData")
-deseq_habermann <- deseq2_res
-
-deseq_adams2 <- deseq_adams[!is.na(deseq_adams$pvalue),]
-deseq_adams_degenes <- rownames(deseq_adams2)[order(deseq_adams2[,"pvalue"], decreasing = F)[1:length(unique(c(adams_df_genes, habermann_df_genes)))]]
-deseq_habermann2 <- deseq_habermann[!is.na(deseq_habermann$pvalue),]
-deseq_habermann_degenes <- rownames(deseq_habermann2)[order(deseq_habermann2[,"pvalue"], decreasing = F)[1:length(unique(c(adams_df_genes, habermann_df_genes)))]]
-
+##
 length(deseq_adams_degenes)
 length(intersect(deseq_adams_degenes, habermann_df_genes))
 length(intersect(deseq_adams_degenes, adams_df_genes))
@@ -222,4 +186,80 @@ length(intersect(deseq_habermann_degenes, de_vec))
 length(intersect(deseq_habermann_degenes, hk_genes))
 
 length(intersect(deseq_adams_degenes, deseq_habermann_degenes))
+
+##################
+
+input <- c(
+  h.reported = 200,
+  a.reported = 500,
+  h.esvd = 2000,
+  a.esvd = 5000,
+  h.deseq = 20000,
+  a.deseq = 50000,
+  "h.reported&a.esvd" = length(intersect(habermann_df_genes, eSVD_adams_de)),
+  "a.reported&h.esvd" = length(intersect(adams_df_genes, eSVD_habermann_de)),
+  "a.esvd&h.esvd" = length(intersect(eSVD_adams_de, eSVD_habermann_de)),
+  "h.reported&a.deseq" = length(intersect(habermann_df_genes, deseq_adams_degenes)),
+  "a.reported&h.deseq" = length(intersect(adams_df_genes, deseq_habermann_degenes)),
+  "h.deseq&a.deseq" =  length(intersect(deseq_adams_degenes, deseq_habermann_degenes))
+)
+input_mat <- UpSetR::fromExpression(input)
+# input_mat <- input_mat[-c(1:(length(adams_df_genes)+length(habermann_df_genes)+length(eSVD_adams_de)+length(eSVD_habermann_de)+length(sctransform_adams_degenes)+length(sctransform_habermann_degenes))),]
+
+png("../../../out/fig/main/adams_habermann_T_upset.png",
+    height = 2000, width = 2000,
+    units = "px", res = 500)
+UpSetR::upset(input_mat,
+              nsets = 6,
+              intersections = list(list("h.reported", "a.esvd"),
+                                   list("a.reported", "h.esvd"),
+                                   list("a.esvd", "h.esvd"),
+                                   list("h.reported", "a.deseq"),
+                                   list("a.reported", "h.deseq"),
+                                   list("h.deseq", "a.deseq")),
+              number.angles = 0,
+              mb.ratio = c(0.5, 0.5),
+              text.scale = 1.5,
+              point.size = 2.8,
+              line.size = 1)
+graphics.off()
+
+#######################
+
+input <- c(
+  h.reported = habermann_df_genes,
+  a.reported = adams_df_genes,
+  h.esvd = eSVD_habermann_de,
+  a.esvd = eSVD_adams_de,
+  h.deseq = deseq_habermann_degenes,
+  a.deseq = deseq_adams_degenes,
+  h.sct = deseq_habermann_degenes,
+  a.sct = deseq_adams_degenes,
+  "h.reported&a.esvd" = max(length(intersect(habermann_df_genes, eSVD_adams_de)), 1),
+  "a.reported&h.esvd" = max(length(intersect(adams_df_genes, eSVD_habermann_de)), 1),
+  "a.esvd&h.esvd" = max(length(intersect(eSVD_adams_de, eSVD_habermann_de)), 1),
+  "h.reported&a.deseq" = length(intersect(habermann_df_genes, deseq_adams_degenes)),
+  "a.reported&h.deseq" = length(intersect(adams_df_genes, deseq_habermann_degenes)),
+  "h.deseq&a.deseq" =  length(intersect(deseq_adams_degenes, deseq_habermann_degenes))
+)
+input_mat <- UpSetR::fromExpression(input)
+# input_mat <- input_mat[-c(1:(length(adams_df_genes)+length(habermann_df_genes)+length(eSVD_adams_de)+length(eSVD_habermann_de)+length(sctransform_adams_degenes)+length(sctransform_habermann_degenes))),]
+
+png("../../../out/fig/main/adams_habermann_T_upset.png",
+    height = 2000, width = 2000,
+    units = "px", res = 500)
+UpSetR::upset(input_mat,
+              nsets = 6,
+              intersections = list(list("h.reported", "a.esvd"),
+                                   list("a.reported", "h.esvd"),
+                                   list("a.esvd", "h.esvd"),
+                                   list("h.reported", "a.deseq"),
+                                   list("a.reported", "h.deseq"),
+                                   list("h.deseq", "a.deseq")),
+              number.angles = 0,
+              mb.ratio = c(0.5, 0.5),
+              text.scale = 1.5,
+              point.size = 2.8,
+              line.size = 1)
+graphics.off()
 

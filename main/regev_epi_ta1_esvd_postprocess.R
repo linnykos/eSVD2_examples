@@ -163,7 +163,8 @@ eSVD_obj_inflamed$teststat_vec <- NULL
 eSVD_obj_inflamed <- eSVD2:::compute_posterior(input_obj = eSVD_obj_inflamed,
                                                bool_adjust_covariates = F,
                                                alpha_max = NULL,
-                                               bool_covariates_as_library = T)
+                                               bool_covariates_as_library = T,
+                                               library_min = 1e-4)
 metadata <- regevEpi_inflamed@meta.data
 metadata[,"Sample"] <- as.factor(metadata[,"Sample"])
 eSVD_obj_inflamed <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj_inflamed,
@@ -198,6 +199,13 @@ length(idx_inflamed)
 length(intersect(idx_inflamed, c(inf_de_idx)))
 length(intersect(idx_inflamed, c(inf_de_idx, noninf_de_idx)))
 
+## https://www.pathwaycommons.org/guide/primers/statistics/fishers_exact_test/
+m <- length(inf_de_idx)
+n <- length(gaussian_teststat_inflamed) - m
+k <- length(idx_inflamed)
+x <- length(intersect(idx_inflamed, c(inf_de_idx)))
+fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
+
 x_vec <- log2(eSVD_obj_inflamed$case_mean) - log2(eSVD_obj_inflamed$control_mean)
 xlim <- range(x_vec)
 xlim <- c(-1,1)*max(abs(xlim))
@@ -219,6 +227,8 @@ points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[idx_inflamed], y = y_vec[idx_inflamed],
        col = 2, pch = 16, cex = 1.5)
+points(x = x_vec[setdiff(inf_de_idx, idx_inflamed)], y = y_vec[setdiff(inf_de_idx, idx_inflamed)],
+       col = 3, pch = 16, cex = 1, lwd = 2)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
@@ -232,6 +242,14 @@ axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
 graphics.off()
 
+png("../../../out/fig/main/regevEpi_ta1-inflamed_volcano-stats.png",
+    height = 2500, width = 2500,
+    units = "px", res = 500)
+plot(x = 1:10, y = 1:10, type = "n",
+     main = paste0("Fisher = ", fisher, "\nTotal: ",
+                   length(inf_de_idx), ", inter: ", length(intersect(idx_inflamed, inf_de_idx))))
+graphics.off()
+
 ###########
 
 # next for non-inflamed
@@ -241,7 +259,8 @@ eSVD_obj_noninflamed$teststat_vec <- NULL
 eSVD_obj_noninflamed <- eSVD2:::compute_posterior(input_obj = eSVD_obj_noninflamed,
                                                   bool_adjust_covariates = F,
                                                   alpha_max = NULL,
-                                                  bool_covariates_as_library = T)
+                                                  bool_covariates_as_library = T,
+                                                  library_min = 1e-4)
 metadata <- regevEpi@meta.data
 metadata[,"Sample"] <- as.factor(metadata[,"Sample"])
 eSVD_obj_noninflamed <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj_noninflamed,
@@ -276,6 +295,13 @@ length(idx_noninflamed)
 length(intersect(idx_noninflamed, c(noninf_de_idx)))
 length(intersect(idx_noninflamed, c(inf_de_idx, noninf_de_idx)))
 
+## https://www.pathwaycommons.org/guide/primers/statistics/fishers_exact_test/
+m <- length(noninf_de_idx)
+n <- length(gaussian_teststat_inflamed) - m
+k <- length(idx_noninflamed)
+x <- length(intersect(idx_noninflamed, c(noninf_de_idx)))
+fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
+
 x_vec <- log2(eSVD_obj_noninflamed$case_mean) - log2(eSVD_obj_noninflamed$control_mean)
 xlim <- range(x_vec) # quantile(x_vec, probs = c(0.01,0.99))
 xlim <- c(-1,1)*max(abs(xlim))
@@ -297,6 +323,8 @@ points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[idx_noninflamed], y = y_vec[idx_noninflamed],
        col = 2, pch = 16, cex = 1.5)
+points(x = x_vec[setdiff(noninf_de_idx, idx_noninflamed)], y = y_vec[setdiff(noninf_de_idx, idx_noninflamed)],
+       col = 3, pch = 16, cex = 1, lwd = 2)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
@@ -309,6 +337,15 @@ axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
 graphics.off()
+
+png("../../../out/fig/main/regevEpi_ta1-noninflamed_volcano-stats.png",
+    height = 2500, width = 2500,
+    units = "px", res = 500)
+plot(x = 1:10, y = 1:10, type = "n",
+     main = paste0("Fisher = ", fisher, "\nTotal: ",
+                   length(noninf_de_idx), ", inter: ", length(intersect(idx_noninflamed, noninf_de_idx))))
+graphics.off()
+
 
 ###############################
 

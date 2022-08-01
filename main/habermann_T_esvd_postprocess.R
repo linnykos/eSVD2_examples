@@ -127,7 +127,8 @@ eSVD_obj$teststat_vec <- NULL
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
                                       alpha_max = NULL,
-                                      bool_covariates_as_library = T)
+                                      bool_covariates_as_library = T,
+                                      library_min = 1e-4)
 metadata <- habermann@meta.data
 metadata[,"Sample_Name"] <- as.factor(metadata[,"Sample_Name"])
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
@@ -162,6 +163,14 @@ length(idx)
 length(intersect(idx, c(habermann_idx)))
 length(intersect(idx, c(adam_idx, habermann_idx)))
 
+## https://www.pathwaycommons.org/guide/primers/statistics/fishers_exact_test/
+m <- length(habermann_idx)
+n <- length(gaussian_teststat) - m
+k <- length(idx)
+x <- length(intersect(idx, c(habermann_idx)))
+fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
+
+
 # tab <- table(habermann$Sample_Name, habermann$Diagnosis)
 # indiv_cases <- rownames(tab)[which(tab[,"IPF"] != 0)]
 # indiv_controls <- rownames(tab)[which(tab[,"IPF"] == 0)]
@@ -193,6 +202,8 @@ points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[idx], y = y_vec[idx],
        col = 2, pch = 16, cex = 1.5)
+points(x = x_vec[setdiff(habermann_idx, idx)], y = y_vec[setdiff(habermann_idx, idx)],
+       col = 3, pch = 16, cex = 1, lwd = 2)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
@@ -204,5 +215,13 @@ points(x = x_vec[intersect(idx, habermann_idx)], y = y_vec[intersect(idx, haberm
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
+graphics.off()
+
+png("../../../out/fig/main/habermann_T_volcano-stats.png",
+    height = 2500, width = 2500,
+    units = "px", res = 500)
+plot(x = 1:10, y = 1:10, type = "n",
+     main = paste0("Fisher = ", fisher, "\nTotal: ",
+                   length(habermann_idx), ", inter: ", length(intersect(idx, habermann_idx))))
 graphics.off()
 
