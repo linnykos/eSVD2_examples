@@ -8,8 +8,10 @@ session_info <- devtools::session_info()
 load("../../../data/sns_autism/sns_formatted2.RData")
 
 sns_original <- sns
-celltype_labels <- c("AST-PP", "Endothelial", "IN-SST", "IN-VIP", "L2/3", "L4", "Microglia", "Oligodendrocytes", "OPC")
-celltype_names <- c("astpp", "endothelial", "insst", "invip", "layer23", "layer4", "microglia", "oligo", "opc")
+celltype_labels <- c("AST-PP", "Endothelial", "IN-SST", "IN-VIP", "L2/3", "L4", "L5/6", "L5/6-CC",
+                     "Microglia", "Oligodendrocytes", "OPC")
+celltype_names <- c("astpp", "endothelial", "insst", "invip", "layer23", "layer4", "layer56", "layer56cc",
+                    "microglia", "oligo", "opc")
 
 for(ii in 1:length(celltype_labels)){
   sns <- sns_original
