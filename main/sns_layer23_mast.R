@@ -4,7 +4,7 @@ library(SummarizedExperiment)
 library(MAST)
 library(lme4)
 
-load("../../../out/main/adams_T_preprocessed.RData")
+load("../../../out/main/sns_layer23_processed.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -14,19 +14,19 @@ session_info <- devtools::session_info()
 # following the analysis in https://github.com/himelmallick/BenchmarkSingleCell/blob/master/Library/run_MAST.R
 # and https://www.bioconductor.org/packages/release/bioc/vignettes/MAST/inst/doc/MAITAnalysis.html
 
-mat <- as.matrix(adams[["RNA"]]@counts[adams[["RNA"]]@var.features,])
+mat <- as.matrix(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,])
 rds <- colSums(mat)
 med_rds <- median(rds)
 mat <- t(t(mat)/rds)*med_rds
 tpms <- log1p(mat)
 
-categorical_var <- c("Disease_Identity", "Subject_Identity", "Gender", "Tobacco")
-numerical_var <- c("Age", "percent.mt")
-metadata <- adams@meta.data[,c(categorical_var, numerical_var)]
+categorical_var <- c("diagnosis", "individual", "region", "sex", "Seqbatch", "Capbatch")
+numerical_var <- c("age", "percent.mt", "RNA.Integrity.Number", "post.mortem.hours")
+metadata <- sns@meta.data[,c(categorical_var, numerical_var)]
 for(var in categorical_var){
-  metadata[,var] <- as.factor( metadata[,var])
+  metadata[,var] <- as.factor(metadata[,var])
 }
-metadata[,"Disease_Identity"] <- stats::relevel(metadata[,"Disease_Identity"], "Control")
+metadata[,"diagnosis"] <- stats::relevel(metadata[,"diagnosis"], "Control")
 
 # create the SingleCellAssay (sca) object. See https://www.rdocumentation.org/packages/MAST/versions/0.931/topics/SingleCellAssay
 sca <- MAST::FromMatrix(exprsArray = tpms,
@@ -42,18 +42,18 @@ CD$cngeneson <- CD$ngeneson-mean(ngeneson)
 SummarizedExperiment::colData(sca) <- CD
 
 set.seed(10)
-mast_res <- MAST::zlm(formula = ~ grp.Disease_Identity + (1 | grp.Subject_Identity) + cngeneson + grp.Gender + grp.Tobacco + grp.Age + grp.percent.mt,
+mast_res <- MAST::zlm(formula = ~ grp.diagnosis + (1 | grp.individual) + cngeneson + grp.region + (1 | grp.Seqbatch) + (1 | grp.Capbatch) + grp.sex + grp.age + grp.percent.mt + grp.RNA.Integrity.Number + grp.post.mortem.hours,
                       sca = sca,
                       method = "glmer",
                       ebayes = FALSE,
                       silent = F)
-save(adams, sca, mast_res,
+save(sns, sca, mast_res,
      date_of_run, session_info,
-     file = "../../../out/main/adams_T_mast.RData")
+     file = "../../../out/main/sns_layer23_mast.RData")
 
 set.seed(10)
-mast_lrt <- MAST::lrTest(mast_res, "grp.Disease_Identity")
+mast_lrt <- MAST::lrTest(mast_res, "grp.diagnosis")
 mast_pval_glmer <- apply(mast_lrt, 1, function(x){x[3,3]})
-save(adams, sca, mast_res, mast_lrt, mast_pval_glmer,
+save(sns, sca, mast_res, mast_lrt, mast_pval_glmer,
      date_of_run, session_info,
-     file = "../../../out/main/adams_T_mast.RData")
+     file = "../../../out/main/sns_layer23_mast.RData")

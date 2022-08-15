@@ -1,8 +1,8 @@
 rm(list=ls())
+load("../../../out/main/sns_layer56_processed.RData")
+
 library(Seurat)
 library(eSVD2)
-
-load("../../../out/main/sns_layer23_processed.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -119,7 +119,7 @@ save(date_of_run, session_info, sns,
      time_start3, time_end3, time_start4, time_end4,
      time_start4b, time_end4b,
      time_start5, time_end5,
-     file = "../../../out/main/sns_layer23_esvd.RData")
+     file = "../../../out/main/sns_layer56_esvd.RData")
 
 
 
