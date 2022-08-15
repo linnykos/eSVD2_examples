@@ -111,7 +111,7 @@ eSVD_obj2 <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                        bool_library_includes_interept = T,
                                        bool_use_log = T,
                                        verbose = 1)
-log_nuisance <- eSVD_obj$fit_Second$nuisance_vec
+log_nuisance <- eSVD_obj2$fit_Second$nuisance_vec
 time_end4 <- Sys.time()
 
 time_start4b <- Sys.time()

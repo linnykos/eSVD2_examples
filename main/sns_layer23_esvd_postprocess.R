@@ -8,22 +8,6 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
-eSVD_obj$fit_Second$posterior_mean_mat <- NULL
-eSVD_obj$fit_Second$posterior_var_mat <- NULL
-eSVD_obj$teststat_vec <- NULL
-eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
-                                      bool_adjust_covariates = F,
-                                      alpha_max = NULL,
-                                      bool_covariates_as_library = T,
-                                      library_min = 1e-1)
-metadata <- sns@meta.data
-metadata[,"individual"] <- as.factor(metadata[,"individual"])
-time_start5 <- Sys.time()
-eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                           covariate_individual = "individual",
-                                           metadata = metadata,
-                                           verbose = 1)
-
 #################
 
 load("../../../data/sns_autism/velmeshev_genes.RData")
