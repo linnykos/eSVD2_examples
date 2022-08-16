@@ -86,12 +86,17 @@ time_start4 <- Sys.time()
 eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       bool_covariates_as_library = T,
                                       bool_library_includes_interept = T,
+                                      bool_use_log = F,
                                       verbose = 1)
 time_end4 <- Sys.time()
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
-                                      bool_covariates_as_library = T)
+                                      alpha_max = NULL,
+                                      bool_covariates_as_library = T,
+                                      bool_stabilize_underdispersion = T,
+                                      library_min = 1,
+                                      pseudocount = 1)
 metadata <- sns@meta.data
 metadata[,"individual"] <- as.factor(metadata[,"individual"])
 time_start5 <- Sys.time()

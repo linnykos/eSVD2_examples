@@ -83,27 +83,20 @@ eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
 
 print("Nuisance estimation")
 time_start4 <- Sys.time()
-eSVD_obj2 <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
-                                       bool_covariates_as_library = T,
-                                       bool_library_includes_interept = T,
-                                       bool_use_log = T,
-                                       verbose = 1)
-log_nuisance <- eSVD_obj2$fit_Second$nuisance_vec
-time_end4 <- Sys.time()
-
-time_start4b <- Sys.time()
 eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       bool_covariates_as_library = T,
                                       bool_library_includes_interept = T,
                                       bool_use_log = F,
                                       verbose = 1)
-time_end4b <- Sys.time()
+time_end4 <- Sys.time()
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
                                       alpha_max = NULL,
                                       bool_covariates_as_library = T,
-                                      library_min = 1e-4)
+                                      bool_stabilize_underdispersion = T,
+                                      library_min = 1,
+                                      pseudocount = 1)
 metadata <- sns@meta.data
 metadata[,"individual"] <- as.factor(metadata[,"individual"])
 time_start5 <- Sys.time()
@@ -114,10 +107,9 @@ eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
 time_end5 <- Sys.time()
 
 save(date_of_run, session_info, sns,
-     eSVD_obj, log_nuisance,
+     eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
-     time_start4b, time_end4b,
      time_start5, time_end5,
      file = "../../../out/main/sns_layer23_esvd.RData")
 
