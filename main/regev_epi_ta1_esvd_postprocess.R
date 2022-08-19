@@ -193,7 +193,7 @@ logpvalue_vec_inflamed <- sapply(gaussian_teststat_inflamed, function(x){
     Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
   }
 })
-logpvalue_vec_inflamed <- -(logpvalue_vec_inflamed/log10(exp(1)) + log10(2))
+logpvalue_vec_inflamed <- -(logpvalue_vec_inflamed/log(10) + log10(2))
 idx_inflamed <- order(logpvalue_vec_inflamed, decreasing = T)[1:length(inf_de_idx)]
 length(idx_inflamed)
 length(intersect(idx_inflamed, c(inf_de_idx)))
@@ -289,7 +289,7 @@ logpvalue_vec_noninflamed <- sapply(gaussian_teststat_noninflamed, function(x){
     Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
   }
 })
-logpvalue_vec_noninflamed <- -(logpvalue_vec_noninflamed/log10(exp(1)) + log10(2))
+logpvalue_vec_noninflamed <- -(logpvalue_vec_noninflamed/log(10) + log10(2))
 idx_noninflamed <- order(logpvalue_vec_noninflamed, decreasing = T)[1:length(noninf_de_idx)]
 length(idx_noninflamed)
 length(intersect(idx_noninflamed, c(noninf_de_idx)))

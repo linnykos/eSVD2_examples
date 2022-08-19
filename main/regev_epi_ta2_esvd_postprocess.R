@@ -170,14 +170,14 @@ fdr_vec <- locfdr_res$fdr
 names(fdr_vec) <- names(gaussian_teststat)
 null_mean <- locfdr_res$fp0["mlest", "delta"]
 null_sd <- locfdr_res$fp0["mlest", "sigma"]
-pvalue_vec <- sapply(gaussian_teststat, function(x){
+logpvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {
-    stats::pnorm(x, mean = null_mean, sd = null_sd)*2
+    Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
   } else {
-    (1-stats::pnorm(x, mean = null_mean, sd = null_sd))*2
+    Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
   }
 })
-logpvalue_vec_inflamed <- -log10(pvalue_vec)
+logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
 idx_inflamed <- which(fdr_vec < 0.1)
 
 # next for non-inflamed
@@ -209,14 +209,14 @@ fdr_vec <- locfdr_res$fdr
 names(fdr_vec) <- names(gaussian_teststat)
 null_mean <- locfdr_res$fp0["mlest", "delta"]
 null_sd <- locfdr_res$fp0["mlest", "sigma"]
-pvalue_vec <- sapply(gaussian_teststat, function(x){
+logpvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {
-    stats::pnorm(x, mean = null_mean, sd = null_sd)*2
+    Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
   } else {
-    (1-stats::pnorm(x, mean = null_mean, sd = null_sd))*2
+    Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
   }
 })
-logpvalue_vec_noninflamed <- -log10(pvalue_vec)
+logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
 idx_noninflamed <- which(fdr_vec < 0.1)
 
 

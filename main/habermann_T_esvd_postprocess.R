@@ -157,7 +157,7 @@ logpvalue_vec <- sapply(gaussian_teststat, function(x){
     Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
   }
 })
-logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
+logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
 idx <- order(logpvalue_vec, decreasing = T)[1:length(habermann_idx)]
 length(idx)
 length(intersect(idx, c(habermann_idx)))

@@ -22,7 +22,8 @@ for(downsample_value in downsample_values){
     stats::rbinom(1, size = x, prob = downsample_value)
   })
 
-  mat@x <- x_vec2
+  mat@x <- as.numeric(x_vec2)
+  mat <- Matrix::Matrix(as.matrix(mat), sparse = T)
   save(mat, date_of_run, session_info,
        file = paste0("../../../out/main/sns_layer23_processed_downsampled-", downsample_value, ".RData"))
 }

@@ -1,0 +1,130 @@
+rm(list=ls())
+library(Seurat)
+library(eSVD2)
+
+load("../../../out/main/sns_layer23_esvd.RData")
+
+set.seed(10)
+date_of_run <- Sys.time()
+session_info <- devtools::session_info()
+
+##################
+
+find_de_genes <- function(eSVD_obj,
+                          seurat_obj = sns,
+                          covariate_individual = "individual"){
+  df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj,
+                               metadata = seurat_obj@meta.data,
+                               covariate_individual = covariate_individual)
+  teststat_vec <- eSVD_obj$teststat_vec
+  p <- length(teststat_vec)
+  gaussian_teststat <- sapply(1:p, function(j){
+    qnorm(pt(teststat_vec[j], df = df_vec[j]))
+  })
+
+  locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
+  fdr_vec <- locfdr_res$fdr
+  names(fdr_vec) <- names(gaussian_teststat)
+  null_mean <- locfdr_res$fp0["mlest", "delta"]
+  null_sd <- locfdr_res$fp0["mlest", "sigma"]
+  logpvalue_vec <- sapply(gaussian_teststat, function(x){
+    if(x < null_mean) {
+      Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
+    } else {
+      Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
+    }
+  })
+  logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
+
+  selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.05)]
+  selected_genes
+}
+
+original_selected_genes <- find_de_genes(eSVD_obj)
+length(original_selected_genes)
+
+downsample_values <- c(0.9, 0.8, 0.7, 0.6, 0.5)
+downsampled_selected_genes <- lapply(downsample_values, function(downsample_value){
+  print(downsample_value)
+  load(paste0("../../../out/main/sns_layer23_esvd_downsampled-", downsample_value, ".RData"))
+  print("Loaded")
+
+  find_de_genes(eSVD_obj)
+})
+
+sapply(downsampled_selected_genes, length)
+sapply(downsampled_selected_genes, function(x){
+  length(intersect(x, original_selected_genes))
+})
+
+######################
+
+load("../../../data/sns_autism/velmeshev_genes.RData")
+tmp <- velmeshev_de_gene_df_list[[1]]
+tmp <- tmp[which(tmp[,"Cell type"] == "L2/3"),]
+de_gene_specific <- tmp[,"Gene name"]
+de_genes1 <- velmeshev_marker_gene_df[,"Gene name"]
+de_genes2 <- unlist(lapply(velmeshev_de_gene_df_list[-1], function(de_mat){
+  idx <- ifelse("Gene name" %in% colnames(de_mat), "Gene name", "HGNC Symbol")
+  de_mat[,idx]
+}))
+de_genes <- sort(unique(c(de_genes1, de_genes2)))
+de_genes <- de_genes[!de_genes %in% de_gene_specific]
+hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
+sfari_genes <- read.csv("../../../data/SFARI/SFARI-Gene_genes_09-02-2021release_01-06-2022export.csv", header = T)[,2]
+cycling_genes <- c(cc.genes$s.genes, cc.genes$g2m.genes)
+
+length(intersect(original_selected_genes, sfari_genes))
+sapply(downsampled_selected_genes, function(x){
+  length(intersect(x, sfari_genes))
+})
+
+length(intersect(original_selected_genes, hk_genes))
+sapply(downsampled_selected_genes, function(x){
+  length(intersect(x, hk_genes))
+})
+
+################################
+
+load("../../../out/main/sns_layer23_esvd.RData")
+
+find_de_genes_semisupervised <- function(eSVD_obj,
+                                         seurat_obj = sns,
+                                         covariate_individual = "individual"){
+  df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj,
+                               metadata = seurat_obj@meta.data,
+                               covariate_individual = covariate_individual)
+  teststat_vec <- eSVD_obj$teststat_vec
+  p <- length(teststat_vec)
+  gaussian_teststat <- sapply(1:p, function(j){
+    qnorm(pt(teststat_vec[j], df = df_vec[j]))
+  })
+
+  locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
+  fdr_vec <- locfdr_res$fdr
+  names(fdr_vec) <- names(gaussian_teststat)
+  null_mean <- locfdr_res$fp0["mlest", "delta"]
+  null_sd <- locfdr_res$fp0["mlest", "sigma"]
+  gaussian_teststat <- (gaussian_teststat - null_mean)/null_sd
+
+  semisupervised_multtest(teststat_vec = gaussian_teststat,
+                          null_idx = which(names(teststat_vec) %in% hk_genes),
+                          alpha = 0.05)
+}
+
+original_selected_genes2 <- find_de_genes_semisupervised(eSVD_obj)
+length(original_selected_genes2)
+
+downsample_values <- c(0.9, 0.8, 0.7, 0.6, 0.5)
+downsampled_selected_genes2 <- lapply(downsample_values, function(downsample_value){
+  print(downsample_value)
+  load(paste0("../../../out/main/sns_layer23_esvd_downsampled-", downsample_value, ".RData"))
+  print("Loaded")
+
+  find_de_genes_semisupervised(eSVD_obj)
+})
+
+sapply(downsampled_selected_genes2, length)
+sapply(downsampled_selected_genes2, function(x){
+  length(intersect(x, original_selected_genes2))
+})
