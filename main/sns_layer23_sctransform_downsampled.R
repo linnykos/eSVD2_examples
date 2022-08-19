@@ -45,7 +45,7 @@ for(kk in 1:length(downsample_values)){
 
   load(paste0("../../../out/main/sns_layer23_processed_downsampled-", downsample_value, ".RData"))
 
-  metadata <- sns_clean@meta.data[,c("region", "sex", "Seqbatch", "percent.mt", "age", "RNA.Integrity.Number", "post.mortem.hours")]
+  metadata <- sns_clean@meta.data[,c("region", "sex", "Seqbatch", "percent.mt", "age", "RNA.Integrity.Number", "post.mortem.hours", "diagnosis")]
   sns2 <- Seurat::CreateSeuratObject(counts = Matrix::t(mat), meta.data = metadata)
   sns2[["RNA"]]@var.features <- colnames(mat)
 
