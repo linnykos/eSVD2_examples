@@ -52,6 +52,7 @@ for(kk in 1:length(downsample_values)){
   sns2$region <- factor(sns2$region)
   sns2$sex <- factor(sns2$sex)
   sns2$Seqbatch <- factor(sns2$Seqbatch)
+  sns2$diagnosis <- factor(sns2$diagnosis)
   set.seed(10)
   sns2 <- Seurat::SCTransform(sns2, method = "glmGamPoi",
                              residual.features = sns2[["RNA"]]@var.features,
@@ -69,9 +70,62 @@ for(kk in 1:length(downsample_values)){
                                    verbose = T)
 
   de_result_downsampled[[kk]] <- de_result2
-
-  save(sns, de_result, de_result_downsampled,
-       date_of_run, session_info,
-       file = "../../../out/main/sns_layer23_sctransform_downsampled.RData")
 }
+
+save(sns, de_result, de_result_downsampled,
+     date_of_run, session_info,
+     file = "../../../out/main/sns_layer23_sctransform_downsampled.RData")
+
+##################
+
+load("../../../data/sns_autism/velmeshev_genes.RData")
+tmp <- velmeshev_de_gene_df_list[[1]]
+tmp <- tmp[which(tmp[,"Cell type"] == "L2/3"),]
+de_gene_specific <- tmp[,"Gene name"]
+de_genes1 <- velmeshev_marker_gene_df[,"Gene name"]
+de_genes2 <- unlist(lapply(velmeshev_de_gene_df_list[-1], function(de_mat){
+  idx <- ifelse("Gene name" %in% colnames(de_mat), "Gene name", "HGNC Symbol")
+  de_mat[,idx]
+}))
+de_genes <- sort(unique(c(de_genes1, de_genes2)))
+de_genes <- de_genes[!de_genes %in% de_gene_specific]
+hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
+sfari_genes <- read.csv("../../../data/SFARI/SFARI-Gene_genes_09-02-2021release_01-06-2022export.csv", header = T)[,2]
+cycling_genes <- c(cc.genes$s.genes, cc.genes$g2m.genes)
+deg_df <- readxl::read_xlsx(
+  path = "../../../data/bulkRNA-DEG-autism/SupplementaryTable3.xlsx",
+  sheet = "DEGene_Statistics"
+)
+deg_df <- as.data.frame(deg_df)
+bulk_de_genes <- deg_df[which(deg_df[,"WholeCortex_ASD_FDR"]<=0.005),"external_gene_name"]
+
+########################
+
+original_selected_genes <- rownames(de_result)[order(de_result$p_val_adj, decreasing = F)[1:100]]
+downsampled_selected_genes <- lapply(de_result_downsampled, function(x){
+  rownames(x)[order(x$p_val_adj, decreasing = F)[1:100]]
+})
+
+
+sapply(downsampled_selected_genes, function(x){
+  length(intersect(x, original_selected_genes))
+})
+
+length(intersect(original_selected_genes, sfari_genes))
+sapply(downsampled_selected_genes, function(x){
+  length(intersect(x, sfari_genes))
+})
+
+length(intersect(original_selected_genes, bulk_de_genes))
+sapply(downsampled_selected_genes, function(x){
+  length(intersect(x, bulk_de_genes))
+})
+
+length(intersect(original_selected_genes, hk_genes))
+sapply(downsampled_selected_genes, function(x){
+  length(intersect(x, hk_genes))
+})
+
+
+
 

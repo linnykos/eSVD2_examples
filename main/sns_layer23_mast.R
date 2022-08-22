@@ -42,11 +42,11 @@ CD$cngeneson <- CD$ngeneson-mean(ngeneson)
 SummarizedExperiment::colData(sca) <- CD
 
 set.seed(10)
-mast_res <- MAST::zlm(formula = ~ grp.diagnosis + (1 | grp.individual) + cngeneson + grp.region + (1 | grp.Seqbatch) + (1 | grp.Capbatch) + grp.sex + grp.age + grp.percent.mt + grp.RNA.Integrity.Number + grp.post.mortem.hours,
+mast_res <- MAST::zlm(formula = ~ grp.diagnosis + (1 | grp.individual) + cngeneson + grp.region + grp.Seqbatch + grp.Capbatch + grp.sex + grp.age + grp.percent.mt + grp.RNA.Integrity.Number + grp.post.mortem.hours,
                       sca = sca,
                       method = "glmer",
                       ebayes = FALSE,
-                      silent = F)
+                      silent = T)
 save(sns, sca, mast_res,
      date_of_run, session_info,
      file = "../../../out/main/sns_layer23_mast.RData")
