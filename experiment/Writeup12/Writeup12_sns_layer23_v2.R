@@ -34,7 +34,7 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     k = 30,
                                     lambda = 0.1,
                                     metadata_case_control = covariates[,"diagnosis_ASD"],
-                                    metadata_case_control = covariate_df[,"individual"],
+                                    metadata_individual = covariate_df[,"individual"],
                                     verbose = 1)
 time_end1 <- Sys.time()
 
