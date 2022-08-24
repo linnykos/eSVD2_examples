@@ -2,7 +2,7 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../../../out/main/sns_layer23_processed.RData")
+load("../../../../out/main/sns_layer23_processed.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -87,7 +87,7 @@ save(date_of_run, session_info, sns,
      eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3,
-     file = "../../../out/main/sns_layer23_esvd_v2.RData")
+     file = "../../../../out/Writeup12/Writeup12_sns_layer23_esvd_v2.RData")
 
 print("Nuisance estimation")
 time_start4 <- Sys.time()
@@ -110,7 +110,7 @@ save(date_of_run, session_info, sns,
      eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
-     file = "../../../out/main/sns_layer23_esvd_v2.RData")
+     file = "../../../../out/Writeup12/Writeup12_sns_layer23_esvd_v2.RData")
 
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
@@ -122,7 +122,7 @@ save(date_of_run, session_info, sns,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../out/main/sns_layer23_esvd_v2.RData")
+     file = "../../../../out/Writeup12/Writeup12_sns_layer23_esvd_v2.RData")
 
 
 
