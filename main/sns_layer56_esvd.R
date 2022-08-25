@@ -1,8 +1,8 @@
 rm(list=ls())
-load("../../../out/main/sns_layer56_processed.RData")
-
 library(Seurat)
 library(eSVD2)
+
+load("../../../out/main/sns_layer56_processed.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -28,11 +28,13 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates,
-                                    case_control_variable = "diagnosis_ASD",
+                                    covariates = covariates[,-which(colnames(covariates) == "diagnosis_ASD")],
+                                    case_control_variable = NULL,
                                     bool_intercept = T,
                                     k = 30,
                                     lambda = 0.1,
+                                    metadata_case_control = covariates[,"diagnosis_ASD"],
+                                    metadata_individual = covariate_df[,"individual"],
                                     verbose = 1)
 time_end1 <- Sys.time()
 
@@ -97,12 +99,9 @@ eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_stabilize_underdispersion = T,
                                       library_min = 1,
                                       pseudocount = 1)
-metadata <- sns@meta.data
-metadata[,"individual"] <- as.factor(metadata[,"individual"])
+
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                           covariate_individual = "individual",
-                                           metadata = metadata,
                                            verbose = 1)
 time_end5 <- Sys.time()
 
