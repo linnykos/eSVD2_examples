@@ -10,9 +10,7 @@ session_info <- devtools::session_info()
 
 #################
 
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj,
-                             metadata = sns@meta.data,
-                             covariate_individual = "individual")
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj)
 teststat_vec <- eSVD_obj$teststat_vec
 p <- length(teststat_vec)
 gaussian_teststat <- sapply(1:p, function(j){
@@ -32,8 +30,9 @@ logpvalue_vec <- sapply(gaussian_teststat, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
+logpvalue_vec <- pmin(logpvalue_vec, 15)
 
-selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.05)]
+selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.0001)]
 
 ############
 
@@ -64,17 +63,17 @@ length(intersect(bulk_de_genes, de_gene_specific))
 length(intersect(bulk_de_genes, de_genes))
 length(intersect(bulk_de_genes, hk_genes))
 
-## see https://www.simplypsychology.org/brodmann-areas.html for brodmann areas
-col_idx <- grep("ASD_BA.*_FDR", colnames(deg_df))
-for(j in col_idx){
-  print(colnames(deg_df)[j])
-  tmp <- deg_df[which(deg_df[,j]<=0.05),"external_gene_name"]
-  print(length(tmp))
-  print(length(intersect(tmp, sfari_genes)))
-}
-
-bulk_de_genes2 <- deg_df[which(deg_df[,"ASD_BA41_42_22_FDR"]<=0.01),"external_gene_name"]
-length(bulk_de_genes2)
+# ## see https://www.simplypsychology.org/brodmann-areas.html for brodmann areas
+# col_idx <- grep("ASD_BA.*_FDR", colnames(deg_df))
+# for(j in col_idx){
+#   print(colnames(deg_df)[j])
+#   tmp <- deg_df[which(deg_df[,j]<=0.05),"external_gene_name"]
+#   print(length(tmp))
+#   print(length(intersect(tmp, sfari_genes)))
+# }
+#
+# bulk_de_genes2 <- deg_df[which(deg_df[,"ASD_BA41_42_22_FDR"]<=0.01),"external_gene_name"]
+# length(bulk_de_genes2)
 
 length(selected_genes)
 length(intersect(selected_genes, de_gene_specific))
@@ -116,10 +115,6 @@ xlim <- c(-1,1)*max(abs(xlim))
 y_vec <- logpvalue_vec
 ylim <- range(y_vec)
 
-# adjust x_vec
-median_idx <- which(y_vec <= stats::quantile(y_vec, probs = 0.05))
-x_vec <- x_vec - stats::median(x_vec[median_idx])
-
 orange_col <- rgb(235, 134, 47, maxColorValue = 255)
 purple_col <- rgb(122, 49, 126, maxColorValue = 255)
 blue_col <- rgb(129, 139, 191, maxColorValue = 255)
@@ -142,7 +137,7 @@ plot(x = x_vec, y = y_vec,
      xaxt = "n", yaxt = "n", bty = "n",
      ylim = ylim, xlim = xlim,
      cex.lab = 1.25, type = "n")
-for(j in seq(0,7,by = .5)){
+for(j in seq(0,15,by = .5)){
   lines(x = c(-1e4,1e4), y = rep(j, 2), col = "gray", lty = 2, lwd = 1)
 }
 lines(x = c(-1e4,1e4), y = rep(min_pthres, 2), col = orange_col, lty = 2, lwd = 2)

@@ -14,9 +14,7 @@ session_info <- devtools::session_info()
 
 #################
 
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj,
-                             metadata = sns@meta.data,
-                             covariate_individual = "individual")
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj)
 teststat_vec <- eSVD_obj$teststat_vec
 p <- length(teststat_vec)
 gaussian_teststat <- sapply(1:p, function(j){
@@ -36,8 +34,9 @@ esvd_logpvalue_vec <- sapply(gaussian_teststat, function(x){
   }
 })
 esvd_logpvalue_vec <- -(esvd_logpvalue_vec/log(10) + log10(2))
-esvd_selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.05)]
+esvd_selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.0001)]
 esvd_pthres <- min(esvd_logpvalue_vec[esvd_selected_genes])
+esvd_logpvalue_vec <- pmin(esvd_logpvalue_vec, 15)
 esvd_selected_genes2 <- names(esvd_logpvalue_vec)[esvd_logpvalue_vec >= esvd_pthres]
 
 deseq_fdr_val <- stats::p.adjust(deseq2_res$pvalue, method = "BH")
@@ -101,7 +100,7 @@ plot(x = x_vec, y = y_vec,
      xaxt = "n", yaxt = "n", bty = "n",
      ylim = ylim, xlim = xlim,
      cex.lab = 1.25, type = "n")
-for(j in seq(0,7,by = .5)){
+for(j in seq(0,15,by = .5)){
   lines(x = c(-1e4,1e4), y = rep(j, 2), col = "gray", lty = 2, lwd = 1)
   lines(y = c(-1e4,1e4), x = rep(j, 2), col = "gray", lty = 2, lwd = 1)
 }
