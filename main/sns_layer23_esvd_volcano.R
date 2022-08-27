@@ -203,7 +203,7 @@ esvd_res <- clusterProfiler::enrichGO(
   pvalueCutoff = 0.05,
   qvalueCutoff = 0.05
 )
-deseq_res <- clusterProfiler::enrichGO(
+velmeshev_res <- clusterProfiler::enrichGO(
   gene = de_gene_specific,
   universe = universe_vec,
   keyType = "SYMBOL",
@@ -221,28 +221,33 @@ generatio <- sapply(esvd_res@result[,"GeneRatio"], function(x){
   as.numeric(zz[1])/as.numeric(zz[2])
 })
 esvd_res@result[order(generatio, decreasing = T)[1:50],c("ID", "Description", "pvalue", "GeneRatio")]
-esvd_res@result["GO:0031175",] # neuron projection development
-esvd_res@result["GO:0099536",] # synaptic signaling
-esvd_res@result["GO:0048812",] # neuron projection morphogenesis
-esvd_res@result["GO:0048667",] # cell morphogenesis involved in neuron differentiation
+esvd_res@result[order(esvd_res@result[,"pvalue"], decreasing = F)[1:50],c("ID", "Description", "pvalue", "GeneRatio")]
 
-colnames(deseq_res@result)
-head(deseq_res@result[,c("ID", "Description", "pvalue", "GeneRatio")])
-deseq_res@result["GO:0099536",]
-deseq_res@result["GO:0031175",]
-deseq_res@result["GO:0048812",]
-deseq_res@result["GO:0048667",]
+esvd_res@result["GO:0099536",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")] # synaptic signaling
+esvd_res@result["GO:0061564",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")] # axon development
+esvd_res@result["GO:0031175",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")] # neuron projection development
+esvd_res@result["GO:0050877",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")] # nervous system process
 
-go_vec <- c("GO:0031175", "GO:0099536", "GO:0048812", "GO:0048667")
+# esvd_res@result["GO:0048812",] # neuron projection morphogenesis
+# esvd_res@result["GO:0048667",] # cell morphogenesis involved in neuron differentiation
+
+colnames(velmeshev_res@result)
+head(velmeshev_res@result[,c("ID", "Description", "pvalue", "GeneRatio")])
+velmeshev_res@result["GO:0099536",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+velmeshev_res@result["GO:0061564",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+velmeshev_res@result["GO:0031175",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+velmeshev_res@result["GO:0050877",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+
+go_vec <- c("GO:0099536", "GO:0061564", "GO:0031175", "GO:0050877")
 esvd_pvalue <- sapply(go_vec, function(x){
   esvd_res@result[x, "pvalue"]
 })
-deseq_pvalue <- sapply(go_vec, function(x){
-  deseq_res@result[x, "pvalue"]
+velmeshev_pvalue <- sapply(go_vec, function(x){
+  velmeshev_res@result[x, "pvalue"]
 })
 
 esvd_log10pvalue <- -log10(esvd_pvalue)
-deseq_log10pvalue <- -log10(deseq_pvalue)
+velmeshev_log10pvalue <- -log10(velmeshev_pvalue)
 
 spacing <- .5
 width <- 1
@@ -257,7 +262,7 @@ png("../../../out/fig/main/sns_layer23_gsea.png",
     units = "px", res = 500)
 par(mar = c(0.1,2,0.1,0.1))
 plot(NA, xlim = c(0, total_len),
-     ylim = c(0, max(c(esvd_log10pvalue, deseq_log10pvalue))),
+     ylim = c(0, max(c(esvd_log10pvalue, velmeshev_log10pvalue))),
      xlab = "", ylab = "", xaxt = "n", yaxt = "n", bty = "n")
 for(i in 1:len){
   x_left <- (2*width+spacing)*(i-1)
@@ -265,8 +270,30 @@ for(i in 1:len){
           y = c(0, 0, esvd_log10pvalue[i], esvd_log10pvalue[i]),
           col = orange_col, border = "black")
   polygon(x = c(x_left, x_left+width, x_left+width, x_left)+width,
-          y = c(0, 0, deseq_log10pvalue[i], deseq_log10pvalue[i]),
+          y = c(0, 0, velmeshev_log10pvalue[i], velmeshev_log10pvalue[i]),
           col = brown_col, border = "black")
 }
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 graphics.off()
+
+####################
+
+go_vec <- c("GO:0099536", "GO:0061564", "GO:0031175", "GO:0050877")
+gene_list <- sapply(go_vec, function(x){
+  vec <- esvd_res@result[x,"geneID"]
+  vec2 <- strsplit(vec, split = "/")[[1]]
+  vec2
+})
+table(unlist(gene_list))
+for(vec in gene_list){
+  print(intersect(vec, sfari_genes))
+  print(intersect(vec, bulk_de_genes))
+  print("===")
+}
+
+x_vec <- log2(eSVD_obj$case_mean) - log2(eSVD_obj$control)
+
+for(vec in gene_list){
+  zz <- x_vec[vec]
+  print(paste0("Neg: ", length(which(zz < 0)), ", Pos: ", length(which(zz > 0))))
+}

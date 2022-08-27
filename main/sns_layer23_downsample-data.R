@@ -12,7 +12,7 @@ session_info <- devtools::session_info()
 
 mat <- Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,])
 
-downsample_values <- c(0.9, 0.8, 0.7, 0.6, 0.5)
+downsample_values <- seq(0.95, 0.6, by = -0.05)
 for(downsample_value in downsample_values){
   print(downsample_value)
   x_vec <- mat@x
