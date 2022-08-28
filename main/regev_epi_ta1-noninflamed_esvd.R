@@ -52,8 +52,8 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates[,-which(colnames(covariates) == "Subject_Disease_Colitis")],
-                                    case_control_variable = NULL,
+                                    covariates = covariates,
+                                    case_control_variable = "Subject_Disease_Colitis",
                                     bool_intercept = T,
                                     k = 15,
                                     lambda = 0.1,

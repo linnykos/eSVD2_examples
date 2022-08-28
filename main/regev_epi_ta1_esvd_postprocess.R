@@ -157,24 +157,7 @@ graphics.off()
 # make volcano plots
 
 # first for inflamed
-eSVD_obj_inflamed$fit_Second$posterior_mean_mat <- NULL
-eSVD_obj_inflamed$fit_Second$posterior_var_mat <- NULL
-eSVD_obj_inflamed$teststat_vec <- NULL
-eSVD_obj_inflamed <- eSVD2:::compute_posterior(input_obj = eSVD_obj_inflamed,
-                                               bool_adjust_covariates = F,
-                                               alpha_max = NULL,
-                                               bool_covariates_as_library = T,
-                                               library_min = 1e-4)
-metadata <- regevEpi_inflamed@meta.data
-metadata[,"Sample"] <- as.factor(metadata[,"Sample"])
-eSVD_obj_inflamed <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj_inflamed,
-                                                    covariate_individual = "Sample",
-                                                    metadata = metadata,
-                                                    verbose = 1)
-
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_inflamed,
-                             metadata = regevEpi_inflamed@meta.data,
-                             covariate_individual = "Sample")
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_inflamed)
 teststat_vec <- eSVD_obj_inflamed$teststat_vec
 p <- length(teststat_vec)
 gaussian_teststat_inflamed <- sapply(1:p, function(j){
@@ -205,12 +188,18 @@ n <- length(gaussian_teststat_inflamed) - m
 k <- length(idx_inflamed)
 x <- length(intersect(idx_inflamed, c(inf_de_idx)))
 fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
+fisher
 
 x_vec <- log2(eSVD_obj_inflamed$case_mean) - log2(eSVD_obj_inflamed$control_mean)
 xlim <- range(x_vec)
 xlim <- c(-1,1)*max(abs(xlim))
 y_vec <- abs(eSVD_obj_inflamed$teststat_vec)
 ylim <- range(y_vec)
+
+orange_col <- rgb(235, 134, 47, maxColorValue = 255)
+purple_col <- rgb(122, 49, 126, maxColorValue = 255)
+green_col <- rgb(70, 177, 70, maxColorValue = 255)
+green_col_trans <- rgb(70, 177, 70, 255*.35, maxColorValue = 255)
 
 png("../../../out/fig/main/regevEpi_ta1-inflamed_volcano.png",
     height = 2500, width = 2500,
@@ -226,17 +215,17 @@ for(j in seq(0,10,by = 1)){
 points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[idx_inflamed], y = y_vec[idx_inflamed],
-       col = 2, pch = 16, cex = 1.5)
+       col = orange_col, pch = 16, cex = 1.5)
 points(x = x_vec[setdiff(inf_de_idx, idx_inflamed)], y = y_vec[setdiff(inf_de_idx, idx_inflamed)],
-       col = 3, pch = 16, cex = 1, lwd = 2)
+       col = purple_col, pch = 16, cex = 1, lwd = 2)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
-       col = rgb(34, 151, 230, 255*.35, maxColorValue = 255), pch = 16, cex = 1)
+       col = green_col_trans, pch = 16, cex = 1)
 points(x = x_vec[intersect(idx_inflamed, inf_de_idx)], y = y_vec[intersect(idx_inflamed, inf_de_idx)],
        col = "white", pch = 1, cex = 2, lwd = 3)
 points(x = x_vec[intersect(idx_inflamed, inf_de_idx)], y = y_vec[intersect(idx_inflamed, inf_de_idx)],
-       col = 3, pch = 1, cex = 2, lwd = 2)
+       col = purple_col, pch = 1, cex = 2, lwd = 2)
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
@@ -253,24 +242,7 @@ graphics.off()
 ###########
 
 # next for non-inflamed
-eSVD_obj_noninflamed$fit_Second$posterior_mean_mat <- NULL
-eSVD_obj_noninflamed$fit_Second$posterior_var_mat <- NULL
-eSVD_obj_noninflamed$teststat_vec <- NULL
-eSVD_obj_noninflamed <- eSVD2:::compute_posterior(input_obj = eSVD_obj_noninflamed,
-                                                  bool_adjust_covariates = F,
-                                                  alpha_max = NULL,
-                                                  bool_covariates_as_library = T,
-                                                  library_min = 1e-4)
-metadata <- regevEpi@meta.data
-metadata[,"Sample"] <- as.factor(metadata[,"Sample"])
-eSVD_obj_noninflamed <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj_noninflamed,
-                                                       covariate_individual = "Sample",
-                                                       metadata = metadata,
-                                                       verbose = 1)
-
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_noninflamed,
-                             metadata = regevEpi_noninflamed@meta.data,
-                             covariate_individual = "Sample")
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_noninflamed)
 teststat_vec <- eSVD_obj_noninflamed$teststat_vec
 p <- length(teststat_vec)
 gaussian_teststat_noninflamed <- sapply(1:p, function(j){
@@ -301,12 +273,18 @@ n <- length(gaussian_teststat_inflamed) - m
 k <- length(idx_noninflamed)
 x <- length(intersect(idx_noninflamed, c(noninf_de_idx)))
 fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
+fisher
 
 x_vec <- log2(eSVD_obj_noninflamed$case_mean) - log2(eSVD_obj_noninflamed$control_mean)
 xlim <- range(x_vec) # quantile(x_vec, probs = c(0.01,0.99))
 xlim <- c(-1,1)*max(abs(xlim))
 y_vec <- abs(eSVD_obj_noninflamed$teststat_vec)
 ylim <- range(y_vec)
+
+orange_col <- rgb(235, 134, 47, maxColorValue = 255)
+purple_col <- rgb(122, 49, 126, maxColorValue = 255)
+green_col <- rgb(70, 177, 70, maxColorValue = 255)
+green_col_trans <- rgb(70, 177, 70, 255*.35, maxColorValue = 255)
 
 png("../../../out/fig/main/regevEpi_ta1-noninflamed_volcano.png",
     height = 2500, width = 2500,
@@ -322,17 +300,17 @@ for(j in seq(0,10,by = 1)){
 points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[idx_noninflamed], y = y_vec[idx_noninflamed],
-       col = 2, pch = 16, cex = 1.5)
+       col = orange_col, pch = 16, cex = 1.5)
 points(x = x_vec[setdiff(noninf_de_idx, idx_noninflamed)], y = y_vec[setdiff(noninf_de_idx, idx_noninflamed)],
-       col = 3, pch = 16, cex = 1, lwd = 2)
+       col = purple_col, pch = 16, cex = 1, lwd = 2)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
-       col = rgb(34, 151, 230, 255*.35, maxColorValue = 255), pch = 16, cex = 1)
+       col = green_col_trans, pch = 16, cex = 1)
 points(x = x_vec[intersect(idx_noninflamed, noninf_de_idx)], y = y_vec[intersect(idx_noninflamed, noninf_de_idx)],
        col = "white", pch = 1, cex = 2, lwd = 3)
 points(x = x_vec[intersect(idx_noninflamed, noninf_de_idx)], y = y_vec[intersect(idx_noninflamed, noninf_de_idx)],
-       col = 3, pch = 1, cex = 2, lwd = 2)
+       col = purple_col, pch = 1, cex = 2, lwd = 2)
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)

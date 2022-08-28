@@ -3,6 +3,7 @@ library(Seurat)
 library(eSVD2)
 
 load("../../../out/main/habermann_T_esvd.RData")
+date_of_run
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -121,35 +122,22 @@ graphics.off()
 ##########################################
 
 # make volcano plot
-eSVD_obj$fit_Second$posterior_mean_mat <- NULL
-eSVD_obj$fit_Second$posterior_var_mat <- NULL
-eSVD_obj$teststat_vec <- NULL
-eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
-                                      bool_adjust_covariates = F,
-                                      alpha_max = NULL,
-                                      bool_covariates_as_library = T,
-                                      library_min = 1e-4)
-metadata <- habermann@meta.data
-metadata[,"Sample_Name"] <- as.factor(metadata[,"Sample_Name"])
-eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                           covariate_individual = "Sample_Name",
-                                           metadata = metadata,
-                                           verbose = 1)
-
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj,
-                             metadata = habermann@meta.data,
-                             covariate_individual = "Sample_Name")
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj)
 teststat_vec <- eSVD_obj$teststat_vec
 p <- length(teststat_vec)
 gaussian_teststat <- sapply(1:p, function(j){
   qnorm(pt(teststat_vec[j], df = df_vec[j]))
 })
 
-locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
-fdr_vec <- locfdr_res$fdr
-names(fdr_vec) <- names(gaussian_teststat)
-null_mean <- locfdr_res$fp0["mlest", "delta"]
-null_sd <- locfdr_res$fp0["mlest", "sigma"]
+# locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
+# fdr_vec <- locfdr_res$fdr
+# names(fdr_vec) <- names(gaussian_teststat)
+# null_mean <- locfdr_res$fp0["mlest", "delta"]
+# null_sd <- locfdr_res$fp0["mlest", "sigma"]
+null_mean <- mean(gaussian_teststat)
+# tmp_range <- stats::quantile(gaussian_teststat, probs = c(0.01, 0.99))
+# null_sd <- stats::sd(intersect(gaussian_teststat >= tmp_range[1], gaussian_teststat <= tmp_range[2]))
+null_sd <- stats::sd(gaussian_teststat)
 logpvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {
     Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
@@ -169,7 +157,7 @@ n <- length(gaussian_teststat) - m
 k <- length(idx)
 x <- length(intersect(idx, c(habermann_idx)))
 fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
-
+fisher
 
 # tab <- table(habermann$Sample_Name, habermann$Diagnosis)
 # indiv_cases <- rownames(tab)[which(tab[,"IPF"] != 0)]
@@ -182,10 +170,16 @@ fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
 # })
 
 x_vec <- log2(eSVD_obj$case_mean) - log2(eSVD_obj$control)
-xlim <- quantile(x_vec, probs = c(0.01, 0.99))
+x_vec <- pmax(pmin(x_vec, 1), -1)
+xlim <- range(x_vec)
 xlim <- c(-1,1)*max(abs(xlim))
 y_vec <- abs(eSVD_obj$teststat_vec)
 ylim <- range(y_vec)
+
+orange_col <- rgb(235, 134, 47, maxColorValue = 255)
+purple_col <- rgb(122, 49, 126, maxColorValue = 255)
+green_col <- rgb(70, 177, 70, maxColorValue = 255)
+green_col_trans <- rgb(70, 177, 70, 255*.35, maxColorValue = 255)
 
 png("../../../out/fig/main/habermann_T_volcano.png",
     height = 2500, width = 2500,
@@ -195,23 +189,23 @@ plot(x = x_vec, y = y_vec,
      xaxt = "n", yaxt = "n", bty = "n",
      ylim = ylim, xlim = xlim,
      cex.lab = 1.25, type = "n")
-for(j in seq(0,4.5,by = 0.5)){
+for(j in seq(0,4.5,by = 0.25)){
   lines(x = c(-1e4,1e4), y = rep(j, 2), col = "gray", lty = 2, lwd = 1)
 }
 points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[idx], y = y_vec[idx],
-       col = 2, pch = 16, cex = 1.5)
+       col = orange_col, pch = 16, cex = 1.5)
 points(x = x_vec[setdiff(habermann_idx, idx)], y = y_vec[setdiff(habermann_idx, idx)],
-       col = 3, pch = 16, cex = 1, lwd = 2)
+       col = purple_col, pch = 16, cex = 1, lwd = 2)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
-       col = rgb(34, 151, 230, 255*.35, maxColorValue = 255), pch = 16, cex = 1)
+       col = green_col_trans, pch = 16, cex = 1)
 points(x = x_vec[intersect(idx, habermann_idx)], y = y_vec[intersect(idx, habermann_idx)],
        col = "white", pch = 1, cex = 2, lwd = 3)
 points(x = x_vec[intersect(idx, habermann_idx)], y = y_vec[intersect(idx, habermann_idx)],
-       col = 3, pch = 1, cex = 2, lwd = 2)
+       col = purple_col, pch = 1, cex = 2, lwd = 2)
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)

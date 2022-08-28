@@ -4,37 +4,9 @@ library(eSVD2)
 library(Rmpfr)
 
 load("../../../out/main/habermann_T_esvd.RData")
-eSVD_obj$fit_Second$posterior_mean_mat <- NULL
-eSVD_obj$fit_Second$posterior_var_mat <- NULL
-eSVD_obj$teststat_vec <- NULL
-eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
-                                      bool_adjust_covariates = F,
-                                      alpha_max = NULL,
-                                      bool_covariates_as_library = T,
-                                      library_min = NULL)
-metadata <- habermann@meta.data
-metadata[,"Sample_Name"] <- as.factor(metadata[,"Sample_Name"])
-eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                           covariate_individual = "Sample_Name",
-                                           metadata = metadata,
-                                           verbose = 1)
 eSVD_obj_habermann <- eSVD_obj
 
 load("../../../out/main/adams_T_esvd.RData")
-eSVD_obj$fit_Second$posterior_mean_mat <- NULL
-eSVD_obj$fit_Second$posterior_var_mat <- NULL
-eSVD_obj$teststat_vec <- NULL
-eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
-                                      bool_adjust_covariates = F,
-                                      alpha_max = NULL,
-                                      bool_covariates_as_library = T,
-                                      library_min = NULL)
-metadata <- adams@meta.data
-metadata[,"Subject_Identity"] <- as.factor(metadata[,"Subject_Identity"])
-eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                           covariate_individual = "Subject_Identity",
-                                           metadata = metadata,
-                                           verbose = 1)
 eSVD_obj_adams <- eSVD_obj
 
 df_mat <- read.csv("~/project/eSVD/data/GSE136831_adams_lung/aba1983_Data_S8.txt",
@@ -212,11 +184,7 @@ graphics.off()
 
 ##########################################
 
-##########################################
-
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_adams,
-                             metadata = adams@meta.data,
-                             covariate_individual = "Subject_Identity")
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_adams)
 teststat_vec <- eSVD_obj_adams$teststat_vec
 p <- length(teststat_vec)
 gaussian_teststat_adams <- sapply(1:p, function(j){
@@ -236,27 +204,21 @@ logpvalue_vec <- sapply(gaussian_teststat_adams, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
-idx_adams <- which(fdr_vec < 0.005)
+idx_adams <- which(fdr_vec < 0.0001)
 idx_adams2 <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adam_idx, habermann_idx)))]
 length(idx_adams)
 length(idx_adams2)
 
 ##
 
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_habermann,
-                             metadata = habermann@meta.data,
-                             covariate_individual = "Sample_Name")
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_habermann)
 teststat_vec <- eSVD_obj_habermann$teststat_vec
 p <- length(teststat_vec)
 gaussian_teststat_habermann <- sapply(1:p, function(j){
   qnorm(pt(teststat_vec[j], df = df_vec[j]))
 })
-
-locfdr_res_habermann <- locfdr::locfdr(gaussian_teststat_habermann, plot = 0)
-fdr_vec <- locfdr_res_habermann$fdr
-names(fdr_vec) <- names(gaussian_teststat_habermann)
-null_mean <- locfdr_res_habermann$fp0["mlest", "delta"]
-null_sd <- locfdr_res_habermann$fp0["mlest", "sigma"]
+null_mean <- mean(gaussian_teststat)
+null_sd <- stats::sd(gaussian_teststat)
 logpvalue_vec <- sapply(gaussian_teststat_habermann, function(x){
   if(x < null_mean) {
     Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
@@ -265,7 +227,7 @@ logpvalue_vec <- sapply(gaussian_teststat_habermann, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
-idx_habermann <- which(fdr_vec < 0.005)
+idx_habermann <- which(fdr_vec < 0.0001)
 idx_habermann2 <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adam_idx, habermann_idx)))]
 length(idx_habermann)
 length(idx_habermann2)
