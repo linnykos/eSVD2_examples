@@ -9,6 +9,8 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
+#################################3
+
 df_mat <- read.csv("~/project/eSVD/data/GSE136831_adams_lung/aba1983_Data_S8.txt",
                    sep = "\t")
 adams_df_genes <- df_mat$gene[which(df_mat$cellType == "T")]
@@ -170,7 +172,7 @@ fisher
 # })
 
 x_vec <- log2(eSVD_obj$case_mean) - log2(eSVD_obj$control)
-x_vec <- pmax(pmin(x_vec, 1), -1)
+# x_vec <- pmax(pmin(x_vec, 1), -1)
 xlim <- range(x_vec)
 xlim <- c(-1,1)*max(abs(xlim))
 y_vec <- abs(eSVD_obj$teststat_vec)

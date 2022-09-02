@@ -261,8 +261,10 @@ bin <- hexbin::hexbin(y1, y2, xbins = 15, xbnds = xbnds, ybnds = ybnds)
 my_colors <- colorRampPalette(viridis::viridis(11))
 hexbin::plot(bin, colramp=my_colors , legend=F,
              xlab = "", ylab = "",
-             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "spearman"), 2)))
+             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "pearson"), 2)))
 graphics.off()
+
+y1 %*% y2 / (sqrt(sum(y1^2)*sum(y2^2)))
 
 # hk_idx2 <- setdiff(hk_idx, c(idx_inflamed, idx_noninflamed, noninf_de_genes, inf_de_genes, other_de_genes))
 png("../../../out/fig/main/adams_habermann_T-agreement_hk-genes.png",
