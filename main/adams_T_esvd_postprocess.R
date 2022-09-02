@@ -129,11 +129,13 @@ gaussian_teststat <- sapply(1:p, function(j){
   qnorm(pt(teststat_vec[j], df = df_vec[j]))
 })
 
-locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
-fdr_vec <- locfdr_res$fdr
-names(fdr_vec) <- names(gaussian_teststat)
-null_mean <- locfdr_res$fp0["mlest", "delta"]
-null_sd <- locfdr_res$fp0["mlest", "sigma"]
+# locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
+# fdr_vec <- locfdr_res$fdr
+# names(fdr_vec) <- names(gaussian_teststat)
+# null_mean <- locfdr_res$fp0["mlest", "delta"]
+null_mean <- mean(gaussian_teststat)
+# null_sd <- locfdr_res$fp0["mlest", "sigma"]
+null_sd <- stats::sd(gaussian_teststat)
 logpvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {
     Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
