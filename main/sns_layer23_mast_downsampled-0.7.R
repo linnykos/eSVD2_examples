@@ -49,9 +49,7 @@ mast_res <- MAST::zlm(formula = ~ grp.diagnosis + (1 | grp.individual) + cngenes
                       sca = sca,
                       method = "glmer",
                       ebayes = FALSE,
-                      silent = T,
-                      fitArgsC = list(control = lme4::glmerControl(calc.derivs = FALSE)),
-                      fitArgsD = list(control = lme4::glmerControl(calc.derivs = FALSE), nAGQ = 0))
+                      silent = T)
 save(sns, sca, mast_res,
      date_of_run, session_info, downsample_value,
      file = paste0("../../../out/main/sns_layer23_mast_downsampled-", downsample_value, ".RData"))
