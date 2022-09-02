@@ -17,8 +17,7 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
-mat <- as.matrix(mat)
-
+mat <- t(as.matrix(mat))
 rds <- colSums(mat)
 med_rds <- median(rds)
 mat <- t(t(mat)/rds)*med_rds
