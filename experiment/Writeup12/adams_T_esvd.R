@@ -1,7 +1,7 @@
 rm(list=ls())
 
 library(Seurat)
-load("../../../out/main/adams_T_preprocessed.RData")
+load("../../../../out/main/adams_T_preprocessed.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -10,7 +10,7 @@ session_info <- devtools::session_info()
 var_features <- Seurat::VariableFeatures(adams)
 mat <- Matrix::t(adams[["RNA"]]@counts[var_features,])
 covariate_dat <- adams@meta.data[,c("Disease_Identity", "Subject_Identity", "Gender",
-                                  "Tobacco","percent.mt", "Age")]
+                                    "Tobacco","percent.mt", "Age")]
 covariate_df <- data.frame(covariate_dat)
 covariate_df[,"Disease_Identity"] <- as.factor(covariate_df[,"Disease_Identity"])
 covariate_df[,"Gender"] <- as.factor(covariate_df[,"Gender"])
@@ -23,8 +23,8 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates,
-                                    case_control_variable = "Disease_Identity_IPF",
+                                    covariates = covariates[,-which(colnames(covariates) == "Disease_Identity_IPF")],
+                                    case_control_variable = NULL,
                                     bool_intercept = T,
                                     k = 15,
                                     lambda = 0.1,
@@ -104,7 +104,7 @@ save(date_of_run, session_info, adams,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../out/main/adams_T_esvd.RData")
+     file = "../../../../out/Writeup12/adams_T_esvd.RData")
 
 
 

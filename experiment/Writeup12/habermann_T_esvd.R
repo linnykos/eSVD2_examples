@@ -1,21 +1,21 @@
 rm(list=ls())
 
 library(Seurat)
-load("../../../out/main/adams_T_preprocessed.RData")
+load("../../../../out/main/habermann_T_preprocessed.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
-var_features <- Seurat::VariableFeatures(adams)
-mat <- Matrix::t(adams[["RNA"]]@counts[var_features,])
-covariate_dat <- adams@meta.data[,c("Disease_Identity", "Subject_Identity", "Gender",
-                                  "Tobacco","percent.mt", "Age")]
+var_features <- Seurat::VariableFeatures(habermann)
+mat <- Matrix::t(habermann[["RNA"]]@counts[var_features,])
+covariate_dat <- habermann@meta.data[,c("Diagnosis", "Sample_Name", "Gender",
+                                        "Tobacco","percent.mt", "Age")]
 covariate_df <- data.frame(covariate_dat)
-covariate_df[,"Disease_Identity"] <- as.factor(covariate_df[,"Disease_Identity"])
+covariate_df[,"Diagnosis"] <- as.factor(covariate_df[,"Diagnosis"])
 covariate_df[,"Gender"] <- as.factor(covariate_df[,"Gender"])
-covariate_df[,"Tobacco"] <- as.factor(covariate_df[,"Tobacco"])
-covariate_df[,"Subject_Identity"] <- factor(covariate_df[,"Subject_Identity"], levels = names(sort(table(covariate_df[,"Subject_Identity"]), decreasing = F)))
+covariate_df[,"Tobacco"] <- droplevels(as.factor(covariate_df[,"Tobacco"]))
+covariate_df[,"Sample_Name"] <- factor(covariate_df[,"Sample_Name"], levels = names(sort(table(covariate_df[,"Sample_Name"]), decreasing = F)))
 covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
                                         rescale_numeric_variables = c("percent.mt", "Age"))
@@ -23,18 +23,17 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates,
-                                    case_control_variable = "Disease_Identity_IPF",
+                                    covariates = covariates[,-which(colnames(covariates) == "Diagnosis_IPF")],
+                                    case_control_variable = NULL,
                                     bool_intercept = T,
                                     k = 15,
                                     lambda = 0.1,
-                                    metadata_case_control = covariates[,"Disease_Identity_IPF"],
-                                    metadata_individual = covariate_df[,"Subject_Identity"],
+                                    metadata_case_control = covariates[,"Diagnosis_IPF"],
+                                    metadata_individual = covariate_df[,"Sample_Name"],
                                     verbose = 1)
 time_end1 <- Sys.time()
 
-
-omitted_variables <- colnames(eSVD_obj$covariates)[grep("Subject_Identity", colnames(eSVD_obj$covariates))]
+omitted_variables <- colnames(eSVD_obj$covariates)[grep("Sample_Name", colnames(eSVD_obj$covariates))]
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_Init",
@@ -46,7 +45,7 @@ time_start2 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              l2pen = 0.1,
                              max_iter = 100,
-                             offset_variables = setdiff(colnames(eSVD_obj$covariates), "Disease_Identity_IPF"),
+                             offset_variables = setdiff(colnames(eSVD_obj$covariates), "Diagnosis_IPF"),
                              tol = 1e-6,
                              verbose = 1,
                              fit_name = "fit_First",
@@ -99,12 +98,12 @@ eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
                                            verbose = 1)
 time_end5 <- Sys.time()
 
-save(date_of_run, session_info, adams,
+save(date_of_run, session_info, habermann,
      eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../out/main/adams_T_esvd.RData")
+     file = "../../../../out/Writeup12/habermann_T_esvd.RData")
 
 
 
