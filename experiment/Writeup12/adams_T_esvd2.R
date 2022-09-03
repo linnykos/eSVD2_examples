@@ -23,7 +23,8 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates[,-which(colnames(covariates) == "Disease_Identity_IPF")],
+                                    covariates = covariates[,-c(which(colnames(covariates) == "Disease_Identity_IPF"),
+                                                                grep("Subject_Identity", colnames(eSVD_obj$covariates)))],
                                     case_control_variable = NULL,
                                     bool_intercept = T,
                                     k = 15,
@@ -33,12 +34,10 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     verbose = 1)
 time_end1 <- Sys.time()
 
-
-omitted_variables <- colnames(eSVD_obj$covariates)[grep("Subject_Identity", colnames(eSVD_obj$covariates))]
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_Init",
-  omitted_variables = c("Log_UMI", omitted_variables)
+  omitted_variables = "Log_UMI"
 )
 
 print("First fit")
@@ -56,7 +55,7 @@ time_end2 <- Sys.time()
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_First",
-  omitted_variables = c("Log_UMI", omitted_variables)
+  omitted_variables = "Log_UMI"
 )
 
 print("Second fit")
@@ -74,7 +73,7 @@ time_end3 <- Sys.time()
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_Second",
-  omitted_variables = omitted_variables
+  omitted_variables = numeric(0)
 )
 
 print("Nuisance estimation")
@@ -104,7 +103,7 @@ save(date_of_run, session_info, adams,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../../out/Writeup12/adams_T_esvd.RData")
+     file = "../../../../out/Writeup12/adams_T_esvd2.RData")
 
 
 
