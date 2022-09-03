@@ -24,7 +24,7 @@ print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariates[,-c(which(colnames(covariates) == "Disease_Identity_IPF"),
-                                                                grep("Subject_Identity", colnames(eSVD_obj$covariates)))],
+                                                                grep("Subject_Identity", colnames(covariates)))],
                                     case_control_variable = NULL,
                                     bool_intercept = T,
                                     k = 15,
