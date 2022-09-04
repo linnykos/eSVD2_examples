@@ -16,7 +16,7 @@ covariate_df[,"Diagnosis"] <- as.factor(covariate_df[,"Diagnosis"])
 covariate_df[,"Gender"] <- droplevels(factor(covariate_df[,"Gender"], levels = names(sort(table(covariate_df[,"Gender"]), decreasing = T))))
 covariate_df[,"Tobacco"] <- droplevels(factor(covariate_df[,"Tobacco"], levels = names(sort(table(covariate_df[,"Tobacco"]), decreasing = T))))
 covariate_df[,"Ethnicity"] <- droplevels(factor(covariate_df[,"Ethnicity"], levels = names(sort(table(covariate_df[,"Ethnicity"]), decreasing = T))))
-covariate_df[,"Sample_Source"] <- factor(covariate_df[,"Sample_Source"], levels = names(sort(table(covariate_df[,"Sample_Source"]), decreasing = T)))
+# covariate_df[,"Sample_Source"] <- factor(covariate_df[,"Sample_Source"], levels = names(sort(table(covariate_df[,"Sample_Source"]), decreasing = T)))
 covariate_df[,"Sample_Name"] <- factor(covariate_df[,"Sample_Name"], levels = names(sort(table(covariate_df[,"Sample_Name"]), decreasing = T)))
 covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
