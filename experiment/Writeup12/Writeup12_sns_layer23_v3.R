@@ -1,44 +1,49 @@
 rm(list=ls())
-
 library(Seurat)
-load("../../../../out/main/habermann_T_preprocessed.RData")
+library(eSVD2)
+
+load("../../../../out/main/sns_layer23_processed.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
-var_features <- Seurat::VariableFeatures(habermann)
-mat <- Matrix::t(habermann[["RNA"]]@counts[var_features,])
-covariate_dat <- habermann@meta.data[,c("Diagnosis", "Sample_Name", "Gender",
-                                        "Tobacco","percent.mt", "Age", "Ethnicity", "Sample_Source")]
+##########
+
+mat <- Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,])
+covariate_dat <- sns@meta.data[,c("percent.mt", "individual", "region", "age", "sex",
+                                  "RNA.Integrity.Number", "post.mortem.hours",
+                                  "diagnosis", "Seqbatch", "Capbatch")]
 covariate_df <- data.frame(covariate_dat)
-covariate_df[,"Diagnosis"] <- as.factor(covariate_df[,"Diagnosis"])
-covariate_df[,"Gender"] <- droplevels(factor(covariate_df[,"Gender"], levels = names(sort(table(covariate_df[,"Gender"]), decreasing = T))))
-covariate_df[,"Tobacco"] <- droplevels(factor(covariate_df[,"Tobacco"], levels = names(sort(table(covariate_df[,"Tobacco"]), decreasing = T))))
-covariate_df[,"Ethnicity"] <- droplevels(factor(covariate_df[,"Ethnicity"], levels = names(sort(table(covariate_df[,"Ethnicity"]), decreasing = T))))
-# covariate_df[,"Sample_Source"] <- factor(covariate_df[,"Sample_Source"], levels = names(sort(table(covariate_df[,"Sample_Source"]), decreasing = T)))
-covariate_df[,"Sample_Name"] <- factor(covariate_df[,"Sample_Name"], levels = names(sort(table(covariate_df[,"Sample_Name"]), decreasing = T)))
+covariate_df[,"individual"] <- factor(covariate_df[,"individual"], levels = names(sort(table(covariate_df[,"individual"]), decreasing = T)))
+covariate_df[,"region"] <- factor(covariate_df[,"region"], levels = names(sort(table(covariate_df[,"region"]), decreasing = T)))
+covariate_df[,"diagnosis"] <- factor(covariate_df[,"diagnosis"], levels = c("Control", "ASD"))
+covariate_df[,"sex"] <- factor(covariate_df[,"sex"], levels = names(sort(table(covariate_df[,"sex"]), decreasing = T)))
+covariate_df[,"Seqbatch"] <- factor(covariate_df[,"Seqbatch"], levels = names(sort(table(covariate_df[,"Seqbatch"]), decreasing = T)))
+covariate_df[,"Capbatch"] <- factor(covariate_df[,"Capbatch"], levels = names(sort(table(covariate_df[,"Capbatch"]), decreasing = T)))
 covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
-                                        rescale_numeric_variables = c("percent.mt", "Age"))
+                                        rescale_numeric_variables = c("percent.mt", "age", "RNA.Integrity.Number", "post.mortem.hours"))
 
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates[,-grep("Sample_Name", colnames(covariates))],
-                                    case_control_variable = "Diagnosis_IPF",
+                                    covariates = covariates[,-grep("individual", colnames(covariates))],
+                                    case_control_variable = "diagnosis_ASD",
                                     bool_intercept = T,
-                                    k = 15,
+                                    k = 30,
                                     lambda = 0.1,
-                                    metadata_case_control = covariates[,"Diagnosis_IPF"],
-                                    metadata_individual = covariate_df[,"Sample_Name"],
+                                    metadata_case_control = covariates[,"diagnosis_ASD"],
+                                    metadata_individual = covariate_df[,"individual"],
                                     verbose = 1)
 time_end1 <- Sys.time()
 
+omitted_variables <- colnames(eSVD_obj$covariates)[c(grep("Seqbatch", colnames(eSVD_obj$covariates)),
+                                                     grep("Capbatch", colnames(eSVD_obj$covariates)))]
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_Init",
-  omitted_variables = "Log_UMI"
+  omitted_variables = c("Log_UMI", omitted_variables)
 )
 
 print("First fit")
@@ -46,7 +51,7 @@ time_start2 <- Sys.time()
 eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
                              l2pen = 0.1,
                              max_iter = 100,
-                             offset_variables = setdiff(colnames(eSVD_obj$covariates), "Diagnosis_IPF"),
+                             offset_variables = setdiff(colnames(eSVD_obj$covariates), "diagnosis_ASD"),
                              tol = 1e-6,
                              verbose = 1,
                              fit_name = "fit_First",
@@ -56,7 +61,7 @@ time_end2 <- Sys.time()
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_First",
-  omitted_variables = "Log_UMI"
+  omitted_variables = c("Log_UMI", omitted_variables)
 )
 
 print("Second fit")
@@ -74,7 +79,7 @@ time_end3 <- Sys.time()
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_Second",
-  omitted_variables = numeric(0)
+  omitted_variables = omitted_variables
 )
 
 print("Nuisance estimation")
@@ -99,12 +104,12 @@ eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
                                            verbose = 1)
 time_end5 <- Sys.time()
 
-save(date_of_run, session_info, habermann,
-     eSVD_obj, covariate_df,
+save(date_of_run, session_info, sns,
+     eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../../out/Writeup12/habermann_T_esvd3.RData")
+     file = "../../../../out/Writeup12/Writeup12_sns_layer23_esvd3.RData")
 
 
 

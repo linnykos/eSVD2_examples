@@ -10,6 +10,23 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
+eSVD_obj$fit_Second$posterior_mean_mat <- NULL
+eSVD_obj$fit_Second$posterior_var_mat <- NULL
+eSVD_obj$teststat_vec <- NULL
+
+eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
+                                      bool_adjust_covariates = F,
+                                      alpha_max = NULL,
+                                      bool_covariates_as_library = T,
+                                      bool_stabilize_underdispersion = T,
+                                      library_min = 1,
+                                      pseudocount = 1)
+
+time_start5 <- Sys.time()
+eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
+                                           verbose = 1)
+time_end5 <- Sys.time()
+
 #################################3
 
 df_mat <- read.csv("~/project/eSVD/data/GSE136831_adams_lung/aba1983_Data_S8.txt",
@@ -69,7 +86,8 @@ logpvalue_vec <- sapply(gaussian_teststat, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
-idx <- order(logpvalue_vec, decreasing = T)[1:length(habermann_idx)]
+# idx <- order(logpvalue_vec, decreasing = T)[1:length(habermann_idx)]
+idx <- order(abs(eSVD_obj$teststat_vec), decreasing = T)[1:length(habermann_idx)]
 length(idx)
 length(intersect(idx, c(habermann_idx)))
 length(intersect(idx, c(adam_idx, habermann_idx)))
@@ -95,7 +113,7 @@ fisher
 x_vec <- log2(eSVD_obj$case_mean) - log2(eSVD_obj$control)
 xlim <- range(x_vec)
 xlim <- c(-1,1)*max(abs(xlim))
-y_vec <- abs(gaussian_teststat)
+y_vec <- abs(eSVD_obj$teststat_vec)
 ylim <- range(y_vec)
 
 orange_col <- rgb(235, 134, 47, maxColorValue = 255)

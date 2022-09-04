@@ -51,7 +51,7 @@ par(mfrow = c(2,3))
 plot(x = eSVD_obj_adams$teststat_vec,
      y = eSVD_obj_habermann$teststat_vec,
      xlab = "Adams", ylab = "Habermann", pch = 16, col = rgb(0.5, 0.5, 0.5, 0.1),
-     main = "All genes", asp = T,
+     main = "All genes",
      xlim = xlim, ylim = ylim)
 lines(c(-100,100), rep(0,2), col = 2, lwd = 2, lty = 2)
 lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
@@ -61,7 +61,7 @@ lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
 plot(x = eSVD_obj_adams$teststat_vec[gene_names[adam_idx]],
      y = eSVD_obj_habermann$teststat_vec[gene_names[adam_idx]],
      xlab = "Adams", ylab = "Habermann", pch = 16, col = 1,
-     main = "Adams genes", asp = T,
+     main = "Adams genes",
      xlim = xlim, ylim = ylim)
 lines(c(-100,100), rep(0,2), col = 2, lwd = 2, lty = 2)
 lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
@@ -71,7 +71,7 @@ lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
 plot(x = eSVD_obj_adams$teststat_vec[gene_names[habermann_idx]],
      y = eSVD_obj_habermann$teststat_vec[gene_names[habermann_idx]],
      xlab = "Adams", ylab = "Habermann", pch = 16, col = 2,
-     main = "Habermann genes", asp = T,
+     main = "Habermann genes",
      xlim = xlim, ylim = ylim)
 lines(c(-100,100), rep(0,2), col = 2, lwd = 2, lty = 2)
 lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
@@ -81,7 +81,7 @@ lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
 plot(x = eSVD_obj_adams$teststat_vec[gene_names[de_other_idx]],
      y = eSVD_obj_habermann$teststat_vec[gene_names[de_other_idx]],
      xlab = "Adams", ylab = "Habermann", pch = 16, col = 4,
-     main = "DE other genes", asp = T,
+     main = "DE other genes",
      xlim = xlim, ylim = ylim)
 lines(c(-100,100), rep(0,2), col = 2, lwd = 2, lty = 2)
 lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
@@ -91,7 +91,7 @@ lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
 plot(x = eSVD_obj_adams$teststat_vec[gene_names[hk_idx]],
      y = eSVD_obj_habermann$teststat_vec[gene_names[hk_idx]],
      xlab = "Adams", ylab = "Habermann", pch = 16, col = 3,
-     main = "HK genes", asp = T,
+     main = "HK genes",
      xlim = xlim, ylim = ylim)
 lines(c(-100,100), rep(0,2), col = 2, lwd = 2, lty = 2)
 lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
@@ -101,7 +101,7 @@ lines(rep(mean_x,2), c(-100,100), col = 1, lwd = 2, lty = 2)
 plot(x = eSVD_obj_adams$teststat_vec[gene_names[cycling_idx]],
      y = eSVD_obj_habermann$teststat_vec[gene_names[cycling_idx]],
      xlab = "Adams", ylab = "Habermann", pch = 16, col = 5,
-     main = "Cycling genes", asp = T,
+     main = "Cycling genes",
      xlim = xlim, ylim = ylim)
 lines(c(-100,100), rep(0,2), col = 2, lwd = 2, lty = 2)
 lines(rep(0,2), c(-100,100), col = 2, lwd = 2, lty = 2)
@@ -140,8 +140,29 @@ hexbin::plot(bin, colramp=my_colors , legend=F,
              main = paste0("Cor: ", round(stats::cor(y1, y2, method = "pearson"), 2)))
 graphics.off()
 
+
+png("../../../../out/fig/Writeup12/adams_habermann_T_esvd3-agreement_hk-genes.png",
+    height = 1750, width = 1750,
+    units = "px", res = 500)
+y1 <- eSVD_obj_adams$teststat_vec[hk_idx]
+y2 <- eSVD_obj_habermann$teststat_vec[hk_idx]
+xbnds <- range(eSVD_obj_adams$teststat_vec[gene_names[unique(c(adam_idx, habermann_idx, hk_idx))]])
+ybnds <- range(eSVD_obj_habermann$teststat_vec[gene_names[unique(c(adam_idx, habermann_idx, hk_idx))]])
+bin <- hexbin::hexbin(y1, y2, xbins = 15, xbnds = xbnds, ybnds = ybnds)
+my_colors <- colorRampPalette(viridis::viridis(11))
+hexbin::plot(bin, colramp=my_colors , legend=F,
+             xlab = "", ylab = "",
+             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "pearson"), 2)))
+graphics.off()
+
+#########################
+
+# RANDOM SCRACTH CALCULATIONS
+
 y1 <- eSVD_obj_adams$teststat_vec[unique(c(adam_idx,habermann_idx))]
 y2 <- eSVD_obj_habermann$teststat_vec[unique(c(adam_idx,habermann_idx))]
+cor(y1, y2, method = "pearson")
+cor(y1, y2, method = "spearman")
 y1 <- y1 - mean(eSVD_obj_adams$teststat_vec)
 y2 <- y2 - mean(eSVD_obj_habermann$teststat_vec)
 sum(y1*y2)/(sqrt(sum(y1^2) * sum(y2^2)))
@@ -184,7 +205,7 @@ logpvalue_vec <- sapply(gaussian_teststat_adams, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
-de_esvd_adams_idx <- order(logpvalue_vec, decreasing = T)[1:length(adams_df_genes)]
+de_esvd_adams_idx <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adams_df_genes,habermann_df_genes)))]
 
 null_mean <- mean(gaussian_teststat_habermann)
 null_sd <- sd(gaussian_teststat_habermann)
@@ -196,10 +217,26 @@ logpvalue_vec <- sapply(gaussian_teststat_habermann, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
-de_esvd_habermann_idx <- order(logpvalue_vec, decreasing = T)[1:length(habermann_df_genes)]
+de_esvd_habermann_idx <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adams_df_genes,habermann_df_genes)))]
 
 intersect_idx <- intersect(de_esvd_habermann_idx, de_esvd_adams_idx)
+length(intersect_idx)
 
 y1 <- gaussian_teststat_adams[intersect_idx]
 y2 <- gaussian_teststat_habermann[intersect_idx]
 round(stats::cor(y1, y2, method = "pearson"), 2)
+
+
+png("../../../../out/fig/Writeup12/adams_habermann_T_esvd3-agreement_lfdr-genes.png",
+    height = 1750, width = 1750,
+    units = "px", res = 500)
+y1 <- eSVD_obj_adams$teststat_vec[intersect_idx]
+y2 <- eSVD_obj_habermann$teststat_vec[intersect_idx]
+xbnds <- range(eSVD_obj_adams$teststat_vec[gene_names[unique(c(intersect_idx, adam_idx, habermann_idx, hk_idx))]])
+ybnds <- range(eSVD_obj_habermann$teststat_vec[gene_names[unique(c(intersect_idx, adam_idx, habermann_idx, hk_idx))]])
+bin <- hexbin::hexbin(y1, y2, xbins = 15, xbnds = xbnds, ybnds = ybnds)
+my_colors <- colorRampPalette(viridis::viridis(11))
+hexbin::plot(bin, colramp=my_colors , legend=F,
+             xlab = "", ylab = "",
+             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "pearson"), 2)))
+graphics.off()
