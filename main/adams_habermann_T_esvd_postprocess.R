@@ -191,11 +191,13 @@ gaussian_teststat_adams <- sapply(1:p, function(j){
   qnorm(pt(teststat_vec[j], df = df_vec[j]))
 })
 
-locfdr_res_adams <- locfdr::locfdr(gaussian_teststat_adams, plot = 0)
-fdr_vec <- locfdr_res_adams$fdr
-names(fdr_vec) <- names(gaussian_teststat_adams)
-null_mean <- locfdr_res_adams$fp0["mlest", "delta"]
-null_sd <- locfdr_res_adams$fp0["mlest", "sigma"]
+# locfdr_res_adams <- locfdr::locfdr(gaussian_teststat_adams, plot = 0)
+# fdr_vec <- locfdr_res_adams$fdr
+# names(fdr_vec) <- names(gaussian_teststat_adams)
+# null_mean <- locfdr_res_adams$fp0["mlest", "delta"]
+# null_sd <- locfdr_res_adams$fp0["mlest", "sigma"]
+null_mean <- mean(gaussian_teststat_adams)
+null_sd <- sd(gaussian_teststat_adams)
 logpvalue_vec <- sapply(gaussian_teststat_adams, function(x){
   if(x < null_mean) {
     Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
@@ -204,10 +206,7 @@ logpvalue_vec <- sapply(gaussian_teststat_adams, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
-idx_adams <- which(fdr_vec < 0.0001)
 idx_adams2 <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adam_idx, habermann_idx)))]
-length(idx_adams)
-length(idx_adams2)
 
 ##
 
@@ -217,8 +216,12 @@ p <- length(teststat_vec)
 gaussian_teststat_habermann <- sapply(1:p, function(j){
   qnorm(pt(teststat_vec[j], df = df_vec[j]))
 })
-null_mean <- mean(gaussian_teststat)
-null_sd <- stats::sd(gaussian_teststat)
+
+locfdr_res_habermann <- locfdr::locfdr(gaussian_teststat_habermann, plot = 0)
+fdr_vec <- locfdr_res_habermann$fdr
+names(fdr_vec) <- names(gaussian_teststat_habermann)
+null_mean <- locfdr_res_habermann$fp0["mlest", "delta"]
+null_sd <- locfdr_res_habermann$fp0["mlest", "sigma"]
 logpvalue_vec <- sapply(gaussian_teststat_habermann, function(x){
   if(x < null_mean) {
     Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
@@ -227,28 +230,21 @@ logpvalue_vec <- sapply(gaussian_teststat_habermann, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
-idx_habermann <- which(fdr_vec < 0.0001)
 idx_habermann2 <- order(logpvalue_vec, decreasing = T)[1:length(unique(c(adam_idx, habermann_idx)))]
-length(idx_habermann)
-length(idx_habermann2)
 
 ###############################
 
-# png("../../../out/fig/main/adams_habermann_T-agreement_lfdr-genes.png",
-#     height = 2000, width = 2000,
-#     units = "px", res = 500)
-# y1 <- gaussian_teststat_adams[unique(c(idx_adams, idx_habermann))]
-# # y1 <- gaussian_teststat_adams[unique(c(idx_adams2, idx_habermann2))]
-# # y1 <- eSVD_obj_adams$fit_Second$z_mat[unique(c(idx_adams, idx_habermann)),"Disease_Identity_IPF"]
-# y2 <- gaussian_teststat_habermann[unique(c(idx_adams, idx_habermann))]
-# # y2 <- gaussian_teststat_habermann[unique(c(idx_adams2, idx_habermann2))]
-# # y2 <- eSVD_obj_habermann$fit_Second$z_mat[unique(c(idx_adams, idx_habermann)),"Diagnosis_IPF"]
-# bin <- hexbin::hexbin(y1, y2, xbins=20)
-# my_colors <- colorRampPalette(viridis::viridis(11))
-# hexbin::plot(bin, colramp=my_colors , legend=F,
-#              xlab = "", ylab = "",
-#              main = paste0("Cor: ", round(stats::cor(y1, y2), 2)))
-# graphics.off()
+png("../../../out/fig/main/adams_habermann_T-agreement_lfdr-genes.png",
+    height = 2000, width = 2000,
+    units = "px", res = 500)
+y1 <- gaussian_teststat_adams[unique(c(idx_adams2, idx_habermann2))]
+y2 <- gaussian_teststat_habermann[unique(c(idx_adams2, idx_habermann2))]
+bin <- hexbin::hexbin(y1, y2, xbins=20)
+my_colors <- colorRampPalette(viridis::viridis(11))
+hexbin::plot(bin, colramp=my_colors , legend=F,
+             xlab = "", ylab = "",
+             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "spearman"), 2)))
+graphics.off()
 
 png("../../../out/fig/main/adams_habermann_T-agreement_de-genes.png",
     height = 1750, width = 1750,
@@ -261,7 +257,7 @@ bin <- hexbin::hexbin(y1, y2, xbins = 15, xbnds = xbnds, ybnds = ybnds)
 my_colors <- colorRampPalette(viridis::viridis(11))
 hexbin::plot(bin, colramp=my_colors , legend=F,
              xlab = "", ylab = "",
-             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "pearson"), 2)))
+             main = paste0("Cor: ", round(stats::cor(y1, y2, method = "spearman"), 2)))
 graphics.off()
 
 y1 %*% y2 / (sqrt(sum(y1^2)*sum(y2^2)))
@@ -283,3 +279,9 @@ hexbin::plot(bin, colramp=my_colors , legend=F,
 graphics.off()
 
 
+
+length(intersect_idx)
+
+y1 <- gaussian_teststat_adams[intersect_idx]
+y2 <- gaussian_teststat_habermann[intersect_idx]
+cor(y1, y2)

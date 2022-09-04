@@ -193,7 +193,7 @@ points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[idx], y = y_vec[idx],
        col = orange_col, pch = 16, cex = 1.5)
-points(x = x_vec[setdiff(habermann_idx, idx)], y = y_vec[setdiff(habermann_idx, idx)],
+points(x = x_vec[setdiff(adam_idx, idx)], y = y_vec[setdiff(adam_idx, idx)],
        col = purple_col, pch = 16, cex = 1, lwd = 2)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)

@@ -3,12 +3,87 @@ library(Seurat)
 library(eSVD2)
 library(Rmpfr)
 
-load("../../../../out/Writeup12/adams_T_esvd.RData")
+load("../../../../out/Writeup12/habermann_T_esvd.RData")
 date_of_run
 
 set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
+
+################################
+
+# the hypothetical: what if we include the individual covariates inside the calculation of the "signal"?
+
+eSVD_obj$fit_Second$posterior_mean_mat <- NULL
+eSVD_obj$fit_Second$posterior_var_mat <- NULL
+eSVD_obj$teststat_vec <- NULL
+eSVD_obj$case_mean <- NULL
+eSVD_obj$control_mean <- NULL
+
+input_obj = eSVD_obj
+alpha_max = NULL
+bool_adjust_covariates = F
+bool_covariates_as_library = T
+bool_return_components = F
+bool_stabilize_underdispersion = F
+library_min = 1
+nuisance_lower_quantile = 0.01
+pseudocount = 1
+
+dat <- eSVD2:::.get_object(eSVD_obj = input_obj, what_obj = "dat", which_fit = NULL)
+covariates <- eSVD2:::.get_object(eSVD_obj = input_obj, what_obj = "covariates", which_fit = NULL)
+latest_Fit <- eSVD2:::.get_object(eSVD_obj = input_obj, what_obj = "latest_Fit", which_fit = NULL)
+esvd_res <- eSVD2:::.get_object(eSVD_obj = input_obj, what_obj = NULL, which_fit = latest_Fit)
+nuisance_vec <- eSVD2:::.get_object(eSVD_obj = input_obj, what_obj = "nuisance", which_fit = latest_Fit)
+case_control_variable <- eSVD2:::.get_object(eSVD_obj = input_obj, which_fit = "param", what_obj = "init_case_control_variable")
+library_size_variable <- eSVD2:::.get_object(eSVD_obj = input_obj, which_fit = "param", what_obj = "init_library_size_variable")
+bool_library_includes_interept <- eSVD2:::.get_object(eSVD_obj = input_obj, which_fit = "param", what_obj = "nuisance_bool_library_includes_interept")
+
+input_obj = as.matrix(eSVD_obj$dat)
+case_control_idx <- which(colnames(covariates) == case_control_variable)
+
+library_size_variables <- library_size_variable
+if(bool_covariates_as_library) library_size_variables <- unique(c(library_size_variables, setdiff(colnames(covariates),
+                                                                                                  c("Intercept", case_control_variable,
+                                                                                                    colnames(covariates)[grep("Sample_Name", colnames(covariates))]))))
+if(bool_library_includes_interept) library_size_variables <-  unique(c("Intercept", library_size_variables))
+
+library_idx <- which(colnames(covariates) %in% library_size_variables)
+
+nat_mat1 <- tcrossprod(esvd_res$x_mat, esvd_res$y_mat)
+nat_mat2 <- tcrossprod(covariates[,-library_idx], esvd_res$z_mat[,-library_idx])
+nat_mat_nolib <- nat_mat1 + nat_mat2
+mean_mat_nolib <- exp(nat_mat_nolib)
+library_mat <- exp(tcrossprod(
+  covariates[,library_idx], esvd_res$z_mat[,library_idx]
+))
+if(!is.null(library_min)) library_mat <- pmax(library_mat, library_min)
+
+nuisance_vec <- pmax(nuisance_vec,
+                     stats::quantile(nuisance_vec, probs = nuisance_lower_quantile))
+Alpha <- sweep(mean_mat_nolib, MARGIN = 2,
+               STATS = nuisance_vec, FUN = "*")
+AplusAlpha <- input_obj + Alpha
+
+if(!is.null(alpha_max)) AplusAlpha <- pmin(AplusAlpha, alpha_max)
+
+SplusBeta <- sweep(library_mat, MARGIN = 2,
+                   STATS = nuisance_vec, FUN = "+")
+posterior_mean_mat <- AplusAlpha/SplusBeta
+posterior_var_mat <- AplusAlpha/SplusBeta^2
+
+rownames(posterior_mean_mat) <- rownames(input_obj)
+rownames(posterior_var_mat) <- rownames(input_obj)
+colnames(posterior_mean_mat) <- colnames(input_obj)
+colnames(posterior_var_mat) <- colnames(input_obj)
+
+eSVD_obj$fit_Second$posterior_mean_mat <- posterior_mean_mat
+eSVD_obj$fit_Second$posterior_var_mat <- posterior_var_mat
+
+eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
+                                           verbose = 1)
+
+###########################
 
 df_mat <- read.csv("~/project/eSVD/data/GSE136831_adams_lung/aba1983_Data_S8.txt",
                    sep = "\t")
@@ -70,22 +145,12 @@ length(intersect(idx, c(adam_idx)))
 length(intersect(idx, c(adam_idx, habermann_idx)))
 
 ## https://www.pathwaycommons.org/guide/primers/statistics/fishers_exact_test/
-m <- length(adam_idx)
+m <- length(habermann_idx)
 n <- length(gaussian_teststat) - m
 k <- length(idx)
-x <- length(intersect(idx, c(adam_idx)))
+x <- length(intersect(idx, c(habermann_idx)))
 fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
 fisher
-
-# tab <- table(adams$Subject_Identity, adams$Disease_Identity)
-# indiv_cases <- rownames(tab)[which(tab[,"IPF"] != 0)]
-# indiv_controls <- rownames(tab)[which(tab[,"IPF"] == 0)]
-# indiv_vec <- factor(as.character(adams$Subject_Identity))
-# p <- length(gaussian_teststat)
-# posterior_mat <- eSVD_obj$fit_Second$posterior_mean_mat
-# x_vec <- sapply(1:p, function(j){
-#   log2(mean(posterior_mat[which(indiv_vec %in% indiv_cases),j])) - log2(mean(posterior_mat[which(indiv_vec %in% indiv_controls),j]))
-# })
 
 x_vec <- log2(eSVD_obj$case_mean) - log2(eSVD_obj$control)
 xlim <- range(x_vec)
@@ -98,7 +163,7 @@ purple_col <- rgb(122, 49, 126, maxColorValue = 255)
 green_col <- rgb(70, 177, 70, maxColorValue = 255)
 green_col_trans <- rgb(70, 177, 70, 255*.35, maxColorValue = 255)
 
-png("../../../../out/fig/Writeup12/adams_T_volcano.png",
+png("../../../../out/fig/Writeup12/habermann_T_volcano_esvd_postprocess2.png",
     height = 2500, width = 2500,
     units = "px", res = 500)
 par(mar = c(3,3,0.4,0.1))
@@ -113,26 +178,27 @@ points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[idx], y = y_vec[idx],
        col = orange_col, pch = 16, cex = 1.5)
-points(x = x_vec[setdiff(adam_idx, idx)], y = y_vec[setdiff(adam_idx, idx)],
+points(x = x_vec[setdiff(habermann_idx, idx)], y = y_vec[setdiff(habermann_idx, idx)],
        col = purple_col, pch = 16, cex = 1, lwd = 2)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = green_col_trans, pch = 16, cex = 1)
-points(x = x_vec[intersect(idx, adam_idx)], y = y_vec[intersect(idx, adam_idx)],
+points(x = x_vec[intersect(idx, habermann_idx)], y = y_vec[intersect(idx, habermann_idx)],
        col = "white", pch = 1, cex = 2, lwd = 3)
-points(x = x_vec[intersect(idx, adam_idx)], y = y_vec[intersect(idx, adam_idx)],
+points(x = x_vec[intersect(idx, habermann_idx)], y = y_vec[intersect(idx, habermann_idx)],
        col = purple_col, pch = 1, cex = 2, lwd = 2)
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
 graphics.off()
 
-png("../../../../out/fig/Writeup12/adams_T_volcano-stats.png",
+png("../../../../out/fig/Writeup12/habermann_T_volcano_esvd_postprocess2_stats.png",
     height = 2500, width = 2500,
     units = "px", res = 500)
 plot(x = 1:10, y = 1:10, type = "n",
      main = paste0("Fisher = ", fisher, "\nTotal: ",
                    length(adam_idx), ", inter: ", length(intersect(idx, adam_idx))))
 graphics.off()
+
 

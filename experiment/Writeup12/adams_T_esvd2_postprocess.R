@@ -3,7 +3,7 @@ library(Seurat)
 library(eSVD2)
 library(Rmpfr)
 
-load("../../../../out/Writeup12/adams_T_esvd.RData")
+load("../../../../out/Writeup12/adams_T_esvd2.RData")
 date_of_run
 
 set.seed(10)
@@ -98,7 +98,7 @@ purple_col <- rgb(122, 49, 126, maxColorValue = 255)
 green_col <- rgb(70, 177, 70, maxColorValue = 255)
 green_col_trans <- rgb(70, 177, 70, 255*.35, maxColorValue = 255)
 
-png("../../../../out/fig/Writeup12/adams_T_volcano.png",
+png("../../../../out/fig/Writeup12/adams_T_esvd2_volcano.png",
     height = 2500, width = 2500,
     units = "px", res = 500)
 par(mar = c(3,3,0.4,0.1))
@@ -128,7 +128,7 @@ axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
 graphics.off()
 
-png("../../../../out/fig/Writeup12/adams_T_volcano-stats.png",
+png("../../../../out/fig/Writeup12/adams_T_esvd2_volcano-stats.png",
     height = 2500, width = 2500,
     units = "px", res = 500)
 plot(x = 1:10, y = 1:10, type = "n",
