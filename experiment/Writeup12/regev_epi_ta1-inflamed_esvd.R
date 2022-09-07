@@ -39,7 +39,9 @@ covariate_df <- data.frame(covariate_dat)
 covariate_df[,"Subject_Disease"] <- factor(covariate_df[,"Subject_Disease"], levels = c("HC", "Colitis"))
 covariate_df[,"Sample"] <- factor(covariate_df[,"Sample"], levels = names(sort(table(covariate_df[,"Sample"]), decreasing = T)))
 covariate_df[,"Subject_Gender"] <- factor(covariate_df[,"Subject_Gender"], levels = names(sort(table(covariate_df[,"Subject_Gender"]), decreasing = T)))
-covariate_df[,"Subject_Location"] <- factor(covariate_df[,"Subject_Location"], levels = names(sort(table(covariate_df[,"Subject_Location"]), decreasing = T)))
+tmp <- covariate_df[,"Subject_Location"]
+tmp[tmp == "#N/A"] <- "Not_Available"
+covariate_df[,"Subject_Location"] <- factor(tmp, levels = names(sort(table(tmp), decreasing = T)))
 covariate_df[,"Subject_Smoking"] <- factor(covariate_df[,"Subject_Smoking"], levels = names(sort(table(covariate_df[,"Subject_Smoking"]), decreasing = T)))
 
 covariates <- eSVD2:::format_covariates(dat = mat,
@@ -60,7 +62,7 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
 time_end1 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  eSVD_obj = eSVD_obj,
+  input_obj = eSVD_obj,
   fit_name = "fit_Init",
   omitted_variables = "Log_UMI"
 )
@@ -78,7 +80,7 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end2 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  eSVD_obj = eSVD_obj,
+  input_obj = eSVD_obj,
   fit_name = "fit_First",
   omitted_variables = "Log_UMI"
 )
@@ -96,7 +98,7 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end3 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  eSVD_obj = eSVD_obj,
+  input_obj = eSVD_obj,
   fit_name = "fit_Second",
   omitted_variables = numeric(0)
 )
