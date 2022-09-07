@@ -1,5 +1,6 @@
 rm(list=ls())
 set.seed(10)
+library(Seurat)
 source("../eSVD2_examples/simulation/data_generator.R")
 
 set.seed(10)
@@ -171,7 +172,7 @@ for(x in gene_casecontrol_name){
 
 ####################
 
-tmp <- data.frame(covariates[,2:4])
+tmp <- data.frame(covariates[,2:5])
 tmp$individual <- individual_vec
 seurat_obj <- Seurat::CreateSeuratObject(counts = t(obs_mat),
                                          meta.data = tmp)
@@ -201,3 +202,8 @@ Seurat::DimPlot(seurat_obj, reduction = "umap", group.by = "individual")
 Seurat::DimPlot(seurat_obj, reduction = "umap", group.by = "cc")
 Seurat::DimPlot(seurat_obj, reduction = "umap", group.by = "gender")
 Seurat::FeaturePlot(seurat_obj, reduction = "umap", features = "age")
+
+obs_mat <- t(as.matrix(seurat_obj[["RNA"]]@counts))
+zero_prop <- apply(obs_mat, 2, function(x){
+  length(which(x == 0))/length(x)
+})
