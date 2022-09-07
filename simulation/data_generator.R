@@ -25,9 +25,7 @@ data_generator <- function(
     natural_param_max_quant,
     sparsity_downsampling
 ){
-  stopifnot(all(dim(gene_topic_nuisance_proporition_mat) ==
-                  c(length(gene_nuisance_values), length(gene_topic_casecontrol_size))),
-            nrow(gene_topic_simplex) == length(cell_latent_gaussian_mean),
+  stopifnot(nrow(gene_topic_simplex) == length(cell_latent_gaussian_mean),
             length(gene_covariate_coefficient_proportion) == length(gene_covariate_coefficient_size))
 
   num_indiv <- nrow(individual_covariates)
@@ -36,8 +34,13 @@ data_generator <- function(
   x_mat <- .form_x_mat(cell_latent_gaussian_covariance = cell_latent_gaussian_covariance,
                        cell_latent_gaussian_mean = cell_latent_gaussian_mean,
                        n = n)
-  covariates <- .form_covariate_mat(individual_covariates = individual_covariates,
-                                    individual_num_cells = individual_num_cells)
+  res <- .form_covariate_mat(individual_case_control_variable = individual_case_control_variable,
+                             individual_covariates = individual_covariates,
+                             individual_num_cells = individual_num_cells)
+  covariates <- res$covariates
+  case_individuals <- res$case_individuals
+  control_individuals <- res$control_individuals
+  individual_vec <- res$individual_vec
 
   # now work on the genes
   res <- .form_y_mat(gene_null_latent_gaussian_noise = gene_null_latent_gaussian_noise,
@@ -90,8 +93,8 @@ data_generator <- function(
   for(j in 1:p){
     gamma_mat[,j] <- stats::rgamma(
       n = n,
-      shape = exp(nat_mat[,j])/nuisance_vec[j],
-      rate = 1/nuisance_vec[j])
+      shape = exp(nat_mat[,j])*nuisance_vec[j],
+      rate = nuisance_vec[j])
   }
 
   gene_library_vec <- rep(gene_library_repeating_vec, times = ceiling(p/length(gene_library_repeating_vec)))
@@ -102,9 +105,32 @@ data_generator <- function(
                                 lambda = gene_library_vec[j]*gamma_mat[,j])
   }
 
-  list(covariates = covariates,
+  ## sparsity_downsampling has no effect right now
+  covariates <- cbind(covariates, log1p(rowMeans(obs_mat)))
+  colnames(covariates)[ncol(covariates)] <- "Log_UMI"
+  z_mat <- cbind(z_mat, 0)
+  colnames(z_mat)[ncol(z_mat)] <- "Log_UMI"
+
+  # append all the names
+  rownames(x_mat) <- paste0("cell_", 1:n)
+  rownames(gamma_mat) <-  rownames(x_mat)
+  rownames(obs_mat) <- rownames(x_mat)
+  rownames(covariates) <- rownames(x_mat)
+  rownames(y_mat) <- paste0("gene_", 1:p)
+  colnames(gamma_mat) <-  rownames(y_mat)
+  colnames(obs_mat) <- rownames(y_mat)
+  names(nuisance_vec) <- rownames(y_mat)
+  names(gene_labeling) <- rownames(y_mat)
+  names(gene_labeling2) <- rownames(y_mat)
+  names(gene_library_vec) <- rownames(y_mat)
+
+  list(case_individuals = case_individuals,
+       control_individuals = control_individuals,
+       covariates = covariates,
        gene_labeling = gene_labeling,
        gene_labeling2 = gene_labeling2,
+       gene_library_vec = gene_library_vec,
+       individual_vec = individual_vec,
        nuisance_vec = nuisance_vec,
        obs_mat = obs_mat,
        x_mat = x_mat,
@@ -122,7 +148,8 @@ data_generator <- function(
                 Sigma = cell_latent_gaussian_covariance)
 }
 
-.form_covariate_mat <- function(individual_covariates,
+.form_covariate_mat <- function(individual_case_control_variable,
+                                individual_covariates,
                                 individual_num_cells){
   num_indiv <- nrow(individual_covariates)
   covariates <- do.call(rbind, lapply(1:num_indiv, function(i){
@@ -132,7 +159,15 @@ data_generator <- function(
   covariates <- cbind(1, covariates)
   colnames(covariates) <- c("Intercept", colnames(individual_covariates))
 
-  covariates
+  individual_vec <- paste0("indiv_", 1:num_indiv)
+  case_individuals <- individual_vec[which(individual_covariates[,individual_case_control_variable] == 1)]
+  control_individuals <- individual_vec[which(individual_covariates[,individual_case_control_variable] == 0)]
+  individual_vec_full <- rep(paste0("indiv_", 1:num_indiv), each = individual_num_cells)
+
+  list(case_individuals = case_individuals,
+       control_individuals = control_individuals,
+       covariates = covariates,
+       individual_vec = individual_vec_full)
 }
 
 .form_y_mat <- function(gene_null_latent_gaussian_noise,
@@ -203,7 +238,6 @@ data_generator <- function(
                         gene_topic_casecontrol_size,
                         gene_labeling,
                         p){
-  p <- nrow(y_mat)
   r <- length(covariates_colnames)
   z_mat <- matrix(0, nrow = p, ncol = r)
   colnames(z_mat) <- covariates_colnames
