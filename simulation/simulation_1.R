@@ -31,10 +31,8 @@ gene_num_per_topic <- 100
 
 gene_library_repeating_vec <- c(0.8, rep(1, 8), 1.2)
 gene_nuisance_values<- c(0.1, 1, 100)
-gene_covariate_coefficient_proportion <- c(0.1, 0.1, 0.7, 0.1, 0.1, 0.1)
-gene_covariate_coefficient_proportion <- gene_covariate_coefficient_proportion/sum(gene_covariate_coefficient_proportion)
-gene_covariate_coefficient_size <- c(-1,-0.5,0,0.5,1,3)
 
+set.seed(10)
 num_topics <- 4
 simplex <- matrix(0, nrow = k, ncol = num_topics)
 for(j in 1:num_topics){
@@ -45,6 +43,8 @@ for(i in 1:k){
   idx <- i %% num_topics + 1
   simplex[i,idx] <- simplex[i,idx] + runif(length(idx))
 }
+simplex[1,] <- 0
+simplex[1,1:ceiling(num_topics/2)] <- 1.5
 gene_topic_simplex <- simplex
 gene_topic_latent_gaussian_noise <- 0.1*diag(k)
 gene_topic_casecontrol_name <- c("none", "weak-negative", "strong-negative", "weak-positive", "strong-positive")
@@ -52,13 +52,25 @@ gene_topic_casecontrol_size <- c(0, -0.5, -5, 0.5,  2)
 gene_topic_casecontrol_proportion <- c(0.74, 0.1, 0.03, 0.1, 0.03)
 mat <- matrix(0, nrow = length(gene_nuisance_values), ncol = length(gene_topic_casecontrol_size))
 mat[,1] <- c(0.8,0.15,0.05)
-mat[,2] <- c(0.6,0.3,0.1)
+mat[,2] <- c(0.6,0.35,0.05)
 mat[,3] <- c(0.1,0.2,0.7)
-mat[,4] <- c(0.6,0.3,0.1)
+mat[,4] <- c(0.6,0.35,0.05)
 mat[,5] <- c(0.1,0.2,0.7)
 colnames(mat) <- paste0("cc_size:", gene_topic_casecontrol_name)
 rownames(mat) <- paste0("nuisance:", gene_nuisance_values)
 gene_nuisance_proporition_mat <- mat
+
+gene_covariate_coefficient_size <- c(-1,-0.5,0,0.5,1,3)
+mat <- matrix(0, nrow = length(gene_covariate_coefficient_size),
+              ncol = length(gene_topic_casecontrol_name))
+colnames(mat) <- paste0("cc_size:", gene_topic_casecontrol_name)
+rownames(mat) <- paste0("coef_size:", gene_nuisance_values)
+mat[,1] <- c(0.1, 0.1, 0.6, 0.1, 0.1,   0)
+mat[,2] <- c(  0,   0,   0,   0, 0.4, 0.6)
+mat[,3] <- c(  0,   0, 0.8, 0.2,   0,   0)
+mat[,4] <- c(  0,   0,   0,   0, 0.4, 0.6)
+mat[,5] <- c(  0,   0, 0.8, 0.2,   0,   0)
+gene_covariate_coefficient_proportion_mat <- mat
 
 ##############
 
@@ -81,11 +93,12 @@ sparsity_downsampling <- 0
 
 #########################
 
+set.seed(10)
 simulation_dat <- data_generator(
   cell_latent_gaussian_mean = cell_latent_gaussian_mean,
   cell_latent_gaussian_covariance = cell_latent_gaussian_covariance,
   gene_library_repeating_vec = gene_library_repeating_vec,
-  gene_covariate_coefficient_proportion = gene_covariate_coefficient_proportion,
+  gene_covariate_coefficient_proportion_mat = gene_covariate_coefficient_proportion_mat,
   gene_covariate_coefficient_size = gene_covariate_coefficient_size,
   gene_nuisance_values = gene_nuisance_values,
   gene_nuisance_proporition_mat = gene_nuisance_proporition_mat,
@@ -106,7 +119,8 @@ simulation_dat <- data_generator(
   individual_case_control_variable = individual_case_control_variable,
   individual_num_cells = individual_num_cells,
   natural_param_max_quant = natural_param_max_quant,
-  sparsity_downsampling = sparsity_downsampling
+  bool_include_extra_signal = T,
+  gene_intercept_global_shift = -.5
 )
 
 #####################################3
@@ -123,6 +137,9 @@ obs_mat = simulation_dat$obs_mat
 x_mat = simulation_dat$x_mat
 y_mat = simulation_dat$y_mat
 z_mat = simulation_dat$z_mat
+
+quantile(apply(obs_mat, 2, function(x){length(which(x==0))/length(x)}))
+table(gene_labeling2, z_mat[,"age"])
 
 nat_mat1 <- tcrossprod(x_mat, y_mat)
 nat_mat2 <- tcrossprod(covariates[,"cc"], z_mat[,"cc"])
@@ -161,6 +178,7 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "weak-positive" = rgb(0.5, 1, 0.9))
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
 plot(teststat_vec, col = col_vec, pch = 16)
+hist(teststat_vec, breaks = 50)
 
 gene_casecontrol_name <- sort(unique(gene_topic_casecontrol_name, gene_null_casecontrol_name))
 for(x in gene_casecontrol_name){

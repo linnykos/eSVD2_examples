@@ -105,7 +105,6 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
 plot(eSVD_obj$teststat_vec, col = col_vec, pch = 16)
 
-
 save(eSVD_obj,
      seurat_obj,
      case_individuals,

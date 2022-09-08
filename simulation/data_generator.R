@@ -2,7 +2,7 @@ data_generator <- function(
     cell_latent_gaussian_mean,
     cell_latent_gaussian_covariance,
     gene_library_repeating_vec,
-    gene_covariate_coefficient_proportion,
+    gene_covariate_coefficient_proportion_mat,
     gene_covariate_coefficient_size,
     gene_nuisance_values,
     gene_nuisance_proporition_mat,
@@ -23,17 +23,15 @@ data_generator <- function(
     individual_case_control_variable,
     individual_num_cells,
     natural_param_max_quant,
-    sparsity_downsampling
+    bool_include_extra_signal = T,
+    gene_intercept_global_shift = 0
 ){
-  stopifnot(nrow(gene_topic_simplex) == length(cell_latent_gaussian_mean),
-            length(gene_covariate_coefficient_proportion) == length(gene_covariate_coefficient_size))
+  stopifnot(nrow(gene_topic_simplex) == length(cell_latent_gaussian_mean))
 
   num_indiv <- nrow(individual_covariates)
   n <- individual_num_cells*num_indiv
 
-  x_mat <- .form_x_mat(cell_latent_gaussian_covariance = cell_latent_gaussian_covariance,
-                       cell_latent_gaussian_mean = cell_latent_gaussian_mean,
-                       n = n)
+
   res <- .form_covariate_mat(individual_case_control_variable = individual_case_control_variable,
                              individual_covariates = individual_covariates,
                              individual_num_cells = individual_num_cells)
@@ -41,6 +39,16 @@ data_generator <- function(
   case_individuals <- res$case_individuals
   control_individuals <- res$control_individuals
   individual_vec <- res$individual_vec
+
+  x_mat <- .form_x_mat(
+    bool_include_extra_signal = bool_include_extra_signal,
+    cell_latent_gaussian_covariance = cell_latent_gaussian_covariance,
+    cell_latent_gaussian_mean = cell_latent_gaussian_mean,
+    covariates = covariates,
+    individual_case_control_variable = individual_case_control_variable,
+    individual_vec = individual_vec,
+    n = n
+  )
 
   # now work on the genes
   res <- .form_y_mat(gene_null_latent_gaussian_noise = gene_null_latent_gaussian_noise,
@@ -53,8 +61,9 @@ data_generator <- function(
   gene_labeling <- res$gene_labeling
 
   res <- .form_z_mat(covariates_colnames = colnames(covariates),
-                     gene_covariate_coefficient_proportion = gene_covariate_coefficient_proportion,
+                     gene_covariate_coefficient_proportion_mat = gene_covariate_coefficient_proportion_mat,
                      gene_covariate_coefficient_size = gene_covariate_coefficient_size,
+                     gene_intercept_global_shift = gene_intercept_global_shift,
                      gene_null_casecontrol_name = gene_null_casecontrol_name,
                      gene_null_casecontrol_proportion = gene_null_casecontrol_proportion,
                      gene_null_casecontrol_size = gene_null_casecontrol_size,
@@ -72,7 +81,7 @@ data_generator <- function(
   idx <- which(nat_colQuant >= natural_param_max_quant)
   if(length(idx) > 0){
     for(j in idx){
-      z_mat[j,"Intercept"] <- natural_param_max_quant - nat_colQuant[j]
+      z_mat[j,"Intercept"] <- natural_param_max_quant - nat_colQuant[j] + z_mat[j,"Intercept"]
     }
   }
 
@@ -140,14 +149,6 @@ data_generator <- function(
 
 ####################
 
-.form_x_mat <- function(cell_latent_gaussian_covariance,
-                        cell_latent_gaussian_mean,
-                        n){
-  MASS::mvrnorm(n,
-                mu = cell_latent_gaussian_mean,
-                Sigma = cell_latent_gaussian_covariance)
-}
-
 .form_covariate_mat <- function(individual_case_control_variable,
                                 individual_covariates,
                                 individual_num_cells){
@@ -168,6 +169,41 @@ data_generator <- function(
        control_individuals = control_individuals,
        covariates = covariates,
        individual_vec = individual_vec_full)
+}
+
+.form_x_mat <- function(bool_include_extra_signal,
+                        cell_latent_gaussian_covariance,
+                        cell_latent_gaussian_mean,
+                        covariates,
+                        individual_case_control_variable,
+                        individual_vec,
+                        n){
+  if(bool_include_extra_signal){
+    tmp <- MASS::mvrnorm(n,
+                         mu = cell_latent_gaussian_mean[-1],
+                         Sigma = cell_latent_gaussian_covariance[-1,-1])
+    tab <- table(individual_vec, covariates[,individual_case_control_variable])
+    case_indiv <- rownames(tab)[which(tab[,"1"] != 0)]
+    control_indiv <- rownames(tab)[which(tab[,"0"] != 0)]
+
+    vec <- rep(0, n)
+    vec[individual_vec %in% control_indiv] <- -1
+    case_indiv_firsthalf <- case_indiv[1:ceiling(length(case_indiv)/2)]
+    vec[individual_vec %in% case_indiv_firsthalf] <- 1/2
+    case_indiv_secondhalf <- setdiff(case_indiv, case_indiv_firsthalf)
+    for(indiv in case_indiv_secondhalf){
+      idx <- which(individual_vec == indiv)
+      vec[idx[1:ceiling(length(idx)/2)]] <- -1
+    }
+    x_mat <- cbind(vec, tmp)
+
+  } else {
+    x_mat <- MASS::mvrnorm(n,
+                           mu = cell_latent_gaussian_mean,
+                           Sigma = cell_latent_gaussian_covariance)
+  }
+
+  x_mat
 }
 
 .form_y_mat <- function(gene_null_latent_gaussian_noise,
@@ -228,8 +264,9 @@ data_generator <- function(
 }
 
 .form_z_mat <- function(covariates_colnames,
-                        gene_covariate_coefficient_proportion,
+                        gene_covariate_coefficient_proportion_mat,
                         gene_covariate_coefficient_size,
+                        gene_intercept_global_shift,
                         gene_null_casecontrol_name,
                         gene_null_casecontrol_proportion,
                         gene_null_casecontrol_size,
@@ -241,12 +278,7 @@ data_generator <- function(
   r <- length(covariates_colnames)
   z_mat <- matrix(0, nrow = p, ncol = r)
   colnames(z_mat) <- covariates_colnames
-  covariates_other <- colnames(z_mat)[which(!colnames(z_mat) %in% c("Intercept", individual_case_control_variable))]
-  for(variable in covariates_other){
-    z_mat[,variable] <- .exact_sampler(target_length = nrow(z_mat),
-                                       value_proportion = gene_covariate_coefficient_proportion,
-                                       value_vec = gene_covariate_coefficient_size)
-  }
+  z_mat[,"Intercept"] <- gene_intercept_global_shift
 
   # now for case-control
   gene_labeling2 <- rep("NA", p)
@@ -271,6 +303,21 @@ data_generator <- function(
     from = as.character(gene_null_casecontrol_size),
     to = gene_null_casecontrol_name
   )
+
+  # now for the covariates
+  gene_casecontrol_name <- sort(unique(gene_topic_casecontrol_name, gene_null_casecontrol_name))
+  covariates_other <- colnames(z_mat)[which(!colnames(z_mat) %in% c("Intercept", individual_case_control_variable))]
+  for(variable in covariates_other){
+    r <- length(gene_casecontrol_name)
+    for(j in 1:r){
+      gene_in_size <- grep(gene_casecontrol_name[j], gene_labeling2)
+      z_mat[gene_in_size,variable] <- .exact_sampler(
+        target_length = length(gene_in_size),
+        value_proportion = gene_covariate_coefficient_proportion_mat[,paste0("cc_size:", gene_casecontrol_name[j])],
+        value_vec = gene_covariate_coefficient_size
+      )
+    }
+  }
 
   list(gene_labeling2 = gene_labeling2,
        z_mat = z_mat)

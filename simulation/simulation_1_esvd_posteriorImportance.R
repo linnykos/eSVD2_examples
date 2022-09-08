@@ -131,5 +131,7 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "weak-positive" = rgb(0.5, 1, 0.9))
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
 plot(teststat_vec, col = col_vec, pch = 16)
+hist(teststat_vec, breaks = 50)
+hist(eSVD_obj$teststat_vec, breaks = 50, xlim = range(teststat_vec))
 
-plot(teststat_vec, eSVD_obj$teststat_ve)
+plot(teststat_vec, eSVD_obj$teststat_vec)
