@@ -105,16 +105,22 @@ data_generator_nat_mat <- function(
 }
 
 data_signal_enhancer <- function(input_obj,
+                                 gene_case_control_none_size_sd = 0.3,
                                  global_shift = 0){
   case_individuals <- input_obj$case_individuals
   control_individuals <- input_obj$control_individuals
   covariates <- input_obj$covariates
   gene_labeling <- input_obj$gene_labeling
   gene_labeling2 <- input_obj$gene_labeling2
+  individual_case_control_variable <- input_obj$individual_case_control_variable
   individual_vec <- input_obj$individual_vec
   x_mat <- input_obj$x_mat
   y_mat <- input_obj$y_mat
   z_mat <- input_obj$z_mat
+
+  idx <- intersect(which(gene_labeling2 == "none"), which(z_mat[,individual_case_control_variable] == 0))
+  z_mat[idx,individual_case_control_variable] <- stats::rnorm(length(idx), mean = 0, sd = gene_case_control_none_size_sd)
+
   nat_mat <- tcrossprod(x_mat, y_mat) + tcrossprod(covariates, z_mat)
   nat_mat <- nat_mat + global_shift
 
@@ -124,12 +130,12 @@ data_signal_enhancer <- function(input_obj,
     indivuals <- sample(case_individuals, round(length(case_individuals)/4))
     cell_idx <- which(individual_vec %in% indivuals)
     tmp <- nat_mat[cell_idx,j]
-    nat_mat[cell_idx,j] <- pmax(tmp+1, tmp*1.1)
+    nat_mat[cell_idx,j] <- pmax(tmp+2, tmp*1.5)
 
     indivuals <- sample(control_individuals, round(length(control_individuals)/4))
     cell_idx <- which(individual_vec %in% indivuals)
     tmp <- nat_mat[cell_idx,j]
-    nat_mat[cell_idx,j] <- pmin(tmp-1, tmp*1.1)
+    nat_mat[cell_idx,j] <- pmin(tmp-2, tmp*1.5)
   }
 
   gene_idx <- which(gene_labeling2 == "strong-negative")
@@ -137,12 +143,12 @@ data_signal_enhancer <- function(input_obj,
     indivuals <- sample(case_individuals, round(length(case_individuals)/4))
     cell_idx <- which(individual_vec %in% indivuals)
     tmp <- nat_mat[cell_idx,j]
-    nat_mat[cell_idx,j] <- pmin(tmp-1, tmp*1.1)
+    nat_mat[cell_idx,j] <- pmin(tmp-2, tmp*1.5)
 
     indivuals <- sample(control_individuals, round(length(control_individuals)/4))
     cell_idx <- which(individual_vec %in% indivuals)
     tmp <- nat_mat[cell_idx,j]
-    nat_mat[cell_idx,j] <- pmax(tmp+1, tmp*1.1)
+    nat_mat[cell_idx,j] <- pmax(tmp+2, tmp*1.5)
   }
 
   # shrink none and weak signals towards the strong ones
@@ -173,11 +179,11 @@ data_signal_enhancer <- function(input_obj,
 
       nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
                                     shrinkage_idx = none_idx_posShrink,
-                                    shrinkage_val = 0.5,
+                                    shrinkage_val = 0.7,
                                     target_mat = pos_nat_mat)
       nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
                                     shrinkage_idx = weak_pos_idx_posShrink,
-                                    shrinkage_val = 0.7,
+                                    shrinkage_val = 0.95,
                                     target_mat = pos_nat_mat)
     }
 
@@ -191,11 +197,11 @@ data_signal_enhancer <- function(input_obj,
 
       nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
                                     shrinkage_idx = none_idx_negShrink,
-                                    shrinkage_val = 0.5,
+                                    shrinkage_val = 0.7,
                                     target_mat = neg_nat_mat)
       nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
                                     shrinkage_idx = weak_neg_idx_posShrink,
-                                    shrinkage_val = 0.7,
+                                    shrinkage_val = 0.95,
                                     target_mat = neg_nat_mat)
     }
   }
