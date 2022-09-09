@@ -20,7 +20,7 @@ cell_latent_gaussian_covariance = cov_mat
 
 gene_null_casecontrol_name <- c("none", "strong-negative", "strong-positive")
 gene_null_casecontrol_proportion <- c(0.95, 0.03, 0.02)
-gene_null_casecontrol_size <- c(0, -5, 2)
+gene_null_casecontrol_size <- c(0, -0.75, 0.75)
 gene_null_latent_gaussian_noise <- 0.5*diag(k)
 
 gene_num_mixed_membership <- 100
@@ -43,13 +43,11 @@ for(i in 1:k){
   idx <- i %% num_topics + 1
   simplex[i,idx] <- simplex[i,idx] + runif(length(idx))
 }
-simplex[1,] <- 0
-simplex[1,1:ceiling(num_topics/2)] <- 1.5
 gene_topic_simplex <- simplex
 gene_topic_latent_gaussian_noise <- 0.1*diag(k)
 gene_topic_casecontrol_name <- c("none", "weak-negative", "strong-negative", "weak-positive", "strong-positive")
-gene_topic_casecontrol_size <- c(0, -0.5, -5, 0.5,  2)
-gene_topic_casecontrol_proportion <- c(0.74, 0.1, 0.03, 0.1, 0.03)
+gene_topic_casecontrol_size <- c(0, -0.5, -0.75, 0.5, .75)
+gene_topic_casecontrol_proportion <- c(0.7, 0.1, 0.05, 0.1, 0.05)
 mat <- matrix(0, nrow = length(gene_nuisance_values), ncol = length(gene_topic_casecontrol_size))
 mat[,1] <- c(0.8,0.15,0.05)
 mat[,2] <- c(0.6,0.35,0.05)
@@ -66,8 +64,8 @@ mat <- matrix(0, nrow = length(gene_covariate_coefficient_size),
 colnames(mat) <- paste0("cc_size:", gene_topic_casecontrol_name)
 rownames(mat) <- paste0("coef_size:", gene_nuisance_values)
 mat[,1] <- c(0.1, 0.1, 0.6, 0.1, 0.1,   0)
-mat[,2] <- c(  0,   0,   0,   0, 0.4, 0.6)
-mat[,3] <- c(  0,   0, 0.8, 0.2,   0,   0)
+mat[,2] <- c(0.6, 0.4,   0,   0,   0,   0)
+mat[,3] <- c(  0, 0.2, 0.8,   0,   0,   0)
 mat[,4] <- c(  0,   0,   0,   0, 0.4, 0.6)
 mat[,5] <- c(  0,   0, 0.8, 0.2,   0,   0)
 gene_covariate_coefficient_proportion_mat <- mat
@@ -88,13 +86,10 @@ individual_covariates = df
 individual_case_control_variable = "cc"
 individual_num_cells = 250
 
-natural_param_max_quant <- 5
-sparsity_downsampling <- 0
-
 #########################
 
 set.seed(10)
-simulation_dat <- data_generator(
+input_obj <- data_generator_nat_mat(
   cell_latent_gaussian_mean = cell_latent_gaussian_mean,
   cell_latent_gaussian_covariance = cell_latent_gaussian_covariance,
   gene_library_repeating_vec = gene_library_repeating_vec,
@@ -117,26 +112,27 @@ simulation_dat <- data_generator(
   gene_topic_casecontrol_size = gene_topic_casecontrol_size,
   individual_covariates = individual_covariates,
   individual_case_control_variable = individual_case_control_variable,
-  individual_num_cells = individual_num_cells,
-  natural_param_max_quant = natural_param_max_quant,
-  bool_include_extra_signal = T,
-  gene_intercept_global_shift = -.5
+  individual_num_cells = individual_num_cells
 )
+
+input_obj <- data_signal_enhancer(input_obj,
+                                  global_shift = 0)
+input_obj <- data_generator_obs_mat(input_obj)
 
 #####################################3
 
-case_individuals = simulation_dat$case_individuals
-control_individuals = simulation_dat$control_individuals
-covariates = simulation_dat$covariates
-gene_labeling = simulation_dat$gene_labeling
-gene_labeling2 = simulation_dat$gene_labeling2
-gene_library_vec = simulation_dat$gene_library_vec
-individual_vec = simulation_dat$individual_vec
-nuisance_vec = simulation_dat$nuisance_vec
-obs_mat = simulation_dat$obs_mat
-x_mat = simulation_dat$x_mat
-y_mat = simulation_dat$y_mat
-z_mat = simulation_dat$z_mat
+case_individuals = input_obj$case_individuals
+control_individuals = input_obj$control_individuals
+covariates = input_obj$covariates
+gene_labeling = input_obj$gene_labeling
+gene_labeling2 = input_obj$gene_labeling2
+gene_library_vec = input_obj$gene_library_vec
+individual_vec = input_obj$individual_vec
+nuisance_vec = input_obj$nuisance_vec
+obs_mat = input_obj$obs_mat
+x_mat = input_obj$x_mat
+y_mat = input_obj$y_mat
+z_mat = input_obj$z_mat
 
 quantile(apply(obs_mat, 2, function(x){length(which(x==0))/length(x)}))
 table(gene_labeling2, z_mat[,"age"])
@@ -225,3 +221,4 @@ obs_mat <- t(as.matrix(seurat_obj[["RNA"]]@counts))
 zero_prop <- apply(obs_mat, 2, function(x){
   length(which(x == 0))/length(x)
 })
+quantile(zero_prop)

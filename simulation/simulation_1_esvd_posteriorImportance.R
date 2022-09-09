@@ -24,7 +24,7 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariates[,-grep("individual", colnames(covariates))],
                                     case_control_variable = "cc_1",
                                     bool_intercept = T,
-                                    k = 5,
+                                    k = 3,
                                     lambda = 0.1,
                                     metadata_case_control = covariates[,"cc_1"],
                                     metadata_individual = covariate_df[,"individual"],
@@ -131,7 +131,9 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "weak-positive" = rgb(0.5, 1, 0.9))
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
 plot(teststat_vec, col = col_vec, pch = 16)
+hist(eSVD_obj[["fit_Second"]]$z_mat[,"cc_1"], breaks = 50)
 hist(teststat_vec, breaks = 50)
 hist(eSVD_obj$teststat_vec, breaks = 50, xlim = range(teststat_vec))
 
-plot(teststat_vec, eSVD_obj$teststat_vec)
+plot(teststat_vec, eSVD_obj$teststat_vec, asp = T, col = col_vec, pch = 16)
+lines(c(-1e5,1e5), c(-1e5,1e5), col = 2, lty = 2, lwd = 2)

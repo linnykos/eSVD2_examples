@@ -1,4 +1,4 @@
-data_generator <- function(
+data_generator_nat_mat <- function(
     cell_latent_gaussian_mean,
     cell_latent_gaussian_covariance,
     gene_library_repeating_vec,
@@ -22,15 +22,12 @@ data_generator <- function(
     individual_covariates,
     individual_case_control_variable,
     individual_num_cells,
-    natural_param_max_quant,
-    bool_include_extra_signal = T,
     gene_intercept_global_shift = 0
 ){
   stopifnot(nrow(gene_topic_simplex) == length(cell_latent_gaussian_mean))
 
   num_indiv <- nrow(individual_covariates)
   n <- individual_num_cells*num_indiv
-
 
   res <- .form_covariate_mat(individual_case_control_variable = individual_case_control_variable,
                              individual_covariates = individual_covariates,
@@ -41,7 +38,6 @@ data_generator <- function(
   individual_vec <- res$individual_vec
 
   x_mat <- .form_x_mat(
-    bool_include_extra_signal = bool_include_extra_signal,
     cell_latent_gaussian_covariance = cell_latent_gaussian_covariance,
     cell_latent_gaussian_mean = cell_latent_gaussian_mean,
     covariates = covariates,
@@ -74,60 +70,21 @@ data_generator <- function(
                      p = nrow(y_mat))
   z_mat <- res$z_mat; gene_labeling2 <- res$gene_labeling2
 
-  nat_mat1 <- tcrossprod(x_mat, y_mat)
-  nat_mat2 <- tcrossprod(covariates, z_mat)
-  nat_mat <- nat_mat1 + nat_mat2
-  nat_colQuant <- apply(nat_mat, 2, stats::quantile, probs = 0.9)
-  idx <- which(nat_colQuant >= natural_param_max_quant)
-  if(length(idx) > 0){
-    for(j in idx){
-      z_mat[j,"Intercept"] <- natural_param_max_quant - nat_colQuant[j] + z_mat[j,"Intercept"]
-    }
-  }
-
   nuisance_vec <- .form_nuisance_vec(gene_labeling2 = gene_labeling2,
                                      gene_nuisance_proporition_mat = gene_nuisance_proporition_mat,
                                      gene_nuisance_values = gene_nuisance_values,
                                      gene_null_casecontrol_name = gene_null_casecontrol_name,
                                      gene_topic_casecontrol_name = gene_topic_casecontrol_name,
-                                     p = ncol(nat_mat))
+                                     p = nrow(y_mat))
 
-  nat_mat1 <- tcrossprod(x_mat, y_mat)
-  nat_mat2 <- tcrossprod(covariates, z_mat)
-  nat_mat <- nat_mat1 + nat_mat2
-  nat_mat[nat_mat >= natural_param_max_quant] <- natural_param_max_quant
-
-  n <- nrow(nat_mat); p <- ncol(nat_mat)
-  gamma_mat <- matrix(0, nrow = n, ncol = p)
-  for(j in 1:p){
-    gamma_mat[,j] <- stats::rgamma(
-      n = n,
-      shape = exp(nat_mat[,j])*nuisance_vec[j],
-      rate = nuisance_vec[j])
-  }
-
+  p <- nrow(y_mat)
   gene_library_vec <- rep(gene_library_repeating_vec, times = ceiling(p/length(gene_library_repeating_vec)))
   gene_library_vec <- gene_library_vec[1:p]
-  obs_mat <- matrix(0, nrow = n, ncol = p)
-  for(j in 1:p){
-    obs_mat[,j] <- stats::rpois(n = n,
-                                lambda = gene_library_vec[j]*gamma_mat[,j])
-  }
-
-  ## sparsity_downsampling has no effect right now
-  covariates <- cbind(covariates, log1p(rowMeans(obs_mat)))
-  colnames(covariates)[ncol(covariates)] <- "Log_UMI"
-  z_mat <- cbind(z_mat, 0)
-  colnames(z_mat)[ncol(z_mat)] <- "Log_UMI"
 
   # append all the names
-  rownames(x_mat) <- paste0("cell_", 1:n)
-  rownames(gamma_mat) <-  rownames(x_mat)
-  rownames(obs_mat) <- rownames(x_mat)
+  rownames(x_mat) <- paste0("cell_", 1:nrow(x_mat))
   rownames(covariates) <- rownames(x_mat)
   rownames(y_mat) <- paste0("gene_", 1:p)
-  colnames(gamma_mat) <-  rownames(y_mat)
-  colnames(obs_mat) <- rownames(y_mat)
   names(nuisance_vec) <- rownames(y_mat)
   names(gene_labeling) <- rownames(y_mat)
   names(gene_labeling2) <- rownames(y_mat)
@@ -138,13 +95,177 @@ data_generator <- function(
        covariates = covariates,
        gene_labeling = gene_labeling,
        gene_labeling2 = gene_labeling2,
-       gene_library_vec = gene_library_vec,
+       gene_library_repeating_vec = gene_library_repeating_vec,
+       individual_case_control_variable = individual_case_control_variable,
        individual_vec = individual_vec,
        nuisance_vec = nuisance_vec,
-       obs_mat = obs_mat,
        x_mat = x_mat,
        y_mat = y_mat,
        z_mat = z_mat)
+}
+
+data_signal_enhancer <- function(input_obj,
+                                 global_shift = 0){
+  case_individuals <- input_obj$case_individuals
+  control_individuals <- input_obj$control_individuals
+  covariates <- input_obj$covariates
+  gene_labeling <- input_obj$gene_labeling
+  gene_labeling2 <- input_obj$gene_labeling2
+  individual_vec <- input_obj$individual_vec
+  x_mat <- input_obj$x_mat
+  y_mat <- input_obj$y_mat
+  z_mat <- input_obj$z_mat
+  nat_mat <- tcrossprod(x_mat, y_mat) + tcrossprod(covariates, z_mat)
+  nat_mat <- nat_mat + global_shift
+
+  # start be exaggerating the strong signals
+  gene_idx <- which(gene_labeling2 == "strong-positive")
+  for(j in gene_idx){
+    indivuals <- sample(case_individuals, round(length(case_individuals)/4))
+    cell_idx <- which(individual_vec %in% indivuals)
+    tmp <- nat_mat[cell_idx,j]
+    nat_mat[cell_idx,j] <- pmax(tmp+1, tmp*1.1)
+
+    indivuals <- sample(control_individuals, round(length(control_individuals)/4))
+    cell_idx <- which(individual_vec %in% indivuals)
+    tmp <- nat_mat[cell_idx,j]
+    nat_mat[cell_idx,j] <- pmin(tmp-1, tmp*1.1)
+  }
+
+  gene_idx <- which(gene_labeling2 == "strong-negative")
+  for(j in gene_idx){
+    indivuals <- sample(case_individuals, round(length(case_individuals)/4))
+    cell_idx <- which(individual_vec %in% indivuals)
+    tmp <- nat_mat[cell_idx,j]
+    nat_mat[cell_idx,j] <- pmin(tmp-1, tmp*1.1)
+
+    indivuals <- sample(control_individuals, round(length(control_individuals)/4))
+    cell_idx <- which(individual_vec %in% indivuals)
+    tmp <- nat_mat[cell_idx,j]
+    nat_mat[cell_idx,j] <- pmax(tmp+1, tmp*1.1)
+  }
+
+  # shrink none and weak signals towards the strong ones
+  tab_mat <- table(gene_labeling, gene_labeling2)
+  topic_names <- rownames(tab_mat)[grep("topic", rownames(tab_mat))]
+  for(topic_name in topic_names){
+    strong_pos_idx <- intersect(which(gene_labeling2 == "strong-positive"), which(gene_labeling == topic_name))
+    strong_neg_idx <- intersect(which(gene_labeling2 == "strong-negative"), which(gene_labeling == topic_name))
+    weak_pos_idx <- intersect(which(gene_labeling2 == "weak-positive"), which(gene_labeling == topic_name))
+    weak_neg_idx <- intersect(which(gene_labeling2 == "weak-negative"), which(gene_labeling == topic_name))
+    none_idx <- intersect(which(gene_labeling2 == "none"), which(gene_labeling == topic_name))
+
+    none_number <- ceiling(length(none_idx)*.4)
+    none_idx_posShrink <- sample(none_idx, none_number)
+    none_idx <- setdiff(none_idx, none_idx_posShrink)
+    none_idx_negShrink <- sample(none_idx, none_number)
+    weak_pos_idx_posShrink <- sample(weak_pos_idx, ceiling(length(weak_pos_idx)*.3))
+    weak_neg_idx_posShrink <- sample(weak_neg_idx, ceiling(length(weak_neg_idx)*.3))
+
+    # denoise the strong genes
+    if(length(strong_pos_idx) > 0){
+      pos_nat_mat <- apply(nat_mat[,strong_pos_idx], 2, function(x){
+        df <- data.frame(cbind(x, covariates))
+        colnames(df)[1] <- "y"
+        lm_res <- stats::lm(y ~ . - 1, data = df)
+        stats::residuals(lm_res)
+      })
+
+      nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
+                                    shrinkage_idx = none_idx_posShrink,
+                                    shrinkage_val = 0.5,
+                                    target_mat = pos_nat_mat)
+      nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
+                                    shrinkage_idx = weak_pos_idx_posShrink,
+                                    shrinkage_val = 0.7,
+                                    target_mat = pos_nat_mat)
+    }
+
+    if(length(strong_neg_idx) > 0){
+      neg_nat_mat <- apply(nat_mat[,strong_neg_idx,drop = F], 2, function(x){
+        df <- data.frame(cbind(x, covariates))
+        colnames(df)[1] <- "y"
+        lm_res <- stats::lm(y ~ . - 1, data = df)
+        stats::residuals(lm_res)
+      })
+
+      nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
+                                    shrinkage_idx = none_idx_negShrink,
+                                    shrinkage_val = 0.5,
+                                    target_mat = neg_nat_mat)
+      nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
+                                    shrinkage_idx = weak_neg_idx_posShrink,
+                                    shrinkage_val = 0.7,
+                                    target_mat = neg_nat_mat)
+    }
+  }
+
+  list(case_individuals = input_obj$case_individuals,
+       control_individuals = input_obj$control_individuals,
+       covariates = covariates,
+       gene_labeling = gene_labeling,
+       gene_labeling2 = gene_labeling2,
+       gene_library_repeating_vec = input_obj$gene_library_repeating_vec,
+       individual_case_control_variable = input_obj$individual_case_control_variable,
+       individual_vec = input_obj$individual_vec,
+       nat_mat = nat_mat,
+       nuisance_vec = input_obj$nuisance_vec,
+       x_mat = input_obj$x_mat,
+       y_mat = input_obj$y_mat,
+       z_mat = input_obj$z_mat)
+}
+
+data_generator_obs_mat <- function(input_obj){
+  gene_library_repeating_vec <- input_obj$gene_library_repeating_vec
+  nuisance_vec <- input_obj$nuisance_vec
+  nat_mat <- input_obj$nat_mat
+  covariates <- input_obj$covariates
+  z_mat <- input_obj$z_mat
+
+  n <- nrow(nat_mat); p <- ncol(nat_mat)
+
+  gamma_mat <- matrix(0, nrow = n, ncol = p)
+  for(j in 1:p){
+    gamma_mat[,j] <- stats::rgamma(
+      n = n,
+      shape = exp(nat_mat[,j])*nuisance_vec[j],
+      rate = nuisance_vec[j])
+  }
+  gamma_mat <- pmin(gamma_mat, 1000)
+
+  gene_library_vec <- rep(gene_library_repeating_vec, times = ceiling(p/length(gene_library_repeating_vec)))
+  gene_library_vec <- gene_library_vec[1:p]
+  obs_mat <- matrix(0, nrow = n, ncol = p)
+  for(j in 1:p){
+    obs_mat[,j] <- stats::rpois(n = n,
+                                lambda = gene_library_vec[j]*gamma_mat[,j])
+  }
+
+  covariates <- cbind(covariates, log1p(rowMeans(obs_mat)))
+  colnames(covariates)[ncol(covariates)] <- "Log_UMI"
+  z_mat <- cbind(z_mat, 0)
+  colnames(z_mat)[ncol(z_mat)] <- "Log_UMI"
+
+  rownames(gamma_mat) <- rownames(nat_mat)
+  rownames(obs_mat) <- rownames(nat_mat)
+  colnames(gamma_mat) <- colnames(nat_mat)
+  colnames(obs_mat) <- colnames(nat_mat)
+
+  list(case_individuals = input_obj$case_individuals,
+       control_individuals = input_obj$control_individuals,
+       covariates = covariates,
+       gamma_mat = gamma_mat,
+       gene_labeling = input_obj$gene_labeling,
+       gene_labeling2 = input_obj$gene_labeling2,
+       gene_library_vec = gene_library_vec,
+       individual_case_control_variable = input_obj$individual_case_control_variable,
+       individual_vec = input_obj$individual_vec,
+       nat_mat = nat_mat,
+       nuisance_vec = nuisance_vec,
+       obs_mat = obs_mat,
+       x_mat = input_obj$x_mat,
+       y_mat = input_obj$y_mat,
+       z_mat = input_obj$z_mat)
 }
 
 ####################
@@ -171,37 +292,15 @@ data_generator <- function(
        individual_vec = individual_vec_full)
 }
 
-.form_x_mat <- function(bool_include_extra_signal,
-                        cell_latent_gaussian_covariance,
+.form_x_mat <- function(cell_latent_gaussian_covariance,
                         cell_latent_gaussian_mean,
                         covariates,
                         individual_case_control_variable,
                         individual_vec,
                         n){
-  if(bool_include_extra_signal){
-    tmp <- MASS::mvrnorm(n,
-                         mu = cell_latent_gaussian_mean[-1],
-                         Sigma = cell_latent_gaussian_covariance[-1,-1])
-    tab <- table(individual_vec, covariates[,individual_case_control_variable])
-    case_indiv <- rownames(tab)[which(tab[,"1"] != 0)]
-    control_indiv <- rownames(tab)[which(tab[,"0"] != 0)]
-
-    vec <- rep(0, n)
-    vec[individual_vec %in% control_indiv] <- -1
-    case_indiv_firsthalf <- case_indiv[1:ceiling(length(case_indiv)/2)]
-    vec[individual_vec %in% case_indiv_firsthalf] <- 1/2
-    case_indiv_secondhalf <- setdiff(case_indiv, case_indiv_firsthalf)
-    for(indiv in case_indiv_secondhalf){
-      idx <- which(individual_vec == indiv)
-      vec[idx[1:ceiling(length(idx)/2)]] <- -1
-    }
-    x_mat <- cbind(vec, tmp)
-
-  } else {
-    x_mat <- MASS::mvrnorm(n,
-                           mu = cell_latent_gaussian_mean,
-                           Sigma = cell_latent_gaussian_covariance)
-  }
+  x_mat <- MASS::mvrnorm(n,
+                         mu = cell_latent_gaussian_mean,
+                         Sigma = cell_latent_gaussian_covariance)
 
   x_mat
 }
@@ -344,4 +443,27 @@ data_generator <- function(
   }
 
   nuisance_vec
+}
+
+.natural_shrinkage <- function(nat_mat,
+                               shrinkage_idx,
+                               shrinkage_val,
+                               target_mat){
+  stopifnot(shrinkage_val >= 0, shrinkage_val <= 1)
+
+  cor_mat <- stats::cor(nat_mat[,shrinkage_idx,drop=F], target_mat)
+  for(j in 1:length(shrinkage_idx)){
+    k <- which.max(cor_mat[j,])
+
+    y_vec <- nat_mat[,shrinkage_idx[j]]
+    df <- data.frame(cbind(y_vec, target_mat[,k]))
+    colnames(df)[1] <- "y"
+    lm_res <- stats::lm(y ~ . - 1, data = df)
+    resid_vec <- stats::residuals(lm_res)
+
+    y_vec <- (1-shrinkage_val)*y_vec + shrinkage_val*resid_vec
+    nat_mat[,shrinkage_idx[j]] <- y_vec
+  }
+
+  nat_mat
 }
