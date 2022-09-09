@@ -4,4 +4,4 @@
 #$ -o ../../../out/main/qsub/
 #$ -l m_mem_free=10G
 
-Rscript --no-save sns_layer23_mast_downsampled-0.9.R
+Rscript --no-save sns_layer23_mast_downsampled-0.7.R
