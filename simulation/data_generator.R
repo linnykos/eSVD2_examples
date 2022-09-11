@@ -82,9 +82,9 @@ data_generator_nat_mat <- function(
   gene_library_vec <- gene_library_vec[1:p]
 
   # append all the names
-  rownames(x_mat) <- paste0("cell_", 1:nrow(x_mat))
+  rownames(x_mat) <- paste0("cell-", 1:nrow(x_mat))
   rownames(covariates) <- rownames(x_mat)
-  rownames(y_mat) <- paste0("gene_", 1:p)
+  rownames(y_mat) <- paste0("gene-", 1:p)
   names(nuisance_vec) <- rownames(y_mat)
   names(gene_labeling) <- rownames(y_mat)
   names(gene_labeling2) <- rownames(y_mat)

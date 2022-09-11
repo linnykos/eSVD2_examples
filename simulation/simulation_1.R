@@ -117,6 +117,7 @@ input_obj <- data_generator_nat_mat(
 
 input_obj <- data_signal_enhancer(input_obj,
                                   global_shift = -1)
+nat_mat <- input_obj$nat_mat
 input_obj <- data_generator_obs_mat(input_obj)
 
 #####################################3
@@ -128,6 +129,7 @@ gene_labeling = input_obj$gene_labeling
 gene_labeling2 = input_obj$gene_labeling2
 gene_library_vec = input_obj$gene_library_vec
 individual_vec = input_obj$individual_vec
+nat_mat = input_obj$nat_mat
 nuisance_vec = input_obj$nuisance_vec
 obs_mat = input_obj$obs_mat
 x_mat = input_obj$x_mat
@@ -137,9 +139,6 @@ z_mat = input_obj$z_mat
 quantile(apply(obs_mat, 2, function(x){length(which(x==0))/length(x)}))
 table(gene_labeling2, z_mat[,"age"])
 
-nat_mat1 <- tcrossprod(x_mat, y_mat)
-nat_mat2 <- tcrossprod(covariates[,"cc"], z_mat[,"cc"])
-nat_mat <- nat_mat1 + nat_mat2
 mean_mat <- exp(nat_mat)
 
 case_idx <- which(covariates[,"cc"] == 1)
@@ -175,6 +174,7 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
 plot(teststat_vec, col = col_vec, pch = 16)
 hist(teststat_vec, breaks = 50)
+true_teststat_vec <- teststat_vec
 
 gene_casecontrol_name <- sort(unique(gene_topic_casecontrol_name, gene_null_casecontrol_name))
 for(x in gene_casecontrol_name){
@@ -204,8 +204,10 @@ save(seurat_obj,
      gene_labeling2,
      gene_library_vec,
      individual_vec,
+     nat_mat,
      nuisance_vec,
      obs_mat,
+     true_teststat_vec,
      x_mat,
      y_mat,
      z_mat,

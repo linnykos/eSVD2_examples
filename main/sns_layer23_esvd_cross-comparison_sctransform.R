@@ -5,7 +5,7 @@ library(SummarizedExperiment)
 library(DESeq2)
 
 
-load("../../../out/main/sns_layer23_deseq2.RData")
+load("../../../out/main/sns_layer23_sctransform.RData")
 # load("../../../out/main/sns_layer23_esvd.RData")
 load("../../../out/Writeup12/Writeup12_sns_layer23_esvd3.RData")
 
@@ -40,13 +40,13 @@ esvd_pthres <- min(esvd_logpvalue_vec[esvd_selected_genes])
 esvd_logpvalue_vec <- pmin(esvd_logpvalue_vec, 15)
 esvd_selected_genes2 <- names(esvd_logpvalue_vec)[esvd_logpvalue_vec >= esvd_pthres]
 
-deseq_fdr_val <- stats::p.adjust(deseq2_res$pvalue, method = "BH")
-names(deseq_fdr_val) <- rownames(deseq2_res)
-deseq_selected_genes <- names(deseq_fdr_val)[which(deseq_fdr_val <= 0.05)]
-length(deseq_selected_genes)
-deseq_logpvalue_vec <- -log10(deseq2_res$pvalue)
-names(deseq_logpvalue_vec) <- rownames(deseq2_res)
-deseq_pthres <- min(deseq_logpvalue_vec[deseq_selected_genes])
+sct_fdr_val <- stats::p.adjust(de_result$p_val, method = "BH")
+names(sct_fdr_val) <- rownames(de_result)
+sct_selected_genes <- names(sct_fdr_val)[which(sct_fdr_val <= 1e-50)]
+length(sct_selected_genes)
+sct_logpvalue_vec <- -log10(de_result$p_val)
+names(sct_logpvalue_vec) <- rownames(de_result)
+sct_pthres <- min(sct_logpvalue_vec[sct_selected_genes])
 
 ############################
 
@@ -80,20 +80,20 @@ blue_col <- rgb(129, 139, 191, maxColorValue = 255)
 green_col <- rgb(70, 177, 70, maxColorValue = 255)
 green_col_trans <- rgb(70, 177, 70, 255*.35, maxColorValue = 255)
 
-x_vec <- deseq_logpvalue_vec
+x_vec <- sct_logpvalue_vec[names(esvd_logpvalue_vec)]
 y_vec <- esvd_logpvalue_vec
 xlim <- range(x_vec)
 ylim <- range(y_vec)
 
 esvd_idx <- which(names(y_vec) %in% esvd_selected_genes2)
-deseq_idx <- which(names(y_vec) %in% deseq_selected_genes)
+sct_idx <- which(names(y_vec) %in% sct_selected_genes)
 sfari_idx <- which(names(y_vec) %in% sfari_genes)
 bulk_idx <- which(names(y_vec) %in% bulk_de_genes)
 hk_idx <- which(names(y_vec) %in% hk_genes)
 
 ##################
 
-png("../../../out/fig/main/sns_layer23_cross-comparison.png",
+png("../../../out/fig/main/sns_layer23_cross-comparison_sctransform.png",
     height = 3500, width = 2500,
     units = "px", res = 500)
 par(mar = c(3,3,0.4,0.1))
@@ -106,21 +106,21 @@ for(j in seq(0,15,by = .5)){
   lines(y = c(-1e4,1e4), x = rep(j, 2), col = "gray", lty = 2, lwd = 1)
 }
 lines(x = c(-1e4,1e4), y = rep(esvd_pthres, 2), col = "white", lty = 2, lwd = 4)
-lines(y = c(-1e4,1e4), x = rep(deseq_pthres, 2), col = "white", lty = 2, lwd = 4)
+lines(y = c(-1e4,1e4), x = rep(sct_pthres, 2), col = "white", lty = 2, lwd = 4)
 lines(x = c(-1e4,1e4), y = rep(esvd_pthres, 2), col = orange_col, lty = 2, lwd = 2)
-lines(y = c(-1e4,1e4), x = rep(deseq_pthres, 2), col = yellow_col, lty = 2, lwd = 2)
+lines(y = c(-1e4,1e4), x = rep(sct_pthres, 2), col = yellow_col, lty = 2, lwd = 2)
 
 points(x = x_vec, y = y_vec,
        col = rgb(0.6, 0.6, 0.6, 0.3), pch = 16)
 points(x = x_vec[esvd_idx], y = y_vec[esvd_idx],
        col = orange_col, pch = 16, cex = 1.5)
-points(x = x_vec[deseq_idx], y = y_vec[deseq_idx],
+points(x = x_vec[sct_idx], y = y_vec[sct_idx],
        col = yellow_col, pch = 16, cex = 1.5)
 
 # plot non-overlapping genes
-points(x = x_vec[setdiff(bulk_idx, c(esvd_idx, deseq_idx))], y = y_vec[setdiff(bulk_idx, c(esvd_idx, deseq_idx))],
+points(x = x_vec[setdiff(bulk_idx, c(esvd_idx, sct_idx))], y = y_vec[setdiff(bulk_idx, c(esvd_idx, sct_idx))],
        col = blue_col, pch = 16, cex = 1, lwd = 2)
-points(x = x_vec[setdiff(sfari_idx, c(esvd_idx, deseq_idx))], y = y_vec[setdiff(sfari_idx, c(esvd_idx, deseq_idx))],
+points(x = x_vec[setdiff(sfari_idx, c(esvd_idx, sct_idx))], y = y_vec[setdiff(sfari_idx, c(esvd_idx, sct_idx))],
        col = purple_col, pch = 16, cex = 1, lwd = 2)
 
 # plot housekeeping
@@ -128,15 +128,17 @@ points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = "white", pch = 16, cex = 1)
 points(x = x_vec[hk_idx], y = y_vec[hk_idx],
        col = green_col_trans, pch = 16, cex = 1)
+points(x = x_vec[intersect(hk_idx, c(esvd_idx, sct_idx))], y = y_vec[intersect(hk_idx, c(esvd_idx, sct_idx))],
+       col = green_col, pch = 16, cex = 1)
 
 # circle overlapping gens
-points(x = x_vec[intersect(c(esvd_idx, deseq_idx), sfari_idx)], y = y_vec[intersect(c(esvd_idx, deseq_idx), sfari_idx)],
+points(x = x_vec[intersect(c(esvd_idx, sct_idx), sfari_idx)], y = y_vec[intersect(c(esvd_idx, sct_idx), sfari_idx)],
        col = "white", pch = 1, cex = 2, lwd = 3)
-points(x = x_vec[intersect(c(esvd_idx, deseq_idx), sfari_idx)], y = y_vec[intersect(c(esvd_idx, deseq_idx), sfari_idx)],
+points(x = x_vec[intersect(c(esvd_idx, sct_idx), sfari_idx)], y = y_vec[intersect(c(esvd_idx, sct_idx), sfari_idx)],
        col = purple_col, pch = 1, cex = 2, lwd = 2)
-points(x = x_vec[intersect(c(esvd_idx, deseq_idx), bulk_idx)], y = y_vec[intersect(c(esvd_idx, deseq_idx), bulk_idx)],
+points(x = x_vec[intersect(c(esvd_idx, sct_idx), bulk_idx)], y = y_vec[intersect(c(esvd_idx, sct_idx), bulk_idx)],
        col = "white", pch = 1, cex = 2, lwd = 3)
-points(x = x_vec[intersect(c(esvd_idx, deseq_idx), bulk_idx)], y = y_vec[intersect(c(esvd_idx, deseq_idx), bulk_idx)],
+points(x = x_vec[intersect(c(esvd_idx, sct_idx), bulk_idx)], y = y_vec[intersect(c(esvd_idx, sct_idx), bulk_idx)],
        col = blue_col, pch = 1, cex = 2, lwd = 2)
 
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)

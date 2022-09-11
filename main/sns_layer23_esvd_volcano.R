@@ -2,7 +2,8 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../../../out/main/sns_layer23_esvd.RData")
+# load("../../../out/main/sns_layer23_esvd.RData")
+load("../../../out/Writeup12/Writeup12_sns_layer23_esvd3.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -227,6 +228,12 @@ esvd_res@result["GO:0099536",c("ID", "Description", "GeneRatio", "BgRatio", "pva
 esvd_res@result["GO:0061564",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")] # axon development
 esvd_res@result["GO:0031175",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")] # neuron projection development
 esvd_res@result["GO:0050877",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")] # nervous system process
+
+esvd_res@result["GO:0006812",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+esvd_res@result["GO:0060341",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+esvd_res@result["GO:1901698",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+esvd_res@result["GO:0034220",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+esvd_res@result["GO:0051668",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
 
 # esvd_res@result["GO:0048812",] # neuron projection morphogenesis
 # esvd_res@result["GO:0048667",] # cell morphogenesis involved in neuron differentiation

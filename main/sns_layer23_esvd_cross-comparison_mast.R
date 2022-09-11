@@ -6,7 +6,8 @@ library(DESeq2)
 
 
 load("../../../out/main/sns_layer23_mast.RData")
-load("../../../out/main/sns_layer23_esvd.RData")
+# load("../../../out/main/sns_layer23_esvd.RData")
+load("../../../out/Writeup12/Writeup12_sns_layer23_esvd3.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -41,7 +42,7 @@ esvd_selected_genes2 <- names(esvd_logpvalue_vec)[esvd_logpvalue_vec >= esvd_pth
 
 mast_fdr_val <- stats::p.adjust(mast_pval_glmer, method = "BH")
 names(mast_fdr_val) <- names(mast_pval_glmer)
-mast_selected_genes <- names(mast_fdr_val)[which(mast_fdr_val <= 0.005)]
+mast_selected_genes <- names(mast_fdr_val)[which(mast_fdr_val <= 0.0025)]
 length(mast_selected_genes)
 mast_logpvalue_vec <- -log10(mast_pval_glmer)
 names(mast_logpvalue_vec) <- names(mast_pval_glmer)
@@ -79,7 +80,7 @@ blue_col <- rgb(129, 139, 191, maxColorValue = 255)
 green_col <- rgb(70, 177, 70, maxColorValue = 255)
 green_col_trans <- rgb(70, 177, 70, 255*.35, maxColorValue = 255)
 
-x_vec <- mast_logpvalue_vec
+x_vec <- mast_logpvalue_vec[names(esvd_logpvalue_vec)]
 y_vec <- esvd_logpvalue_vec
 xlim <- range(x_vec)
 ylim <- range(y_vec)

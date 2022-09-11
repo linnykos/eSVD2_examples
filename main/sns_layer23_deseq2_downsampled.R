@@ -11,7 +11,7 @@ session_info <- devtools::session_info()
 
 sns_clean <- sns
 
-downsample_values <- c(0.9, 0.8, 0.7, 0.6, 0.5)
+downsample_values <- seq(0.95, 0.6, by = -0.05)
 de_result_downsampled <- vector("list", length = length(downsample_values))
 names(de_result_downsampled) <- paste0("downsampled_", downsample_values)
 for(kk in 1:length(downsample_values)){
