@@ -25,10 +25,11 @@ covariates <- eSVD2:::format_covariates(dat = mat_tmp,
                                         covariate_df = covariate_df,
                                         rescale_numeric_variables = c("percent.mt", "age", "RNA.Integrity.Number", "post.mortem.hours"))
 
-downsample_values <- seq(0.95, 0.6, by = -0.05)
+downsample_values <- seq(0.85, 0.6, by = -0.05)
 for(downsample_value in downsample_values){
   print(paste0("Working on downsample: ", downsample_value))
   if("mat" %in% ls()) rm(list = "mat")
+  gc()
 
   load(paste0("../../../out/main/sns_layer23_processed_downsampled-", downsample_value, ".RData"))
   set.seed(10)
