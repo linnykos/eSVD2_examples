@@ -44,10 +44,41 @@ for(kk in 1:length(downsample_values)){
                                    min.pct = 0,
                                    verbose = T)
 
+
+  case_idx <- which(Seurat::Idents(sns2) == "ASD")
+  control_idx <- which(Seurat::Idents(sns2) == "Control")
+  n1 <- length(case_idx); n2 <- length(control_idx)
+  null_mean <- n1*n2/2
+  null_sd <- sqrt(n1*n2*(n1+n2+1)/12)
+
+  wilcox_stats_list <- lapply(1:nrow(de_result2), function(i){
+    if(i %% floor(nrow(de_result2)/10) == 0) cat('*')
+    gene_name <- rownames(de_result2)[i]
+
+    x <- sns2[["SCT"]]@scale.data[gene_name, case_idx]
+    y <- sns2[["SCT"]]@scale.data[gene_name, control_idx]
+
+    wilcox_res <- stats::wilcox.test(x = x, y = y)
+    test_stat <- wilcox_res$statistic
+    z_score <- (test_stat-null_mean)/null_sd
+    p_val_check <- wilcox_res$p.value
+
+    c(teststatistics = test_stat,
+      null_mean = null_mean,
+      null_sd = null_sd,
+      z_score = z_score,
+      p_val_check = p_val_check)
+  })
+
+  wilcox_mat <- do.call(rbind, wilcox_stats_list)
+  colnames(wilcox_mat) <- c("teststatistics", "null_mean", "null_sd", "z_score", "p_val_check")
+
+  de_result2 <- cbind(de_result2, wilcox_mat)
+
   sctransform_result_downsampled[[kk]] <- de_result2
 }
 
-save(sns, de_result, sctransform_result_downsampled,
+save(sns, sctransform_result_downsampled,
      date_of_run, session_info,
      file = "../../../out/main/sns_layer23_sctransform_downsampled.RData")
 

@@ -107,7 +107,6 @@ data_generator_nat_mat <- function(
 # only exacerbate the strong-positive genes, and for the same individuals in the same way
 # regress only to strong-positive genes
 data_signal_enhancer <- function(input_obj,
-                                 gene_case_control_none_size_sd = 0.3,
                                  global_shift = 0){
   case_individuals <- input_obj$case_individuals
   control_individuals <- input_obj$control_individuals
@@ -119,9 +118,6 @@ data_signal_enhancer <- function(input_obj,
   x_mat <- input_obj$x_mat
   y_mat <- input_obj$y_mat
   z_mat <- input_obj$z_mat
-
-  idx <- intersect(which(gene_labeling2 == "none"), which(z_mat[,individual_case_control_variable] == 0))
-  z_mat[idx,individual_case_control_variable] <- stats::rnorm(length(idx), mean = 0, sd = gene_case_control_none_size_sd)
 
   nat_mat <- tcrossprod(x_mat, y_mat) + tcrossprod(covariates, z_mat)
   nat_mat <- nat_mat + global_shift
@@ -156,6 +152,7 @@ data_signal_enhancer <- function(input_obj,
   # shrink none and weak signals towards the strong ones
   tab_mat <- table(gene_labeling, gene_labeling2)
   topic_names <- rownames(tab_mat)[grep("topic", rownames(tab_mat))]
+  nuisance_vec <- input_obj$nuisance_vec
   for(topic_name in topic_names){
     strong_pos_idx <- intersect(which(gene_labeling2 == "strong-positive"), which(gene_labeling == topic_name))
     weak_pos_idx <- intersect(which(gene_labeling2 == "weak-positive"), which(gene_labeling == topic_name))
@@ -175,13 +172,20 @@ data_signal_enhancer <- function(input_obj,
       })
 
       nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
+                                    quantile_value = 0.75,
+                                    quantile_threshold = 0,
                                     shrinkage_idx = none_idx_posShrink,
                                     shrinkage_val = 0.7,
                                     target_mat = pos_nat_mat)
       nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
+                                    quantile_value = 0.75,
+                                    quantile_threshold = -1,
                                     shrinkage_idx = weak_pos_idx_posShrink,
                                     shrinkage_val = 0.95,
                                     target_mat = pos_nat_mat)
+
+      nuisance_vec[none_idx_posShrink] <- pmin(nuisance_vec[none_idx_posShrink]/10, 0.1)
+      nuisance_vec[weak_pos_idx_posShrink] <- pmin(nuisance_vec[weak_pos_idx_posShrink]/10, 1)
     }
   }
 
@@ -194,7 +198,7 @@ data_signal_enhancer <- function(input_obj,
        individual_case_control_variable = input_obj$individual_case_control_variable,
        individual_vec = input_obj$individual_vec,
        nat_mat = nat_mat,
-       nuisance_vec = input_obj$nuisance_vec,
+       nuisance_vec = nuisance_vec,
        x_mat = input_obj$x_mat,
        y_mat = input_obj$y_mat,
        z_mat = input_obj$z_mat)
@@ -431,6 +435,8 @@ data_generator_obs_mat <- function(input_obj){
 }
 
 .natural_shrinkage <- function(nat_mat,
+                               quantile_value,
+                               quantile_threshold,
                                shrinkage_idx,
                                shrinkage_val,
                                target_mat){
@@ -447,6 +453,11 @@ data_generator_obs_mat <- function(input_obj){
     resid_vec <- stats::residuals(lm_res)
 
     y_vec <- (1-shrinkage_val)*y_vec + shrinkage_val*resid_vec
+    y_quantile <- stats::quantile(y_vec, probs = quantile_value)
+    if(y_quantile >= quantile_threshold){
+      y_vec <- y_vec - (y_quantile - quantile_threshold)
+    }
+
     nat_mat[,shrinkage_idx[j]] <- y_vec
   }
 
