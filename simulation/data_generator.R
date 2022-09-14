@@ -104,6 +104,8 @@ data_generator_nat_mat <- function(
        z_mat = z_mat)
 }
 
+# only exacerbate the strong-positive genes, and for the same individuals in the same way
+# regress only to strong-positive genes
 data_signal_enhancer <- function(input_obj,
                                  gene_case_control_none_size_sd = 0.3,
                                  global_shift = 0){
@@ -125,30 +127,30 @@ data_signal_enhancer <- function(input_obj,
   nat_mat <- nat_mat + global_shift
 
   # start be exaggerating the strong signals
+  subset_case_indivuals <- sample(case_individuals, round(length(case_individuals)/2))
+  size_addition <- runif(length(subset_case_indivuals), min = 0, max = 3)
+  size_multiplier1 <- runif(length(subset_case_indivuals), min = 0, max = 2)
+
+  # start be exaggerating the strong signals
+  subset_control_indivuals <- sample(control_individuals, round(length(control_individuals)/2))
+  size_subtraction <- runif(length(subset_control_indivuals), min = 0, max = 3)
+  size_multiplier2 <- runif(length(subset_control_indivuals), min = 0, max = 2)
+
   gene_idx <- which(gene_labeling2 == "strong-positive")
   for(j in gene_idx){
-    indivuals <- sample(case_individuals, round(length(case_individuals)/4))
-    cell_idx <- which(individual_vec %in% indivuals)
-    tmp <- nat_mat[cell_idx,j]
-    nat_mat[cell_idx,j] <- pmax(tmp+2, tmp*1.5)
+    for(kk in 1:length(subset_case_indivuals)){
+      individual_name <- subset_case_indivuals[kk]
+      cell_idx <- which(individual_vec %in% individual_name)
+      tmp <- nat_mat[cell_idx,j]
+      nat_mat[cell_idx,j] <- pmax(tmp+size_addition[kk], tmp*size_multiplier1[kk])
+    }
 
-    indivuals <- sample(control_individuals, round(length(control_individuals)/4))
-    cell_idx <- which(individual_vec %in% indivuals)
-    tmp <- nat_mat[cell_idx,j]
-    nat_mat[cell_idx,j] <- pmin(tmp-2, tmp*1.5)
-  }
-
-  gene_idx <- which(gene_labeling2 == "strong-negative")
-  for(j in gene_idx){
-    indivuals <- sample(case_individuals, round(length(case_individuals)/4))
-    cell_idx <- which(individual_vec %in% indivuals)
-    tmp <- nat_mat[cell_idx,j]
-    nat_mat[cell_idx,j] <- pmin(tmp-2, tmp*1.5)
-
-    indivuals <- sample(control_individuals, round(length(control_individuals)/4))
-    cell_idx <- which(individual_vec %in% indivuals)
-    tmp <- nat_mat[cell_idx,j]
-    nat_mat[cell_idx,j] <- pmax(tmp+2, tmp*1.5)
+    for(kk in 1:length(subset_control_indivuals)){
+      individual_name <- subset_control_indivuals[kk]
+      cell_idx <- which(individual_vec %in% individual_name)
+      tmp <- nat_mat[cell_idx,j]
+      nat_mat[cell_idx,j] <- pmin(tmp-size_subtraction[kk], tmp*size_multiplier2[kk])
+    }
   }
 
   # shrink none and weak signals towards the strong ones
@@ -156,17 +158,12 @@ data_signal_enhancer <- function(input_obj,
   topic_names <- rownames(tab_mat)[grep("topic", rownames(tab_mat))]
   for(topic_name in topic_names){
     strong_pos_idx <- intersect(which(gene_labeling2 == "strong-positive"), which(gene_labeling == topic_name))
-    strong_neg_idx <- intersect(which(gene_labeling2 == "strong-negative"), which(gene_labeling == topic_name))
     weak_pos_idx <- intersect(which(gene_labeling2 == "weak-positive"), which(gene_labeling == topic_name))
-    weak_neg_idx <- intersect(which(gene_labeling2 == "weak-negative"), which(gene_labeling == topic_name))
     none_idx <- intersect(which(gene_labeling2 == "none"), which(gene_labeling == topic_name))
 
-    none_number <- ceiling(length(none_idx)*.4)
+    none_number <- ceiling(length(none_idx)*.8)
     none_idx_posShrink <- sample(none_idx, none_number)
-    none_idx <- setdiff(none_idx, none_idx_posShrink)
-    none_idx_negShrink <- sample(none_idx, none_number)
-    weak_pos_idx_posShrink <- sample(weak_pos_idx, ceiling(length(weak_pos_idx)*.3))
-    weak_neg_idx_posShrink <- sample(weak_neg_idx, ceiling(length(weak_neg_idx)*.3))
+    weak_pos_idx_posShrink <- sample(weak_pos_idx, ceiling(length(weak_pos_idx)*.8))
 
     # denoise the strong genes
     if(length(strong_pos_idx) > 0){
@@ -185,24 +182,6 @@ data_signal_enhancer <- function(input_obj,
                                     shrinkage_idx = weak_pos_idx_posShrink,
                                     shrinkage_val = 0.95,
                                     target_mat = pos_nat_mat)
-    }
-
-    if(length(strong_neg_idx) > 0){
-      neg_nat_mat <- apply(nat_mat[,strong_neg_idx,drop = F], 2, function(x){
-        df <- data.frame(cbind(x, covariates))
-        colnames(df)[1] <- "y"
-        lm_res <- stats::lm(y ~ . - 1, data = df)
-        stats::residuals(lm_res)
-      })
-
-      nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
-                                    shrinkage_idx = none_idx_negShrink,
-                                    shrinkage_val = 0.7,
-                                    target_mat = neg_nat_mat)
-      nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
-                                    shrinkage_idx = weak_neg_idx_posShrink,
-                                    shrinkage_val = 0.95,
-                                    target_mat = neg_nat_mat)
     }
   }
 
