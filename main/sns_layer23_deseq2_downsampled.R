@@ -12,8 +12,8 @@ session_info <- devtools::session_info()
 sns_clean <- sns
 
 downsample_values <- seq(0.95, 0.6, by = -0.05)
-de_result_downsampled <- vector("list", length = length(downsample_values))
-names(de_result_downsampled) <- paste0("downsampled_", downsample_values)
+deseq_result_downsampled <- vector("list", length = length(downsample_values))
+names(deseq_result_downsampled) <- paste0("downsampled_", downsample_values)
 for(kk in 1:length(downsample_values)){
   downsample_value <- downsample_values[kk]
   print(paste0("Working on downsample: ", downsample_value))
@@ -74,11 +74,11 @@ for(kk in 1:length(downsample_values)){
 
   dds <- DESeq2::DESeq(dds)
 
-  de_result_downsampled[[kk]] <- DESeq2::results(dds, name="diagnosis_ASD_vs_Control")
+  deseq_result_downsampled[[kk]] <- DESeq2::results(dds, name="diagnosis_ASD_vs_Control")
 }
 
 
-save(sns, de_result_downsampled,
+save(sns, deseq_result_downsampled,
      date_of_run, session_info,
      file = "../../../out/main/sns_layer23_deseq2_downsampled.RData")
 
@@ -110,7 +110,7 @@ bulk_de_genes <- deg_df[which(deg_df[,"WholeCortex_ASD_FDR"]<=0.005),"external_g
 ########################
 
 original_selected_genes <- rownames(deseq2_res)[order(deseq2_res$padj, decreasing = F)[1:100]]
-downsampled_selected_genes <- lapply(de_result_downsampled, function(x){
+downsampled_selected_genes <- lapply(deseq_result_downsampled, function(x){
   rownames(x)[order(x$padj, decreasing = F)[1:100]]
 })
 

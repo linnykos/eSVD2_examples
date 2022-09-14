@@ -9,34 +9,9 @@ session_info <- devtools::session_info()
 
 sns_clean <- sns
 
-sns$region <- factor(sns$region)
-sns$sex <- factor(sns$sex)
-sns$Seqbatch <- factor(sns$Seqbatch)
-set.seed(10)
-sns <- Seurat::SCTransform(sns, method = "glmGamPoi",
-                             residual.features = sns[["RNA"]]@var.features,
-                             vars.to.regress = c("region", "sex", "Seqbatch", "percent.mt", "age", "RNA.Integrity.Number", "post.mortem.hours"),
-                             verbose = T)
-Seurat::Idents(sns) <- "diagnosis"
-levels(sns)
-
-Seurat::DefaultAssay(sns) <- "SCT"
-de_result <- Seurat::FindMarkers(sns, ident.1 = "ASD", ident.2 = "Control",
-                                 slot = "scale.data",
-                                 test.use = "wilcox",
-                                 logfc.threshold = 0,
-                                 min.pct = 0,
-                                 verbose = T)
-
-save(sns, de_result,
-     date_of_run, session_info,
-     file = "../../../out/main/sns_layer23_sctransform_downsampled.RData")
-
-###################
-
 downsample_values <- seq(0.95, 0.6, by = -0.05)
-de_result_downsampled <- vector("list", length = length(downsample_values))
-names(de_result_downsampled) <- paste0("downsampled_", downsample_values)
+sctransform_result_downsampled <- vector("list", length = length(downsample_values))
+names(sctransform_result_downsampled) <- paste0("downsampled_", downsample_values)
 
 for(kk in 1:length(downsample_values)){
   downsample_value <- downsample_values[kk]
@@ -69,10 +44,10 @@ for(kk in 1:length(downsample_values)){
                                    min.pct = 0,
                                    verbose = T)
 
-  de_result_downsampled[[kk]] <- de_result2
+  sctransform_result_downsampled[[kk]] <- de_result2
 }
 
-save(sns, de_result, de_result_downsampled,
+save(sns, de_result, sctransform_result_downsampled,
      date_of_run, session_info,
      file = "../../../out/main/sns_layer23_sctransform_downsampled.RData")
 
@@ -102,7 +77,7 @@ save(sns, de_result, de_result_downsampled,
 # ########################
 #
 # original_selected_genes <- rownames(de_result)[order(de_result$p_val_adj, decreasing = F)[1:100]]
-# downsampled_selected_genes <- lapply(de_result_downsampled, function(x){
+# downsampled_selected_genes <- lapply(sctransform_result_downsampled, function(x){
 #   rownames(x)[order(x$p_val_adj, decreasing = F)[1:100]]
 # })
 #
