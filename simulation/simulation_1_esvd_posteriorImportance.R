@@ -37,15 +37,22 @@ green_col <- rgb(70, 179, 70, maxColorValue = 255)
 gray_col <- rgb(.8, .8, .8)
 
 col_palette <- grDevices::colorRampPalette(c(purple_col,gray_col,green_col))(100)
-transformed_vec <- abs(true_teststat_vec)^0.75 * sign(true_teststat_vec)
-range_vec <- range(transformed_vec)
+rank_vec <- rank(true_teststat_vec)-length(true_teststat_vec)/2
+rank_vec <- rank_vec/max(abs(rank_vec))
+rank_vec <- sign(rank_vec)*abs(rank_vec)^25
+range_vec <- range(rank_vec)
 col_breaks <- seq(range_vec[1], range_vec[2], length = 100)
-col_vec_true <- sapply(transformed_vec, function(x){
+col_vec_true <- sapply(rank_vec, function(x){
   col_palette[which.min(abs(x-col_breaks))]
 })
+# transformed_vec <- abs(true_teststat_vec)^0.75 * sign(true_teststat_vec)
+# range_vec <- range(transformed_vec)
+# col_breaks <- seq(range_vec[1], range_vec[2], length = 100)
+# col_vec_true <- sapply(transformed_vec, function(x){
+#   col_palette[which.min(abs(x-col_breaks))]
+# })
 ordering_idx <- order(abs(true_teststat_vec), decreasing = F)
 # plot(true_teststat_vec, col = col_vec_true, pch = 16)
-
 range_vec <- range(c(eSVD_obj$teststat_vec, teststat_vec))
 
 den <- stats::density(-teststat_vec)
