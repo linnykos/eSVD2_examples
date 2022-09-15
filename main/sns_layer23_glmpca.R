@@ -19,7 +19,7 @@ covariate_df[,"diagnosis"] <- factor(covariate_df[,"diagnosis"], levels = c("Con
 covariate_df[,"sex"] <- factor(covariate_df[,"sex"], levels = names(sort(table(covariate_df[,"sex"]), decreasing = T)))
 covariate_df[,"Seqbatch"] <- factor(covariate_df[,"Seqbatch"], levels = names(sort(table(covariate_df[,"Seqbatch"]), decreasing = T)))
 covariate_df[,"Capbatch"] <- factor(covariate_df[,"Capbatch"], levels = names(sort(table(covariate_df[,"Capbatch"]), decreasing = T)))
-covariates <- eSVD2:::format_covariates(dat = mat,
+covariates <- eSVD2:::format_covariates(dat = Matrix::t(mat),
                                         covariate_df = covariate_df,
                                         rescale_numeric_variables = c("percent.mt", "age", "RNA.Integrity.Number", "post.mortem.hours"))
 
