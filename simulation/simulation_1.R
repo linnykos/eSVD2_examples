@@ -1,7 +1,7 @@
 rm(list=ls())
 set.seed(10)
 library(Seurat)
-source("../eSVD2_examples/simulation/data_generator.R")
+source("../eSVD2_examples/simulation/data_generator1.R")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -117,7 +117,6 @@ input_obj <- data_generator_nat_mat(
 
 input_obj <- data_signal_enhancer(input_obj,
                                   global_shift = -1)
-nat_mat <- input_obj$nat_mat
 input_obj <- data_generator_obs_mat(input_obj)
 
 #####################################3
@@ -129,34 +128,22 @@ gene_labeling = input_obj$gene_labeling
 gene_labeling2 = input_obj$gene_labeling2
 gene_library_vec = input_obj$gene_library_vec
 individual_vec = input_obj$individual_vec
-nat_mat = input_obj$nat_mat
 nuisance_vec = input_obj$nuisance_vec
 obs_mat = input_obj$obs_mat
 x_mat = input_obj$x_mat
 y_mat = input_obj$y_mat
 z_mat = input_obj$z_mat
 
-quantile(apply(obs_mat, 2, function(x){length(which(x==0))/length(x)}))
-table(gene_labeling2, z_mat[,"age"])
-
+nat_mat1 <- tcrossprod(x_mat, y_mat)
+nat_mat2 <- tcrossprod(covariates[,"cc"], z_mat[,"cc"])
+nat_mat <- nat_mat1 + nat_mat2
 mean_mat <- exp(nat_mat)
-
 case_idx <- which(covariates[,"cc"] == 1)
 control_idx <- which(covariates[,"cc"] == 0)
 case_mean <- colMeans(mean_mat[case_idx,])
 control_mean <- colMeans(mean_mat[control_idx,])
 diff_mean <- case_mean - control_mean
-
-gene_casecontrol_name <- sort(unique(gene_topic_casecontrol_name, gene_null_casecontrol_name))
-for(x in gene_casecontrol_name){
-  idx <- which(gene_labeling2 == x)
-  print(x)
-  print(round(quantile(diff_mean[idx], probs = seq(0,1,length.out=11)), 2))
-  print("====")
-}
-
 var_mat <- sweep(x = mean_mat, MARGIN = 2, STATS = nuisance_vec, FUN = "/")
-
 res <- eSVD2:::compute_test_statistic.default(
   input_obj = mean_mat,
   posterior_var_mat = var_mat,
@@ -164,7 +151,52 @@ res <- eSVD2:::compute_test_statistic.default(
   control_individuals = control_individuals,
   individual_vec = individual_vec
 )
-teststat_vec <- res$teststat_vec
+true_teststat_vec <- res$teststat_vec
+
+tmp <- eSVD2:::.determine_individual_indices(case_individuals = case_individuals,
+                                     control_individuals = control_individuals,
+                                     individual_vec = individual_vec)
+all_indiv_idx <- c(tmp$case_indiv_idx, tmp$control_indiv_idx)
+avg_mat <- eSVD2:::.construct_averaging_matrix(idx_list = all_indiv_idx,
+                                       n = nrow(mean_mat))
+avg_posterior_mean_mat <- as.matrix(avg_mat %*% mean_mat)
+avg_posterior_var_mat <- as.matrix(avg_mat %*% var_mat)
+
+case_row_idx <- 1:length(case_individuals)
+control_row_idx <- (length(case_individuals)+1):nrow(avg_posterior_mean_mat)
+case_gaussian_mean <- Matrix::colMeans(avg_posterior_mean_mat[case_row_idx,,drop = F])
+control_gaussian_mean <- Matrix::colMeans(avg_posterior_mean_mat[control_row_idx,,drop = F])
+case_gaussian_var <- eSVD2:::.compute_mixture_gaussian_variance(
+  avg_posterior_mean_mat = avg_posterior_mean_mat[case_row_idx,,drop = F],
+  avg_posterior_var_mat = avg_posterior_var_mat[case_row_idx,,drop = F]
+)
+control_gaussian_var <- eSVD2:::.compute_mixture_gaussian_variance(
+  avg_posterior_mean_mat = avg_posterior_mean_mat[control_row_idx,,drop = F],
+  avg_posterior_var_mat = avg_posterior_var_mat[control_row_idx,,drop = F]
+)
+n1 <- length(case_individuals); n2 <- length(control_individuals)
+numerator_vec <- (case_gaussian_var/n1 + control_gaussian_var/n2)^2
+denominator_vec <- (case_gaussian_var/n1)^2/(n1-1) + (control_gaussian_var/n2)^2/(n2-1)
+df_vec <- numerator_vec/denominator_vec
+names(df_vec) <- names(case_gaussian_var)
+p <- length(true_teststat_vec)
+gaussian_teststat <- sapply(1:p, function(j){
+  qnorm(pt(true_teststat_vec[j], df = df_vec[j]))
+})
+
+locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
+true_fdr_vec <- locfdr_res$fdr
+names(true_fdr_vec) <- names(gaussian_teststat)
+true_null_mean <- locfdr_res$fp0["mlest", "delta"]
+true_null_sd <- locfdr_res$fp0["mlest", "sigma"]
+true_logpvalue_vec <- sapply(gaussian_teststat, function(x){
+  if(x < null_mean) {
+    Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
+  } else {
+    Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
+  }
+})
+true_logpvalue_vec <- -(true_logpvalue_vec/log(10) + log10(2))
 
 col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "strong-negative" = rgb(0.75, 0, 0),
@@ -172,15 +204,17 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "weak-negative" = rgb(1, 0.5, 0.9),
                  "weak-positive" = rgb(0.5, 1, 0.9))
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
-plot(teststat_vec, col = col_vec, pch = 16)
-hist(teststat_vec, breaks = 50)
-true_teststat_vec <- teststat_vec
+plot(true_teststat_vec, col = col_vec, pch = 16)
+hist(true_teststat_vec, breaks = 50)
+
+quantile(apply(obs_mat, 2, function(x){length(which(x==0))/length(x)}))
+table(gene_labeling2, z_mat[,"age"])
 
 gene_casecontrol_name <- sort(unique(gene_topic_casecontrol_name, gene_null_casecontrol_name))
 for(x in gene_casecontrol_name){
   idx <- which(gene_labeling2 == x)
   print(x)
-  print(round(quantile(teststat_vec[idx], probs = seq(0,1,length.out=11)), 2))
+  print(round(quantile(true_teststat_vec[idx], probs = seq(0,1,length.out=11)), 2))
   print("====")
 }
 
@@ -204,9 +238,13 @@ save(seurat_obj,
      gene_labeling2,
      gene_library_vec,
      individual_vec,
-     nat_mat,
      nuisance_vec,
+     nat_mat,
      obs_mat,
+     true_fdr_vec,
+     true_logpvalue_vec,
+     true_null_mean,
+     true_null_sd,
      true_teststat_vec,
      x_mat,
      y_mat,

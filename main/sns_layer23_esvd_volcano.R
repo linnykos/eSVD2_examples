@@ -235,6 +235,11 @@ esvd_res@result["GO:1901698",c("ID", "Description", "GeneRatio", "BgRatio", "pva
 esvd_res@result["GO:0034220",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
 esvd_res@result["GO:0051668",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
 
+esvd_res@result["GO:0099536",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+esvd_res@result["GO:0007417",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+esvd_res@result["GO:0034220",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+esvd_res@result["GO:0048878",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
+
 # esvd_res@result["GO:0048812",] # neuron projection morphogenesis
 # esvd_res@result["GO:0048667",] # cell morphogenesis involved in neuron differentiation
 

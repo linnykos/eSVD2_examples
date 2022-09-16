@@ -87,8 +87,8 @@ eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       alpha_max = NULL,
                                       bool_covariates_as_library = T,
                                       bool_stabilize_underdispersion = T,
-                                      library_min = 1,
-                                      pseudocount = 1)
+                                      library_min = 1e-3,
+                                      pseudocount = 0)
 
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
@@ -109,15 +109,22 @@ save(eSVD_obj,
      seurat_obj,
      case_individuals,
      control_individuals,
+     covariates,
      gene_labeling,
      gene_labeling2,
+     gene_library_vec,
      individual_vec,
      nuisance_vec,
+     nat_mat,
+     obs_mat,
+     true_fdr_vec,
+     true_logpvalue_vec,
+     true_null_mean,
+     true_null_sd,
      true_teststat_vec,
      x_mat,
      y_mat,
      z_mat,
      date_of_run, session_info,
      file = "../eSVD2_examples/simulation/simulation_1_esvd.RData")
-
 

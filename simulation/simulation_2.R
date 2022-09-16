@@ -1,7 +1,7 @@
 rm(list=ls())
 set.seed(10)
 library(Seurat)
-source("../eSVD2_examples/simulation/data_generator.R")
+source("../eSVD2_examples/simulation/data_generator2.R")
 
 set.seed(10)
 date_of_run <- Sys.time()
