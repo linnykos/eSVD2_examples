@@ -9,11 +9,10 @@ date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
 mat <- sns[["RNA"]]@counts[sns[["RNA"]]@var.features,]
-covariate_dat <- sns@meta.data[,c("percent.mt", "individual", "region", "age", "sex",
+covariate_dat <- sns@meta.data[,c("percent.mt", "region", "age", "sex",
                                   "RNA.Integrity.Number", "post.mortem.hours",
                                   "diagnosis", "Seqbatch", "Capbatch")]
 covariate_df <- data.frame(covariate_dat)
-covariate_df[,"individual"] <- factor(covariate_df[,"individual"], levels = names(sort(table(covariate_df[,"individual"]), decreasing = T)))
 covariate_df[,"region"] <- factor(covariate_df[,"region"], levels = names(sort(table(covariate_df[,"region"]), decreasing = T)))
 covariate_df[,"diagnosis"] <- factor(covariate_df[,"diagnosis"], levels = c("Control", "ASD"))
 covariate_df[,"sex"] <- factor(covariate_df[,"sex"], levels = names(sort(table(covariate_df[,"sex"]), decreasing = T)))
