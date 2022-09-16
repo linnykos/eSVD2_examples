@@ -125,12 +125,12 @@ data_signal_enhancer <- function(input_obj,
 
   # start be exaggerating the strong signals
   subset_case_indivuals <- sample(case_individuals, round(length(case_individuals)/2))
-  size_addition <- runif(length(subset_case_indivuals), min = 0, max = 3)
+  size_addition <- runif(length(subset_case_indivuals), min = 0, max = 0.5)
   # size_multiplier1 <- runif(length(subset_case_indivuals), min = 0, max = 2)
 
   # start be exaggerating the strong signals
   subset_control_indivuals <- sample(control_individuals, round(length(control_individuals)/2))
-  size_subtraction <- runif(length(subset_control_indivuals), min = 0, max = 3)
+  size_subtraction <- runif(length(subset_control_indivuals), min = 0, max = 0.5)
   # size_multiplier2 <- runif(length(subset_control_indivuals), min = 0, max = 2)
 
   gene_idx <- which(gene_labeling2 == "strong-positive")
@@ -194,15 +194,15 @@ data_signal_enhancer <- function(input_obj,
   #
   #     nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
   #                                   quantile_value = 0.75,
-  #                                   quantile_threshold = 1,
+  #                                   quantile_threshold = 0,
   #                                   shrinkage_idx = none_idx_posShrink,
-  #                                   shrinkage_val = 0.95,
+  #                                   shrinkage_val = 0.6,
   #                                   target_mat = pos_nat_mat)
   #     nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
   #                                   quantile_value = 0.75,
-  #                                   quantile_threshold = 1,
+  #                                   quantile_threshold = 0,
   #                                   shrinkage_idx = weak_pos_idx_posShrink,
-  #                                   shrinkage_val = 1,
+  #                                   shrinkage_val = 0.9,
   #                                   target_mat = pos_nat_mat)
   #
   #     nuisance_vec[none_idx_posShrink] <- pmin(nuisance_vec[none_idx_posShrink]/10, 0.1)

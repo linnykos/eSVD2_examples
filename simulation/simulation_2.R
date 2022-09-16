@@ -20,7 +20,7 @@ cell_latent_gaussian_covariance = cov_mat
 
 gene_null_casecontrol_name <- c("none", "strong-negative", "strong-positive")
 gene_null_casecontrol_proportion <- c(0.8, 0.15, 0.05)
-gene_null_casecontrol_size <- c(0, -0.75, 0.75)
+gene_null_casecontrol_size <- c(0, -0.3, 0.3)
 gene_null_latent_gaussian_noise <- 0.5*diag(k)
 
 gene_num_mixed_membership <- 100
@@ -46,7 +46,7 @@ for(i in 1:k){
 gene_topic_simplex <- simplex
 gene_topic_latent_gaussian_noise <- 0.1*diag(k)
 gene_topic_casecontrol_name <- c("none", "weak-negative", "strong-negative", "weak-positive", "strong-positive")
-gene_topic_casecontrol_size <- c(0, -0.5, -0.75, 0.5, .75)
+gene_topic_casecontrol_size <- c(0, -0.2, -0.4, 0.2, .4)
 gene_topic_casecontrol_proportion <- c(0.6, 0.15, 0.05, 0.15, 0.05)
 mat <- matrix(0, nrow = length(gene_nuisance_values), ncol = length(gene_topic_casecontrol_size))
 mat[,1] <- c(0.8,0.15,0.05)
@@ -116,7 +116,7 @@ input_obj <- data_generator_nat_mat(
 )
 
 input_obj <- data_signal_enhancer(input_obj,
-                                  global_shift = 0)
+                                  global_shift = -1)
 nat_mat <- input_obj$nat_mat
 input_obj <- data_generator_obs_mat(input_obj)
 
