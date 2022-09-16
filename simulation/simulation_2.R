@@ -19,7 +19,7 @@ cell_latent_gaussian_covariance = cov_mat
 ##############
 
 gene_null_casecontrol_name <- c("none", "strong-negative", "strong-positive")
-gene_null_casecontrol_proportion <- c(0.95, 0.03, 0.02)
+gene_null_casecontrol_proportion <- c(0.8, 0.15, 0.05)
 gene_null_casecontrol_size <- c(0, -0.75, 0.75)
 gene_null_latent_gaussian_noise <- 0.5*diag(k)
 
@@ -47,7 +47,7 @@ gene_topic_simplex <- simplex
 gene_topic_latent_gaussian_noise <- 0.1*diag(k)
 gene_topic_casecontrol_name <- c("none", "weak-negative", "strong-negative", "weak-positive", "strong-positive")
 gene_topic_casecontrol_size <- c(0, -0.5, -0.75, 0.5, .75)
-gene_topic_casecontrol_proportion <- c(0.5, 0.2, 0.05, 0.2, 0.05)
+gene_topic_casecontrol_proportion <- c(0.6, 0.15, 0.05, 0.15, 0.05)
 mat <- matrix(0, nrow = length(gene_nuisance_values), ncol = length(gene_topic_casecontrol_size))
 mat[,1] <- c(0.8,0.15,0.05)
 mat[,2] <- c(0.6,0.35,0.05)
@@ -136,35 +136,30 @@ x_mat = input_obj$x_mat
 y_mat = input_obj$y_mat
 z_mat = input_obj$z_mat
 
-quantile(apply(obs_mat, 2, function(x){length(which(x==0))/length(x)}))
-table(gene_labeling2, z_mat[,"age"])
+# mean_mat <- exp(nat_mat)
+# case_idx <- which(covariates[,"cc"] == 1)
+# control_idx <- which(covariates[,"cc"] == 0)
+# case_mean <- colMeans(mean_mat[case_idx,])
+# control_mean <- colMeans(mean_mat[control_idx,])
+# diff_mean <- case_mean - control_mean
+# var_mat <- sweep(x = mean_mat, MARGIN = 2, STATS = nuisance_vec, FUN = "/")
+#
+# res <- eSVD2:::compute_test_statistic.default(
+#   input_obj = mean_mat,
+#   posterior_var_mat = var_mat,
+#   case_individuals = case_individuals,
+#   control_individuals = control_individuals,
+#   individual_vec = individual_vec
+# )
+# teststat_vec <- res$teststat_vec
+# true_teststat_vec <- teststat_vec
 
-mean_mat <- exp(nat_mat)
-
-case_idx <- which(covariates[,"cc"] == 1)
-control_idx <- which(covariates[,"cc"] == 0)
-case_mean <- colMeans(mean_mat[case_idx,])
-control_mean <- colMeans(mean_mat[control_idx,])
-diff_mean <- case_mean - control_mean
-
-gene_casecontrol_name <- sort(unique(gene_topic_casecontrol_name, gene_null_casecontrol_name))
-for(x in gene_casecontrol_name){
-  idx <- which(gene_labeling2 == x)
-  print(x)
-  print(round(quantile(diff_mean[idx], probs = seq(0,1,length.out=11)), 2))
-  print("====")
-}
-
-var_mat <- sweep(x = mean_mat, MARGIN = 2, STATS = nuisance_vec, FUN = "/")
-
-res <- eSVD2:::compute_test_statistic.default(
-  input_obj = mean_mat,
-  posterior_var_mat = var_mat,
-  case_individuals = case_individuals,
-  control_individuals = control_individuals,
-  individual_vec = individual_vec
-)
-teststat_vec <- res$teststat_vec
+true_teststat_vec <- apply(nat_mat, 2, function(x){
+  df <- as.data.frame(cbind(y = x, covariates[,1:6]))
+  colnames(df)[1] <- "y"
+  lm_res <- stats::lm(y ~ . - 1, data = df)
+  stats::coef(lm_res)["cc_1"]
+})
 
 col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "strong-negative" = rgb(0.75, 0, 0),
@@ -174,7 +169,10 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
 plot(teststat_vec, col = col_vec, pch = 16)
 hist(teststat_vec, breaks = 50)
-true_teststat_vec <- teststat_vec
+
+
+quantile(apply(obs_mat, 2, function(x){length(which(x==0))/length(x)}))
+table(gene_labeling2, z_mat[,"age"])
 
 gene_casecontrol_name <- sort(unique(gene_topic_casecontrol_name, gene_null_casecontrol_name))
 for(x in gene_casecontrol_name){
@@ -186,7 +184,7 @@ for(x in gene_casecontrol_name){
 
 ####################
 
-tmp <- data.frame(covariates[,2:5])
+tmp <- data.frame(covariates[,3:6])
 tmp$individual <- individual_vec
 seurat_obj <- Seurat::CreateSeuratObject(counts = t(obs_mat),
                                          meta.data = tmp)

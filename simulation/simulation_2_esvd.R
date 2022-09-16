@@ -24,7 +24,7 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariates[,-grep("individual", colnames(covariates))],
                                     case_control_variable = "cc_1",
                                     bool_intercept = T,
-                                    k = 10,
+                                    k = 7,
                                     lambda = 0.1,
                                     metadata_case_control = covariates[,"cc_1"],
                                     metadata_individual = covariate_df[,"individual"],
@@ -103,7 +103,7 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "weak-negative" = rgb(1, 0.5, 0.9),
                  "weak-positive" = rgb(0.5, 1, 0.9))
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
-hist(eSVD_obj$teststat_vec)
+hist(eSVD_obj$teststat_vec, breaks = 50)
 plot(eSVD_obj$teststat_vec, col = col_vec, pch = 16)
 
 save(eSVD_obj,

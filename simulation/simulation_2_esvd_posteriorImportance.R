@@ -49,7 +49,7 @@ idx <- which(true_teststat_vec2 < 0)
 true_teststat_vec2[idx] <- true_teststat_vec2[idx]/max(abs(true_teststat_vec2[idx]))
 idx <- which(true_teststat_vec2 > 0)
 true_teststat_vec2[idx] <- true_teststat_vec2[idx]/max(abs(true_teststat_vec2[idx]))
-transformed_vec <- abs(true_teststat_vec2)^0.75 * sign(true_teststat_vec2)
+transformed_vec <- abs(true_teststat_vec2)^5 * sign(true_teststat_vec2)
 range_vec <- range(transformed_vec)
 col_breaks <- seq(range_vec[1], range_vec[2], length = 100)
 col_vec_true <- sapply(transformed_vec, function(x){
@@ -59,11 +59,11 @@ ordering_idx <- order(abs(true_teststat_vec), decreasing = F)
 # plot(true_teststat_vec, col = col_vec_true, pch = 16)
 range_vec <- range(c(eSVD_obj$teststat_vec, teststat_vec))
 
-den <- stats::density(-teststat_vec)
 png("../../out/fig/simulation/simulation_2_raw-density.png",
     height = 250, width = 1250,
     units = "px", res = 500)
 par(mar = c(0.1,0.1,0.1,0.1))
+den <- stats::density(-teststat_vec)
 plot(den, main = "", xlab = "", ylab = "", xlim = -1*range_vec[c(2,1)],
      xaxt = "n", yaxt = "n", bty ="n")
 polygon(den, col="gray")
@@ -74,11 +74,11 @@ for(i in ordering_idx){
 graphics.off()
 
 
-den <- stats::density(eSVD_obj$teststat_vec)
 png("../../out/fig/simulation/simulation_2_posterior-density.png",
     height = 250, width = 1250,
     units = "px", res = 500)
 par(mar = c(0.1,0.1,0.1,0.1))
+den <- stats::density(eSVD_obj$teststat_vec)
 plot(den, main = "", xlab = "", ylab = "", xlim = range_vec,
      xaxt = "n", yaxt = "n", bty ="n")
 polygon(den, col="gray")
@@ -91,12 +91,12 @@ graphics.off()
 de_idx <- which(abs(true_teststat_vec) >= 2.25)
 length(de_idx)
 
-y_vec <- teststat_vec
-x_vec <- eSVD_obj$teststat_vec
 png("../../out/fig/simulation/simulation_2_teststatistic_scatterplot.png",
     height = 1750, width = 1250,
     units = "px", res = 500)
 par(mar = c(3,3,0.4,0.1))
+y_vec <- teststat_vec
+x_vec <- eSVD_obj$teststat_vec
 plot(NA, asp = T,
      xlim = range(x_vec), ylim = range(y_vec),
      xaxt = "n", yaxt = "n", bty = "n",

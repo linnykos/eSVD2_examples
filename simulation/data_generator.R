@@ -126,12 +126,12 @@ data_signal_enhancer <- function(input_obj,
   # start be exaggerating the strong signals
   subset_case_indivuals <- sample(case_individuals, round(length(case_individuals)/2))
   size_addition <- runif(length(subset_case_indivuals), min = 0, max = 3)
-  size_multiplier1 <- runif(length(subset_case_indivuals), min = 0, max = 2)
+  # size_multiplier1 <- runif(length(subset_case_indivuals), min = 0, max = 2)
 
   # start be exaggerating the strong signals
   subset_control_indivuals <- sample(control_individuals, round(length(control_individuals)/2))
   size_subtraction <- runif(length(subset_control_indivuals), min = 0, max = 3)
-  size_multiplier2 <- runif(length(subset_control_indivuals), min = 0, max = 2)
+  # size_multiplier2 <- runif(length(subset_control_indivuals), min = 0, max = 2)
 
   gene_idx <- which(gene_labeling2 == "strong-positive")
   for(j in gene_idx){
@@ -139,14 +139,31 @@ data_signal_enhancer <- function(input_obj,
       individual_name <- subset_case_indivuals[kk]
       cell_idx <- which(individual_vec %in% individual_name)
       tmp <- nat_mat[cell_idx,j]
-      nat_mat[cell_idx,j] <- pmax(tmp+size_addition[kk], tmp*size_multiplier1[kk])
+      nat_mat[cell_idx,j] <- tmp+size_addition[kk]
     }
 
     for(kk in 1:length(subset_control_indivuals)){
       individual_name <- subset_control_indivuals[kk]
       cell_idx <- which(individual_vec %in% individual_name)
       tmp <- nat_mat[cell_idx,j]
-      nat_mat[cell_idx,j] <- pmin(tmp-size_subtraction[kk], tmp*size_multiplier2[kk])
+      nat_mat[cell_idx,j] <- tmp-size_subtraction[kk]
+    }
+  }
+
+  gene_idx <- which(gene_labeling2 == "strong-negative")
+  for(j in gene_idx){
+    for(kk in 1:length(subset_case_indivuals)){
+      individual_name <- subset_case_indivuals[kk]
+      cell_idx <- which(individual_vec %in% individual_name)
+      tmp <- nat_mat[cell_idx,j]
+      nat_mat[cell_idx,j] <- tmp-size_addition[kk]
+    }
+
+    for(kk in 1:length(subset_control_indivuals)){
+      individual_name <- subset_control_indivuals[kk]
+      cell_idx <- which(individual_vec %in% individual_name)
+      tmp <- nat_mat[cell_idx,j]
+      nat_mat[cell_idx,j] <- tmp+size_subtraction[kk]
     }
   }
 
