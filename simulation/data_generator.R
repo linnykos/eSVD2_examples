@@ -118,9 +118,10 @@ data_signal_enhancer <- function(input_obj,
   x_mat <- input_obj$x_mat
   y_mat <- input_obj$y_mat
   z_mat <- input_obj$z_mat
+  non_cc_idx <- which(colnames(covariates) != individual_case_control_variable)
 
-  nat_mat <- tcrossprod(x_mat, y_mat) + tcrossprod(covariates, z_mat)
-  nat_mat <- nat_mat + global_shift
+  nat_mat <- tcrossprod(x_mat, y_mat) + tcrossprod(covariates[,-non_cc_idx], z_mat[,-non_cc_idx])
+  nat_mat_other <- tcrossprod(covariates[,non_cc_idx], z_mat[,non_cc_idx])
 
   # start be exaggerating the strong signals
   subset_case_indivuals <- sample(case_individuals, round(length(case_individuals)/2))
@@ -149,45 +150,48 @@ data_signal_enhancer <- function(input_obj,
     }
   }
 
+  nat_mat <- nat_mat + nat_mat_other
+  nat_mat <- nat_mat + global_shift
+
   # shrink none and weak signals towards the strong ones
   tab_mat <- table(gene_labeling, gene_labeling2)
   topic_names <- rownames(tab_mat)[grep("topic", rownames(tab_mat))]
   nuisance_vec <- input_obj$nuisance_vec
-  for(topic_name in topic_names){
-    strong_pos_idx <- intersect(which(gene_labeling2 == "strong-positive"), which(gene_labeling == topic_name))
-    weak_pos_idx <- intersect(which(gene_labeling2 == "weak-positive"), which(gene_labeling == topic_name))
-    none_idx <- intersect(which(gene_labeling2 == "none"), which(gene_labeling == topic_name))
-
-    none_number <- ceiling(length(none_idx)*.8)
-    none_idx_posShrink <- sample(none_idx, none_number)
-    weak_pos_idx_posShrink <- sample(weak_pos_idx, ceiling(length(weak_pos_idx)*.8))
-
-    # denoise the strong genes
-    if(length(strong_pos_idx) > 0){
-      pos_nat_mat <- apply(nat_mat[,strong_pos_idx], 2, function(x){
-        df <- data.frame(cbind(x, covariates))
-        colnames(df)[1] <- "y"
-        lm_res <- stats::lm(y ~ . - 1, data = df)
-        stats::residuals(lm_res)
-      })
-
-      nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
-                                    quantile_value = 0.75,
-                                    quantile_threshold = 0,
-                                    shrinkage_idx = none_idx_posShrink,
-                                    shrinkage_val = 0.7,
-                                    target_mat = pos_nat_mat)
-      nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
-                                    quantile_value = 0.75,
-                                    quantile_threshold = -1,
-                                    shrinkage_idx = weak_pos_idx_posShrink,
-                                    shrinkage_val = 0.95,
-                                    target_mat = pos_nat_mat)
-
-      nuisance_vec[none_idx_posShrink] <- pmin(nuisance_vec[none_idx_posShrink]/10, 0.1)
-      nuisance_vec[weak_pos_idx_posShrink] <- pmin(nuisance_vec[weak_pos_idx_posShrink]/10, 1)
-    }
-  }
+  # for(topic_name in topic_names){
+  #   strong_pos_idx <- intersect(which(gene_labeling2 == "strong-positive"), which(gene_labeling == topic_name))
+  #   weak_pos_idx <- intersect(which(gene_labeling2 == "weak-positive"), which(gene_labeling == topic_name))
+  #   none_idx <- intersect(which(gene_labeling2 == "none"), which(gene_labeling == topic_name))
+  #
+  #   none_number <- ceiling(length(none_idx)*.8)
+  #   none_idx_posShrink <- sample(none_idx, none_number)
+  #   weak_pos_idx_posShrink <- sample(weak_pos_idx, ceiling(length(weak_pos_idx)*.8))
+  #
+  #   # denoise the strong genes
+  #   if(length(strong_pos_idx) > 0){
+  #     pos_nat_mat <- apply(nat_mat[,strong_pos_idx], 2, function(x){
+  #       df <- data.frame(cbind(x, covariates))
+  #       colnames(df)[1] <- "y"
+  #       lm_res <- stats::lm(y ~ . - 1, data = df)
+  #       stats::residuals(lm_res)
+  #     })
+  #
+  #     nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
+  #                                   quantile_value = 0.75,
+  #                                   quantile_threshold = 1,
+  #                                   shrinkage_idx = none_idx_posShrink,
+  #                                   shrinkage_val = 0.95,
+  #                                   target_mat = pos_nat_mat)
+  #     nat_mat <- .natural_shrinkage(nat_mat = nat_mat,
+  #                                   quantile_value = 0.75,
+  #                                   quantile_threshold = 1,
+  #                                   shrinkage_idx = weak_pos_idx_posShrink,
+  #                                   shrinkage_val = 1,
+  #                                   target_mat = pos_nat_mat)
+  #
+  #     nuisance_vec[none_idx_posShrink] <- pmin(nuisance_vec[none_idx_posShrink]/10, 0.1)
+  #     nuisance_vec[weak_pos_idx_posShrink] <- pmin(nuisance_vec[weak_pos_idx_posShrink]/10, 1)
+  #   }
+  # }
 
   list(case_individuals = input_obj$case_individuals,
        control_individuals = input_obj$control_individuals,

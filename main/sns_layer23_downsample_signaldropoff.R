@@ -98,6 +98,42 @@ apply(sct_zmat, 2, median)
 
 ######################################
 
+load("../../../out/main/sns_layer23_mast.RData")
+mast_teststat <- apply(mast_lrt, 1, function(x){x[3,1]})
+
+gene_vec <- intersect(candidate_genes, names(mast_teststat))
+selected_mast_genes <- gene_vec[order(abs(mast_teststat[gene_vec]), decreasing = T)[1:num_genes]]
+mast_teststat[selected_mast_genes]
+hk_genes2 <- intersect(hk_genes, names(mast_teststat))
+base_mean <- mean(abs(mast_teststat[hk_genes2]))
+base_sd <- stats::sd(abs(mast_teststat[hk_genes2]))
+mast_zmat <- sapply(selected_mast_genes, function(x){
+  (abs(mast_teststat[x])-base_mean)/base_sd
+})
+
+mast_downsample_vec <- c(0.9, 0.8, 0.7, 0.6)
+for(val in mast_downsample_vec){
+  print(paste(val))
+  load(paste0("../../../out/main/sns_layer23_mast_downsampled-", val, ".RData"))
+
+  mast_teststat <- apply(mast_lrt, 1, function(x){x[3,1]})
+  hk_genes2 <- intersect(hk_genes, names(mast_teststat))
+
+  base_mean <- mean(abs(mast_teststat[hk_genes2]))
+  base_sd <- stats::sd(abs(mast_teststat[hk_genes2]))
+
+  tmp <- sapply(selected_mast_genes, function(x){
+    (abs(mast_teststat[x])-base_mean)/base_sd
+  })
+
+  mast_zmat <- cbind(mast_zmat, tmp)
+}
+
+colnames(mast_zmat)[-1] <- mast_downsample_vec
+
+
+######################################
+
 esvd_compute_testvec <- function(eSVD_obj){
   set.seed(10)
   df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj)
@@ -152,27 +188,32 @@ apply(esvd_zmat, 2, median)
 esvd_med <- apply(esvd_zmat, 2, mean)
 deseq_med <- apply(deseq_zmat, 2, mean)
 sct_med <- apply(sct_zmat, 2, mean)
+mast_med <- apply(mast_zmat, 2, mean)
 
 esvd_lower <- apply(esvd_zmat, 2, stats::quantile, probs = 0.25)
 deseq_lower <- apply(deseq_zmat, 2, stats::quantile, probs = 0.25)
 sct_lower <- apply(sct_zmat, 2, stats::quantile, probs = 0.25)
+mast_lower <- apply(mast_zmat, 2, stats::quantile, probs = 0.25)
 
 esvd_upper <- apply(esvd_zmat, 2, stats::quantile, probs = 0.75)
 deseq_upper  <- apply(deseq_zmat, 2, stats::quantile, probs = 0.75)
 sct_upper  <- apply(sct_zmat, 2, stats::quantile, probs = 0.75)
+mast_upper <- apply(mast_zmat, 2, stats::quantile, probs = 0.75)
 
 orange_col <- rgb(235, 134, 47, maxColorValue = 255)
 yellow_col <- rgb(255, 205, 114, maxColorValue = 255)
 blue_col <- rgb(48, 174, 255, maxColorValue = 255)
+purple_col <- rgb(122, 49, 126, maxColorValue = 255)
 
 orange_col_trans <- rgb(235, 134, 47, 0.4*255, maxColorValue = 255)
 yellow_col_trans <- rgb(255, 205, 114, 0.4*255, maxColorValue = 255)
 blue_col_trans <- rgb(48, 174, 255, 0.4*255, maxColorValue = 255)
+purple_col_trans <- rgb(122, 49, 126, 0.4*255, maxColorValue = 255)
 
 n <- ncol(esvd_zmat)
-ylim <- range(c(esvd_med, deseq_med, sct_med,
-                esvd_lower, deseq_lower, sct_lower,
-                esvd_upper, deseq_upper, sct_upper))
+ylim <- range(c(esvd_med, deseq_med, sct_med, mast_med,
+                esvd_lower, deseq_lower, sct_lower, mast_lower,
+                esvd_upper, deseq_upper, sct_upper, mast_upper))
 png(paste0("../../../out/fig/main/sns_layer23_downsample-signaldropff.png"),
     height = 1650, width = 3000,
     units = "px", res = 500)
@@ -194,6 +235,11 @@ polygon(x = c(1:n, n:1),
         y = c(sct_upper, rev(sct_lower)),
         col = blue_col_trans,
         border = NA)
+tmp_xvec <- seq(1,9,by = 2)
+polygon(x = c(tmp_xvec, rev(tmp_xvec)),
+        y = c(mast_upper, rev(mast_lower)),
+        col = purple_col_trans,
+        border = NA)
 polygon(x = c(1:n, n:1),
         y = c(deseq_upper, rev(deseq_lower)),
         col = yellow_col_trans,
@@ -205,6 +251,12 @@ polygon(x = c(1:n, n:1),
 
 lines(x = 1:n, y = sct_med, col = 1, lwd = 6)
 lines(x = 1:n, y = sct_med, col = blue_col, lwd = 4, lty = 2)
+
+lines(x = tmp_xvec, y = mast_med, col = 1, lwd = 6)
+lines(x = tmp_xvec, y = mast_med, col = purple_col, lwd = 4, lty = 2)
+
+lines(x = 1:n, y = deseq_med, col = 1, lwd = 6)
+lines(x = 1:n, y = deseq_med, col = yellow_col, lwd = 4, lty = 2)
 
 lines(x = 1:n, y = deseq_med, col = 1, lwd = 6)
 lines(x = 1:n, y = deseq_med, col = yellow_col, lwd = 4, lty = 2)
