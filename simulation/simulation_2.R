@@ -206,7 +206,7 @@ gene_casecontrol_name <- sort(unique(gene_topic_casecontrol_name, gene_null_case
 for(x in gene_casecontrol_name){
   idx <- which(gene_labeling2 == x)
   print(x)
-  print(round(quantile(teststat_vec[idx], probs = seq(0,1,length.out=11)), 2))
+  print(round(quantile(true_teststat_vec[idx], probs = seq(0,1,length.out=11)), 2))
   print("====")
 }
 

@@ -170,6 +170,27 @@ data_signal_enhancer <- function(input_obj,
   nat_mat <- nat_mat + nat_mat_other
   nat_mat <- nat_mat + global_shift
 
+  # add some strong between-individual variablity
+  # [[HARD CODED]]
+  tab <- table(individual_vec, covariates[,"gender"])
+  subset_case_indivuals <- intersect(rownames(tab)[tab[,1]!=0], case_individuals)
+  subset_case_indivuals <- sample(subset_case_indivuals)
+  subset_case_indivuals <- subset_case_indivuals[1:3]
+  subset_control_indivuals <- intersect(rownames(tab)[tab[,1]!=0], control_individuals)
+  subset_control_indivuals <- sample(subset_control_indivuals)
+  subset_control_indivuals <- subset_control_indivuals[1:3]
+  idx <- which(individual_vec %in% c(subset_case_indivuals, subset_control_indivuals))
+  nat_mat[idx,] <- nat_mat[idx,] + 1
+
+  subset_case_indivuals <- intersect(rownames(tab)[tab[,1]==0], case_individuals)
+  subset_case_indivuals <- sample(subset_case_indivuals)
+  subset_case_indivuals <- subset_case_indivuals[1:3]
+  subset_control_indivuals <- intersect(rownames(tab)[tab[,1]==0], control_individuals)
+  subset_control_indivuals <- sample(subset_control_indivuals)
+  subset_control_indivuals <- subset_control_indivuals[1:3]
+  idx <- which(individual_vec %in% c(subset_case_indivuals, subset_control_indivuals))
+  nat_mat[idx,] <- nat_mat[idx,] + 1
+
   # shrink none and weak signals towards the strong ones
   tab_mat <- table(gene_labeling, gene_labeling2)
   topic_names <- rownames(tab_mat)[grep("topic", rownames(tab_mat))]

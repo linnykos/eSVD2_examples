@@ -245,7 +245,7 @@ velmeshev_res@result["GO:0061564",c("ID", "Description", "GeneRatio", "BgRatio",
 velmeshev_res@result["GO:0031175",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
 velmeshev_res@result["GO:0050877",c("ID", "Description", "GeneRatio", "BgRatio", "pvalue")]
 
-go_vec <- c("GO:0099536", "GO:0061564", "GO:0031175", "GO:0050877")
+go_vec <- c("GO:0099536", "GO:0007417", "GO:0034220", "GO:0048878")
 esvd_pvalue <- sapply(go_vec, function(x){
   esvd_res@result[x, "pvalue"]
 })
