@@ -1,6 +1,7 @@
 rm(list=ls())
 library(Seurat)
 
+load("../eSVD2_examples/simulation/simulation_2.RData")
 load("../eSVD2_examples/simulation/simulation_2_esvd.RData")
 
 #########################
@@ -14,6 +15,23 @@ load("../eSVD2_examples/simulation/simulation_2_esvd.RData")
 # plot(eSVD_obj$teststat_vec, col = col_vec, pch = 16)
 
 #########################
+
+mean_mat <- exp(nat_mat)
+case_idx <- which(covariates[,"cc"] == 1)
+control_idx <- which(covariates[,"cc"] == 0)
+case_mean <- colMeans(mean_mat[case_idx,])
+control_mean <- colMeans(mean_mat[control_idx,])
+diff_mean <- case_mean - control_mean
+var_mat <- sweep(x = mean_mat, MARGIN = 2, STATS = nuisance_vec, FUN = "/")
+
+res <- eSVD2:::compute_test_statistic.default(
+  input_obj = mean_mat,
+  posterior_var_mat = var_mat,
+  case_individuals = case_individuals,
+  control_individuals = control_individuals,
+  individual_vec = individual_vec
+)
+true_teststat_vec <- res$teststat_vec
 
 nat_mat1 <- tcrossprod(eSVD_obj[["fit_Second"]]$x_mat, eSVD_obj[["fit_Second"]]$y_mat)
 nat_mat2 <- tcrossprod(eSVD_obj$covariates[,"cc_1"], eSVD_obj[["fit_Second"]]$z_mat[,"cc_1"])
@@ -49,7 +67,7 @@ idx <- which(true_teststat_vec2 < 0)
 true_teststat_vec2[idx] <- true_teststat_vec2[idx]/max(abs(true_teststat_vec2[idx]))
 idx <- which(true_teststat_vec2 > 0)
 true_teststat_vec2[idx] <- true_teststat_vec2[idx]/max(abs(true_teststat_vec2[idx]))
-transformed_vec <- abs(true_teststat_vec2)^8 * sign(true_teststat_vec2)
+transformed_vec <- abs(true_teststat_vec2)^4 * sign(true_teststat_vec2)
 range_vec <- range(transformed_vec)
 col_breaks <- seq(range_vec[1], range_vec[2], length = 100)
 col_vec_true <- sapply(transformed_vec, function(x){
