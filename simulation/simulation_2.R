@@ -154,12 +154,41 @@ z_mat = input_obj$z_mat
 # teststat_vec <- res$teststat_vec
 # true_teststat_vec <- teststat_vec
 
-true_teststat_vec <- apply(nat_mat, 2, function(x){
+nat_mat_unconfounded <- apply(nat_mat, 2, function(x){
   df <- as.data.frame(cbind(y = x, covariates[,1:6]))
   colnames(df)[1] <- "y"
   lm_res <- stats::lm(y ~ . - 1, data = df)
-  stats::coef(lm_res)["cc"]
+
+  tmp_vec <- stats::residuals(lm_res) + covariates[,"cc"]*stats::coef(lm_res)["cc"]
+  tmp_vec
 })
+tmp <- .determine_individual_indices(case_individuals = case_individuals,
+                                     control_individuals = control_individuals,
+                                     individual_vec = individual_vec)
+all_indiv_idx <- c(tmp$case_indiv_idx, tmp$control_indiv_idx)
+avg_mat <- .construct_averaging_matrix(idx_list = all_indiv_idx,
+                                       n = nrow(nat_mat))
+avg_nat_mean_mat <- as.matrix(avg_mat %*% nat_mat_unconfounded)
+avg_nat_var_mat <- t(sapply(all_indiv_idx, function(x){
+  matrixStats::colSds(nat_mat_unconfounded[x,])
+}))
+case_row_idx <- 1:length(case_individuals)
+control_row_idx <- (length(case_individuals)+1):nrow(avg_nat_mean_mat)
+case_gaussian_mean <- Matrix::colMeans(avg_nat_mean_mat[case_row_idx,,drop = F])
+control_gaussian_mean <- Matrix::colMeans(avg_nat_mean_mat[control_row_idx,,drop = F])
+case_gaussian_var <- .compute_mixture_gaussian_variance(
+  avg_posterior_mean_mat = avg_nat_mean_mat[case_row_idx,,drop = F],
+  avg_posterior_var_mat = avg_nat_var_mat[case_row_idx,,drop = F]
+)
+control_gaussian_var <- .compute_mixture_gaussian_variance(
+  avg_posterior_mean_mat = avg_nat_mean_mat[control_row_idx,,drop = F],
+  avg_posterior_var_mat = avg_nat_var_mat[control_row_idx,,drop = F]
+)
+n1 <- length(case_individuals)
+n2 <- length(control_individuals)
+true_teststat_vec <- (case_gaussian_mean - control_gaussian_mean) /
+  (sqrt(case_gaussian_var/n1 + control_gaussian_var/n2))
+names(true_teststat_vec) <- colnames(nat_mat)
 
 col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "strong-negative" = rgb(0.75, 0, 0),
@@ -169,7 +198,6 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
 plot(true_teststat_vec, col = col_vec, pch = 16)
 hist(true_teststat_vec, breaks = 50)
-
 
 quantile(apply(obs_mat, 2, function(x){length(which(x==0))/length(x)}))
 table(gene_labeling2, z_mat[,"age"])
