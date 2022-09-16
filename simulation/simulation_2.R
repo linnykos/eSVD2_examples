@@ -158,7 +158,7 @@ true_teststat_vec <- apply(nat_mat, 2, function(x){
   df <- as.data.frame(cbind(y = x, covariates[,1:6]))
   colnames(df)[1] <- "y"
   lm_res <- stats::lm(y ~ . - 1, data = df)
-  stats::coef(lm_res)["cc_1"]
+  stats::coef(lm_res)["cc"]
 })
 
 col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
@@ -167,8 +167,8 @@ col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "weak-negative" = rgb(1, 0.5, 0.9),
                  "weak-positive" = rgb(0.5, 1, 0.9))
 col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
-plot(teststat_vec, col = col_vec, pch = 16)
-hist(teststat_vec, breaks = 50)
+plot(true_teststat_vec, col = col_vec, pch = 16)
+hist(true_teststat_vec, breaks = 50)
 
 
 quantile(apply(obs_mat, 2, function(x){length(which(x==0))/length(x)}))
@@ -184,7 +184,7 @@ for(x in gene_casecontrol_name){
 
 ####################
 
-tmp <- data.frame(covariates[,3:6])
+tmp <- data.frame(covariates[,2:5])
 tmp$individual <- individual_vec
 seurat_obj <- Seurat::CreateSeuratObject(counts = t(obs_mat),
                                          meta.data = tmp)
