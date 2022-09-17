@@ -1,7 +1,7 @@
 rm(list=ls())
 library(Seurat)
 
-load("../eSVD2_examples/simulation/simulation_1.RData")
+# load("../eSVD2_examples/simulation/simulation_1.RData")
 load("../eSVD2_examples/simulation/simulation_1_esvd.RData")
 
 #########################
@@ -50,7 +50,8 @@ col_vec_true <- sapply(transformed_vec, function(x){
 ordering_idx <- order(abs(true_teststat_vec), decreasing = F)
 range_vec <- range(c(eSVD_obj$teststat_vec, teststat_vec))
 
-de_idx <- which(true_fdr_vec < 0.0001)
+de_idx <- which(true_fdr_vec < 0.01)
+length(de_idx)
 
 den <- stats::density(-teststat_vec)
 png("../../out/fig/simulation/simulation_1_raw-density.png",
@@ -89,7 +90,7 @@ x_vec <- eSVD_obj$teststat_vec
 png("../../out/fig/simulation/simulation_1_teststatistic_scatterplot.png",
     height = 1750, width = 1250,
     units = "px", res = 500)
-par(mar = c(3,3,0.4,0.1))
+par(mar = c(3,3,0.5,0.5))
 plot(NA, asp = T,
      xlim = range(x_vec), ylim = range(y_vec),
      xaxt = "n", yaxt = "n", bty = "n",
@@ -99,10 +100,11 @@ lines(c(-1e5,1e5), c(-1e5,1e5), col = 1, lty = 2, lwd = 2)
 lines(rep(0,2), c(-1e5,1e5), col = 2, lty = 2, lwd = 2)
 lines(c(-1e5,1e5), rep(0,2), col = 2, lty = 2, lwd = 2)
 
-points(x_vec[de_idx], y_vec[de_idx], col = "black", pch = 16, cex = 1.5)
-points(x_vec[de_idx], y_vec[de_idx], col = "white", pch = 16, cex = 1.25)
 
 points(x_vec[ordering_idx], y_vec[ordering_idx], col = col_vec_true[ordering_idx], pch = 16)
+points(x_vec[de_idx], y_vec[de_idx], col = "black", pch = 16, cex = 1.5)
+points(x_vec[de_idx], y_vec[de_idx], col = "white", pch = 16, cex = 1.25)
+points(x_vec[de_idx], y_vec[de_idx], col = col_vec_true[de_idx], pch = 16)
 
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
