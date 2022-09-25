@@ -1,20 +1,7 @@
 rm(list=ls())
 library(Seurat)
 
-# load("../eSVD2_examples/simulation/simulation_1.RData")
 load("../eSVD2_examples/simulation/simulation_1_esvd.RData")
-
-#########################
-
-# col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
-#                  "strong-negative" = rgb(0.75, 0, 0),
-#                  "strong-positive" = rgb(0, 0.75, 0),
-#                  "weak-negative" = rgb(1, 0.5, 0.9),
-#                  "weak-positive" = rgb(0.5, 1, 0.9))
-# col_vec <- plyr::mapvalues(gene_labeling2, from = names(col_palette), to = col_palette)
-# plot(eSVD_obj$teststat_vec, col = col_vec, pch = 16)
-
-#########################
 
 nat_mat1 <- tcrossprod(eSVD_obj[["fit_Second"]]$x_mat, eSVD_obj[["fit_Second"]]$y_mat)
 nat_mat2 <- tcrossprod(eSVD_obj$covariates[,"cc_1"], eSVD_obj[["fit_Second"]]$z_mat[,"cc_1"])
@@ -27,17 +14,6 @@ teststat_vec <- apply(mean_mat, 2, function(y){
 })
 max_val <- ceiling(max(abs(eSVD_obj$teststat_vec)))+1
 teststat_vec <- pmax(pmin(teststat_vec, max_val), -max_val)
-
-# var_mat <- sweep(x = mean_mat, MARGIN = 2, STATS = nuisance_vec, FUN = "/")
-#
-# res <- eSVD2:::compute_test_statistic.default(
-#   input_obj = mean_mat,
-#   posterior_var_mat = var_mat,
-#   case_individuals = case_individuals,
-#   control_individuals = control_individuals,
-#   individual_vec = individual_vec
-# )
-# teststat_vec <- res$teststat_vec
 
 purple_col <- rgb(213, 65, 221, maxColorValue = 255)
 green_col <- rgb(70, 179, 70, maxColorValue = 255)
@@ -58,7 +34,7 @@ col_vec_true <- sapply(transformed_vec, function(x){
 ordering_idx <- order(abs(true_teststat_vec), decreasing = F)
 range_vec <- range(c(eSVD_obj$teststat_vec, teststat_vec))
 
-de_idx <- which(true_fdr_vec < 0.01)
+de_idx <- which(true_fdr_vec < 0.05)
 length(de_idx)
 
 den <- stats::density(-teststat_vec)
@@ -70,7 +46,7 @@ plot(den, main = "", xlab = "", ylab = "", xlim = -1*range_vec[c(2,1)],
      xaxt = "n", yaxt = "n", bty ="n")
 polygon(den, col="gray")
 lines(x = rep(0,2), y = c(-1e4,1e4), col = 2, lwd = 1, lty = 2)
-for(i in ordering_idx){
+for(i in de_idx){
   rug(-teststat_vec[i], col = col_vec_true[i], lwd = 3)
 }
 graphics.off()
@@ -85,7 +61,7 @@ plot(den, main = "", xlab = "", ylab = "", xlim = range_vec,
      xaxt = "n", yaxt = "n", bty ="n")
 polygon(den, col="gray")
 lines(x = rep(0,2), y = c(-1e4,1e4), col = 2, lwd = 1.5, lty = 2)
-for(i in ordering_idx){
+for(i in de_idx){
   rug(eSVD_obj$teststat_vec[i], col = col_vec_true[i], lwd = 3)
 }
 graphics.off()

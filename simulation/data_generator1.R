@@ -376,7 +376,6 @@ data_generator_obs_mat <- function(input_obj){
        true_teststat_vec = true_teststat_vec)
 }
 
-
 ####################
 
 .form_covariate_mat <- function(individual_case_control_variable,

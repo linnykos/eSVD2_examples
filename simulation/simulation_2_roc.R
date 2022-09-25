@@ -6,29 +6,12 @@ library(DESeq2)
 #########################################
 
 load("../eSVD2_examples/simulation/simulation_2.RData")
-
-mean_mat <- exp(nat_mat)
-case_idx <- which(covariates[,"cc"] == 1)
-control_idx <- which(covariates[,"cc"] == 0)
-case_mean <- colMeans(mean_mat[case_idx,])
-control_mean <- colMeans(mean_mat[control_idx,])
-diff_mean <- case_mean - control_mean
-var_mat <- sweep(x = mean_mat, MARGIN = 2, STATS = nuisance_vec, FUN = "/")
-
-res <- eSVD2:::compute_test_statistic.default(
-  input_obj = mean_mat,
-  posterior_var_mat = var_mat,
-  case_individuals = case_individuals,
-  control_individuals = control_individuals,
-  individual_vec = individual_vec
-)
-true_teststat_vec_safe <- res$teststat_vec
-
 load("../eSVD2_examples/simulation/simulation_2_esvd.RData")
 load("../eSVD2_examples/simulation/simulation_2_deseq2.RData")
 load("../eSVD2_examples/simulation/simulation_2_sctransform.RData")
 
-true_teststat_vec <- true_teststat_vec_safe
+true_de_idx <- which(true_fdr_vec < 0.01)
+length(true_de_idx)
 
 #############
 
@@ -58,9 +41,30 @@ compute_roc <- function(estimated_teststat_vec,
   names(tpr) <- paste0("selected-", 0:len)
   names(fpr) <- names(tpr)
 
-  # plot(fpr,tpr,asp=T)
-  list(tpr = tpr,
-       fpr = fpr)
+  list(tpr = tpr, fpr = fpr)
+}
+
+compute_roc2 <- function(estimated_teststat_vec,
+                         true_de_idx){
+  ordering_est <- order(abs(estimated_teststat_vec), decreasing = T)
+  len <- length(ordering_est)
+  tpr <- sapply(0:len, function(i){
+    if(i == 0) return(0)
+    est_de_idx <- ordering_est[1:i]
+    length(intersect(est_de_idx, true_de_idx))/length(true_de_idx)
+  })
+  fpr <- sapply(0:len, function(i){
+    if(i == 0) return(0)
+    if(i == len) return(1)
+    est_de_idx <- ordering_est[1:i]
+    true_nonde_idx <- setdiff(1:n, true_de_idx)
+    length(intersect(est_de_idx, true_nonde_idx))/length(true_nonde_idx)
+  })
+
+  names(tpr) <- paste0("selected-", 0:len)
+  names(fpr) <- names(tpr)
+
+  list(tpr = tpr, fpr = fpr)
 }
 
 smooth_roc <- function(tpr, fpr){
@@ -112,18 +116,18 @@ logpvalue_vec <- sapply(gaussian_teststat, function(x){
 })
 logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
 
-esvd_roc <- compute_roc(estimated_teststat_vec = logpvalue_vec,
-                        true_teststat_vec = true_teststat_vec)
+esvd_roc <- compute_roc2(estimated_teststat_vec = logpvalue_vec,
+                         true_de_idx = true_de_idx)
 esvd_roc <- smooth_roc(tpr = esvd_roc$tpr,
                        fpr = esvd_roc$fpr)
 
-deseq2_roc <- compute_roc(estimated_teststat_vec = -log10(deseq2_res$pvalue),
-                          true_teststat_vec = true_teststat_vec)
+deseq2_roc <- compute_roc2(estimated_teststat_vec = -log10(deseq2_res$pvalue),
+                           true_de_idx = true_de_idx)
 deseq2_roc <- smooth_roc(tpr = deseq2_roc$tpr,
                          fpr = deseq2_roc$fpr)
 
-sctransform_roc <- compute_roc(estimated_teststat_vec = -log10(de_result$p_val),
-                               true_teststat_vec = true_teststat_vec)
+sctransform_roc <- compute_roc2(estimated_teststat_vec = -log10(de_result$p_val),
+                                true_de_idx = true_de_idx)
 sctransform_roc <- smooth_roc(tpr = sctransform_roc$tpr,
                               fpr = sctransform_roc$fpr)
 
