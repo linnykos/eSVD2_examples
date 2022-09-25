@@ -271,6 +271,7 @@ data_generator_obs_mat <- function(input_obj){
     obs_mat[,j] <- stats::rpois(n = n,
                                 lambda = gene_library_vec[j]*gamma_mat[,j])
   }
+  obs_mat <- pmin(obs_mat, 1000)
 
   covariates <- cbind(covariates, log1p(rowMeans(obs_mat)))
   colnames(covariates)[ncol(covariates)] <- "Log_UMI"
@@ -297,6 +298,90 @@ data_generator_obs_mat <- function(input_obj){
        x_mat = input_obj$x_mat,
        y_mat = input_obj$y_mat,
        z_mat = input_obj$z_mat)
+}
+
+.compute_population_quantities <- function(input_obj){
+  case_individuals <- input_obj$case_individuals
+  control_individuals <- input_obj$control_individuals
+  covariates <- input_obj$covariates
+  individual_case_control_variable <- input_obj$individual_case_control_variable
+  individual_vec <- input_obj$individual_vec
+  nuisance_vec <- input_obj$nuisance_vec
+  x_mat <- input_obj$x_mat
+  y_mat <- input_obj$y_mat
+  z_mat <- input_obj$z_mat
+
+  nat_mat1 <- tcrossprod(x_mat, y_mat)
+  nat_mat2 <- tcrossprod(covariates[,individual_case_control_variable], z_mat[,individual_case_control_variable])
+  nat_mat <- nat_mat1 + nat_mat2
+  mean_mat <- exp(nat_mat)
+
+  case_idx <- which(covariates[,individual_case_control_variable] == 1)
+  control_idx <- which(covariates[,individual_case_control_variable] == 0)
+  case_mean <- colMeans(mean_mat[case_idx,])
+  control_mean <- colMeans(mean_mat[control_idx,])
+  diff_mean <- case_mean - control_mean
+
+  var_mat <- sweep(x = mean_mat, MARGIN = 2, STATS = nuisance_vec, FUN = "/")
+  res <- eSVD2:::compute_test_statistic.default(
+    input_obj = mean_mat,
+    posterior_var_mat = var_mat,
+    case_individuals = case_individuals,
+    control_individuals = control_individuals,
+    individual_vec = individual_vec
+  )
+  true_teststat_vec <- res$teststat_vec
+
+  tmp <- eSVD2:::.determine_individual_indices(case_individuals = case_individuals,
+                                               control_individuals = control_individuals,
+                                               individual_vec = individual_vec)
+  all_indiv_idx <- c(tmp$case_indiv_idx, tmp$control_indiv_idx)
+  avg_mat <- eSVD2:::.construct_averaging_matrix(idx_list = all_indiv_idx,
+                                                 n = nrow(mean_mat))
+  avg_posterior_mean_mat <- as.matrix(avg_mat %*% mean_mat)
+  avg_posterior_var_mat <- as.matrix(avg_mat %*% var_mat)
+
+  case_row_idx <- 1:length(case_individuals)
+  control_row_idx <- (length(case_individuals)+1):nrow(avg_posterior_mean_mat)
+  case_gaussian_mean <- Matrix::colMeans(avg_posterior_mean_mat[case_row_idx,,drop = F])
+  control_gaussian_mean <- Matrix::colMeans(avg_posterior_mean_mat[control_row_idx,,drop = F])
+  case_gaussian_var <- eSVD2:::.compute_mixture_gaussian_variance(
+    avg_posterior_mean_mat = avg_posterior_mean_mat[case_row_idx,,drop = F],
+    avg_posterior_var_mat = avg_posterior_var_mat[case_row_idx,,drop = F]
+  )
+  control_gaussian_var <- eSVD2:::.compute_mixture_gaussian_variance(
+    avg_posterior_mean_mat = avg_posterior_mean_mat[control_row_idx,,drop = F],
+    avg_posterior_var_mat = avg_posterior_var_mat[control_row_idx,,drop = F]
+  )
+  n1 <- length(case_individuals); n2 <- length(control_individuals)
+  numerator_vec <- (case_gaussian_var/n1 + control_gaussian_var/n2)^2
+  denominator_vec <- (case_gaussian_var/n1)^2/(n1-1) + (control_gaussian_var/n2)^2/(n2-1)
+  df_vec <- numerator_vec/denominator_vec
+  names(df_vec) <- names(case_gaussian_var)
+  p <- length(true_teststat_vec)
+  gaussian_teststat <- sapply(1:p, function(j){
+    qnorm(pt(true_teststat_vec[j], df = df_vec[j]))
+  })
+
+  locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
+  true_fdr_vec <- locfdr_res$fdr
+  names(true_fdr_vec) <- names(gaussian_teststat)
+  true_null_mean <- locfdr_res$fp0["mlest", "delta"]
+  true_null_sd <- locfdr_res$fp0["mlest", "sigma"]
+  true_logpvalue_vec <- sapply(gaussian_teststat, function(x){
+    if(x < true_null_mean) {
+      Rmpfr::pnorm(x, mean = true_null_mean, sd = true_null_sd, log.p = T)
+    } else {
+      Rmpfr::pnorm(true_null_mean - (x-true_null_mean), mean = true_null_mean, sd = true_null_sd, log.p = T)
+    }
+  })
+  true_logpvalue_vec <- -(true_logpvalue_vec/log(10) + log10(2))
+
+  list(true_fdr_vec = true_fdr_vec,
+       true_logpvalue_vec = true_logpvalue_vec,
+       true_null_mean = true_null_mean,
+       true_null_sd = true_null_sd,
+       true_teststat_vec = true_teststat_vec)
 }
 
 ####################

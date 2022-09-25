@@ -62,7 +62,7 @@ gene_covariate_coefficient_size <- c(-2,-0.5,0,0.5,1,2)
 mat <- matrix(0, nrow = length(gene_covariate_coefficient_size),
               ncol = length(gene_topic_casecontrol_name))
 colnames(mat) <- paste0("cc_size:", gene_topic_casecontrol_name)
-rownames(mat) <- paste0("coef_size:", gene_nuisance_values)
+rownames(mat) <- paste0("coef_size:", gene_covariate_coefficient_size)
 mat[,1] <- c(0.1, 0.1, 0.6, 0.1, 0.1,   0)
 mat[,2] <- c(0.6, 0.4,   0,   0,   0,   0)
 mat[,3] <- c(  0, 0.2, 0.8,   0,   0,   0)
@@ -119,6 +119,7 @@ input_obj <- data_signal_enhancer(input_obj,
                                   global_shift = -1)
 nat_mat <- input_obj$nat_mat
 input_obj <- data_generator_obs_mat(input_obj)
+pop_res <- .compute_population_quantities(input_obj)
 
 #####################################3
 
@@ -129,66 +130,17 @@ gene_labeling = input_obj$gene_labeling
 gene_labeling2 = input_obj$gene_labeling2
 gene_library_vec = input_obj$gene_library_vec
 individual_vec = input_obj$individual_vec
-nat_mat = input_obj$nat_mat
 nuisance_vec = input_obj$nuisance_vec
+nat_mat = input_obj$nat_mat
 obs_mat = input_obj$obs_mat
 x_mat = input_obj$x_mat
 y_mat = input_obj$y_mat
 z_mat = input_obj$z_mat
-
-# mean_mat <- exp(nat_mat)
-# case_idx <- which(covariates[,"cc"] == 1)
-# control_idx <- which(covariates[,"cc"] == 0)
-# case_mean <- colMeans(mean_mat[case_idx,])
-# control_mean <- colMeans(mean_mat[control_idx,])
-# diff_mean <- case_mean - control_mean
-# var_mat <- sweep(x = mean_mat, MARGIN = 2, STATS = nuisance_vec, FUN = "/")
-#
-# res <- eSVD2:::compute_test_statistic.default(
-#   input_obj = mean_mat,
-#   posterior_var_mat = var_mat,
-#   case_individuals = case_individuals,
-#   control_individuals = control_individuals,
-#   individual_vec = individual_vec
-# )
-# teststat_vec <- res$teststat_vec
-# true_teststat_vec <- teststat_vec
-
-nat_mat_unconfounded <- apply(nat_mat, 2, function(x){
-  df <- as.data.frame(cbind(y = x, covariates[,1:6]))
-  colnames(df)[1] <- "y"
-  lm_res <- stats::lm(y ~ . - 1, data = df)
-
-  tmp_vec <- stats::residuals(lm_res) + covariates[,"cc"]*stats::coef(lm_res)["cc"]
-  tmp_vec
-})
-tmp <- .determine_individual_indices(case_individuals = case_individuals,
-                                     control_individuals = control_individuals,
-                                     individual_vec = individual_vec)
-all_indiv_idx <- c(tmp$case_indiv_idx, tmp$control_indiv_idx)
-avg_mat <- .construct_averaging_matrix(idx_list = all_indiv_idx,
-                                       n = nrow(nat_mat))
-avg_nat_mean_mat <- as.matrix(avg_mat %*% nat_mat_unconfounded)
-avg_nat_var_mat <- t(sapply(all_indiv_idx, function(x){
-  matrixStats::colSds(nat_mat_unconfounded[x,])
-}))
-case_row_idx <- 1:length(case_individuals)
-control_row_idx <- (length(case_individuals)+1):nrow(avg_nat_mean_mat)
-case_gaussian_mean <- Matrix::colMeans(avg_nat_mean_mat[case_row_idx,,drop = F])
-control_gaussian_mean <- Matrix::colMeans(avg_nat_mean_mat[control_row_idx,,drop = F])
-case_gaussian_var <- .compute_mixture_gaussian_variance(
-  avg_posterior_mean_mat = avg_nat_mean_mat[case_row_idx,,drop = F],
-  avg_posterior_var_mat = avg_nat_var_mat[case_row_idx,,drop = F]
-)
-control_gaussian_var <- .compute_mixture_gaussian_variance(
-  avg_posterior_mean_mat = avg_nat_mean_mat[control_row_idx,,drop = F],
-  avg_posterior_var_mat = avg_nat_var_mat[control_row_idx,,drop = F]
-)
-n1 <- length(case_individuals)
-n2 <- length(control_individuals)
-true_teststat_vec <- (case_gaussian_mean - control_gaussian_mean) /
-  (sqrt(case_gaussian_var/n1 + control_gaussian_var/n2))
-names(true_teststat_vec) <- colnames(nat_mat)
+true_fdr_vec <- pop_res$true_fdr_vec
+true_logpvalue_vec <- pop_res$true_logpvalue_vec
+true_null_mean <- pop_res$true_null_mean
+true_null_sd <- pop_res$true_null_sd
+true_teststat_vec <- pop_res$true_teststat_vec
 
 col_palette <- c("none" = rgb(0.5, 0.5, 0.5),
                  "strong-negative" = rgb(0.75, 0, 0),
@@ -206,7 +158,7 @@ gene_casecontrol_name <- sort(unique(gene_topic_casecontrol_name, gene_null_case
 for(x in gene_casecontrol_name){
   idx <- which(gene_labeling2 == x)
   print(x)
-  print(round(quantile(true_teststat_vec[idx], probs = seq(0,1,length.out=11)), 2))
+  print(round(quantile(teststat_vec[idx], probs = seq(0,1,length.out=11)), 2))
   print("====")
 }
 
@@ -230,9 +182,13 @@ save(seurat_obj,
      gene_labeling2,
      gene_library_vec,
      individual_vec,
-     nat_mat,
      nuisance_vec,
+     nat_mat,
      obs_mat,
+     true_fdr_vec,
+     true_logpvalue_vec,
+     true_null_mean,
+     true_null_sd,
      true_teststat_vec,
      x_mat,
      y_mat,
