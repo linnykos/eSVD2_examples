@@ -37,17 +37,13 @@ nat_mat1 <- tcrossprod(eSVD_obj[["fit_Second"]]$x_mat, eSVD_obj[["fit_Second"]]$
 nat_mat2 <- tcrossprod(eSVD_obj$covariates[,"cc_1"], eSVD_obj[["fit_Second"]]$z_mat[,"cc_1"])
 nat_mat <- nat_mat1 + nat_mat2
 mean_mat <- exp(nat_mat)
-
-var_mat <- sweep(x = mean_mat, MARGIN = 2, STATS = nuisance_vec, FUN = "/")
-
-res <- eSVD2:::compute_test_statistic.default(
-  input_obj = mean_mat,
-  posterior_var_mat = var_mat,
-  case_individuals = case_individuals,
-  control_individuals = control_individuals,
-  individual_vec = individual_vec
-)
-teststat_vec <- res$teststat_vec
+case_idx <- which(individual_vec %in% case_individuals)
+control_idx <- which(individual_vec %in% control_individuals)
+teststat_vec <- apply(mean_mat, 2, function(y){
+  mean(y[case_idx]) - mean(y[control_idx])
+})
+max_val <- ceiling(max(abs(eSVD_obj$teststat_vec)))+1
+teststat_vec <- pmax(pmin(teststat_vec, max_val), -max_val)
 
 purple_col <- rgb(213, 65, 221, maxColorValue = 255)
 green_col <- rgb(70, 179, 70, maxColorValue = 255)
