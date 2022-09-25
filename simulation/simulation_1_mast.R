@@ -4,7 +4,7 @@ library(SummarizedExperiment)
 library(MAST)
 library(lme4)
 
-load("../eSVD2_examples/simulation/simulation_1.RData")
+load("../../../out/simulation/simulation_1.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -43,14 +43,14 @@ mast_res <- MAST::zlm(formula = ~ grp.cc + (1 | grp.individual) + cngeneson + gr
                       method = "glmer",
                       ebayes = FALSE,
                       silent = T)
-save(sns, sca, mast_res,
+save(seurat_obj, sca, mast_res,
      date_of_run, session_info,
-     file = "../../../out/main/simulation_1_mast.RData")
+     file = "../../../out/simulation/simulation_1_mast.RData")
 
 set.seed(10)
 mast_lrt <- MAST::lrTest(mast_res, "grp.cc")
 mast_pval_glmer <- apply(mast_lrt, 1, function(x){x[3,3]})
-save(sns, sca, mast_res, mast_lrt, mast_pval_glmer,
+save(seurat_obj, sca, mast_res, mast_lrt, mast_pval_glmer,
      date_of_run, session_info,
-     file =  "../../../out/main/simulation_1_mast.RData")
+     file =  "../../../out/simulation/simulation_1_mast.RData")
 

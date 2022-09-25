@@ -9,6 +9,7 @@ load("../eSVD2_examples/simulation/simulation_1.RData")
 load("../eSVD2_examples/simulation/simulation_1_esvd.RData")
 load("../eSVD2_examples/simulation/simulation_1_deseq2.RData")
 load("../eSVD2_examples/simulation/simulation_1_sctransform.RData")
+load("../eSVD2_examples/simulation/simulation_1_mast.RData")
 
 true_de_idx <- which(true_fdr_vec < 0.05)
 length(true_de_idx)
@@ -16,39 +17,7 @@ length(true_de_idx)
 #############
 
 compute_roc <- function(estimated_teststat_vec,
-                        true_teststat_vec){
-  stopifnot(length(estimated_teststat_vec) == length(true_teststat_vec),
-            length(names(true_teststat_vec)) > 0,
-            all(names(estimated_teststat_vec) == names(true_teststat_vec)))
-
-  len <- length(true_teststat_vec)
-  ordering_est <- order(abs(estimated_teststat_vec), decreasing = T)
-  ordering_true <- order(abs(true_teststat_vec), decreasing = T)
-  tpr <- sapply(0:len, function(i){
-    if(i == 0) return(0)
-    est_de_idx <- ordering_est[1:i]
-    true_de_idx <- ordering_true[1:i]
-    length(intersect(est_de_idx, true_de_idx))/length(true_de_idx)
-  })
-  fpr <- sapply(0:len, function(i){
-    if(i == 0) return(0)
-    if(i == len) return(1)
-    est_de_idx <- ordering_est[1:i]
-    true_nonde_idx <- ordering_true[(i+1):len]
-    length(intersect(est_de_idx, true_nonde_idx))/length(true_nonde_idx)
-  })
-
-  names(tpr) <- paste0("selected-", 0:len)
-  names(fpr) <- names(tpr)
-
-  # plot(fpr,tpr,asp=T)
-  list(tpr = tpr,
-       fpr = fpr)
-}
-
-
-compute_roc2 <- function(estimated_teststat_vec,
-                         true_de_idx){
+                        true_de_idx){
   ordering_est <- order(abs(estimated_teststat_vec), decreasing = T)
   n <- length(ordering_est)
   tpr <- sapply(0:n, function(i){
@@ -92,8 +61,17 @@ smooth_roc <- function(tpr, fpr){
 
   # next, smooth to be monotonic
   res <- stats::isoreg(x = fpr, y = tpr)
+  tpr_new <- res$yf
 
-  list(tpr = res$yf,
+  # last, make sure the curve doesn't dip below the diagonal
+  fpr <- pmax(pmin(fpr, 1), 0)
+  tpr_new <- pmax(pmin(tpr_new, 1), 0)
+  n <- length(tpr_new)
+  for(i in 1:n){
+    tpr_new[i] <- max(tpr_new[i], fpr[i])
+  }
+
+  list(tpr = tpr_new,
        fpr = fpr)
 }
 
@@ -119,27 +97,38 @@ logpvalue_vec <- sapply(gaussian_teststat, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
+p <- ncol(obs_mat)
 
-esvd_roc <- compute_roc2(estimated_teststat_vec = logpvalue_vec,
+esvd_pvalue <- logpvalue_vec[paste0("gene-", 1:p)]
+esvd_roc <- compute_roc(estimated_teststat_vec = esvd_pvalue,
                         true_de_idx = true_de_idx)
 esvd_roc <- smooth_roc(tpr = esvd_roc$tpr,
                        fpr = esvd_roc$fpr)
 
-deseq2_roc <- compute_roc2(estimated_teststat_vec = -log10(deseq2_res$pvalue),
+deseq_pvalue <- deseq2_res[paste0("gene-", 1:p), "pvalue"]
+deseq2_roc <- compute_roc(estimated_teststat_vec = -log10(deseq_pvalue),
                           true_de_idx = true_de_idx)
 deseq2_roc <- smooth_roc(tpr = deseq2_roc$tpr,
                          fpr = deseq2_roc$fpr)
 
-sctransform_roc <- compute_roc2(estimated_teststat_vec = -log10(de_result$p_val),
+sctransform_pvalue <- de_result[paste0("gene-", 1:p), "p_val"]
+sctransform_roc <- compute_roc(estimated_teststat_vec = -log10(sctransform_pvalue),
                                true_de_idx = true_de_idx)
 sctransform_roc <- smooth_roc(tpr = sctransform_roc$tpr,
                               fpr = sctransform_roc$fpr)
+
+mast_pvalue <- mast_pval_glmer[paste0("gene-", 1:p)]
+mast_roc <- compute_roc(estimated_teststat_vec = -log10(mast_pval_glmer),
+                        true_de_idx = true_de_idx)
+mast_roc <- smooth_roc(tpr = mast_roc$tpr,
+                       fpr = mast_roc$fpr)
 
 ##################
 
 orange_col <- rgb(235, 134, 47, maxColorValue = 255)
 yellow_col <- rgb(255, 205, 114, maxColorValue = 255)
 blue_col <- rgb(48, 174, 255, maxColorValue = 255)
+purple_col <- rgb(122, 49, 126, maxColorValue = 255)
 
 png("../../out/fig/simulation/simulation_1_roc.png",
     height = 2000, width = 2000,
@@ -149,8 +138,9 @@ plot(NA, xlim = c(0,1), ylim = c(0,1), asp = T,
      xaxt = "n", yaxt = "n", bty = "n",
      cex.lab = 1.25, type = "n",
      xlab = "", ylab = "")
-points(deseq2_roc$fpr, deseq2_roc$tpr, col = yellow_col, pch = 16)
 points(sctransform_roc$fpr, sctransform_roc$tpr, col = blue_col, pch = 16)
+points(mast_roc$fpr, mast_roc$tpr, col = purple_col, pch = 16)
+points(deseq2_roc$fpr, deseq2_roc$tpr, col = yellow_col, pch = 16)
 points(esvd_roc$fpr, esvd_roc$tpr, col = orange_col, pch = 16)
 lines(c(0,1), c(0,1), col = 1, lwd = 2, lty = 2)
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
