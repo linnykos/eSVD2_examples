@@ -1,7 +1,6 @@
 rm(list=ls())
 library(Seurat)
 library(SummarizedExperiment)
-library(DESeq2)
 
 #########################################
 
@@ -14,7 +13,6 @@ control_subj <- rownames(tab)[which(tab[,"1"] == 0)]
 base_palette <- RColorBrewer::brewer.pal(11, name = "RdYlBu")
 case_color_palette <- grDevices::colorRampPalette(base_palette[1:4])(length(case_subj))
 control_color_palette <- grDevices::colorRampPalette(base_palette[8:11])(length(control_subj))
-
 
 umap_mat <- seurat_obj[["umap"]]@cell.embeddings
 n <- nrow(umap_mat)
