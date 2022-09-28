@@ -21,7 +21,7 @@ covariates <- eSVD2:::format_covariates(dat = mat_tmp,
                                         covariate_df = covariate_df,
                                         rescale_numeric_variables = c("age"))
 
-downsample_values <- seq(0.95, 0.6, by = -0.05)
+downsample_values <- seq(0.9, 0.2, by = -0.1)
 for(downsample_value in downsample_values){
   print("==========================")
   print("==========================")

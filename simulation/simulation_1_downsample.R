@@ -9,7 +9,7 @@ session_info <- devtools::session_info()
 
 mat <- Matrix::t(seurat_obj[["RNA"]]@counts)
 
-downsample_values <- seq(0.95, 0.6, by = -0.05)
+downsample_values <- seq(0.9, 0.2, by = -0.1)
 for(downsample_value in downsample_values){
   print(downsample_value)
   x_vec <- mat@x

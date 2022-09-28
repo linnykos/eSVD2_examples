@@ -22,20 +22,25 @@ covariates <- eSVD2:::format_covariates(dat = mat_tmp,
                                         rescale_numeric_variables = c("age"))
 covariates <- covariates[,-grep("individual", colnames(covariates))]
 
-downsample_values <- seq(0.95, 0.6, by = -0.05)
+downsample_values <- seq(0.9, 0.2, by = -0.1)
 downsample_coef_list <- vector("list", length = length(downsample_values)+1)
 
-p <- 1:ncol(obs_mat)
+p <- ncol(obs_mat)
 downsample_coef_list[[1]] <- t(sapply(1:p, function(j){
+  if(j %% floor(p/10) == 0) cat('*')
   y <- obs_mat[,j]
+  if(sum(y) == 0) return(rep(0, ncol(covariates)))
   df <- data.frame(cbind(y, covariates))
   colnames(df)[1] <- "y"
 
-  glm_res <- MASS::glm.nb(y ~ . - 1, data = df)
-  stats::coef(glm_res)
+  tryCatch({
+    glm_res <- MASS::glm.nb(y ~ . - 1, data = df)
+    stats::coef(glm_res)
+  }, error = function(e){
+    rep(0, ncol(covariates))
+  })
 }))
 
-downsample_values <- seq(0.95, 0.6, by = -0.05)
 for(kk in 1:length(downsample_values)){
   downsample_value <- downsample_values[kk]
   print("==========================")
@@ -46,18 +51,26 @@ for(kk in 1:length(downsample_values)){
   load(paste0("../../out/simulation/simulation_1_downsampled-", downsample_value, ".RData"))
 
   p <- ncol(mat)
-  downsample_coef_list[[kk+1]] <- t(sapply(1:p, function(j){
+  downsample_coef_list[[kk+1]] <- sapply(1:p, function(j){
     if(j %% floor(p/10) == 0) cat('*')
     y <- mat[,j]
+    if(sum(y) == 0) return(rep(0, ncol(covariates)))
     df <- data.frame(cbind(y, covariates))
     colnames(df)[1] <- "y"
 
-    glm_res <- MASS::glm.nb(y ~ . - 1, data = df)
-    stats::coef(glm_res)
-  }))
+    tryCatch({
+      glm_res <- MASS::glm.nb(y ~ . - 1, data = df)
+      stats::coef(glm_res)
+    }, error = function(e){
+      rep(0, ncol(covariates))
+    })
+  })
+
+  downsample_coef_list[[kk+1]] <- t(downsample_coef_list[[kk+1]])
 }
 
 save(date_of_run, session_info, seurat_obj,
+     covariates,
      downsample_coef_list, downsample_values,
      file = paste0("../../out/simulation/simulation_1_nbreg_downsampled.RData"))
 
