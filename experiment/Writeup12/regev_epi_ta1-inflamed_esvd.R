@@ -115,6 +115,10 @@ eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       verbose = 1)
 time_end4 <- Sys.time()
 
+save(date_of_run, session_info, regevEpi,
+     eSVD_obj,
+     file = "../../../../out/Writeup12/regevEpi_ta1-inflamed_esvd.RData")
+
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
                                       alpha_max = NULL,
