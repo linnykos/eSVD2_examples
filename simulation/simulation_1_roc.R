@@ -5,11 +5,11 @@ library(DESeq2)
 
 #########################################
 
-load("../eSVD2_examples/simulation/simulation_1.RData")
-load("../eSVD2_examples/simulation/simulation_1_esvd.RData")
-load("../eSVD2_examples/simulation/simulation_1_deseq2.RData")
-load("../eSVD2_examples/simulation/simulation_1_sctransform.RData")
-load("../eSVD2_examples/simulation/simulation_1_mast.RData")
+load("../../out/simulation/simulation_1.RData")
+load("../../out/simulation/simulation_1_esvd.RData")
+load("../../out/simulation/simulation_1_deseq2.RData")
+load("../../out/simulation/simulation_1_sctransform.RData")
+load("../../out/simulation/simulation_1_mast.RData")
 
 true_de_idx <- which(true_fdr_vec < 0.05)
 length(true_de_idx)
@@ -75,6 +75,33 @@ smooth_roc <- function(tpr, fpr){
        fpr = fpr)
 }
 
+roc_fdr_point <- function(pvalue_vec,
+                          true_de_idx,
+                          fdr_threshold = 0.05){
+  n <- length(pvalue_vec)
+  fdr_vec <- stats::p.adjust(pvalue_vec, method = "BH")
+  fdr_idx <- which(fdr_vec <= fdr_threshold)
+
+  true_nonde_idx <- setdiff(1:n, true_de_idx)
+  tpr <- length(intersect(true_de_idx,fdr_idx))/length(true_de_idx)
+  fpr <- length(intersect(true_nonde_idx,fdr_idx))/length(true_nonde_idx)
+
+  c(tpr = tpr, fpr = fpr,
+    len = length(fdr_idx),
+    intersection = length(intersect(true_de_idx,fdr_idx)))
+}
+
+search_for_point_on_curve <- function(fpr,
+                                      fpr_curve,
+                                      tpr,
+                                      tpr_curve){
+  n <- length(fpr_curve)
+  dist_vec <- (fpr-fpr_curve)^2 + (tpr-tpr_curve)^2
+  idx <- which.min(dist_vec)
+  list(tpr = tpr_curve[idx],
+       fpr = fpr_curve[idx])
+}
+
 ##########################
 
 df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj)
@@ -97,31 +124,60 @@ logpvalue_vec <- sapply(gaussian_teststat, function(x){
   }
 })
 logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
-p <- ncol(obs_mat)
 
 esvd_pvalue <- logpvalue_vec[paste0("gene-", 1:p)]
 esvd_roc <- compute_roc(estimated_teststat_vec = esvd_pvalue,
                         true_de_idx = true_de_idx)
 esvd_roc <- smooth_roc(tpr = esvd_roc$tpr,
                        fpr = esvd_roc$fpr)
+esvd_point <- roc_fdr_point(pvalue_vec = 10^(-esvd_pvalue),
+                            true_de_idx = true_de_idx,
+                            fdr_threshold = 0.1)
+esvd_point <- search_for_point_on_curve(fpr = esvd_point["fpr"],
+                                        fpr_curve = esvd_roc$fpr,
+                                        tpr = esvd_point["tpr"],
+                                        tpr_curve = esvd_roc$tpr)
+esvd_point
 
 deseq_pvalue <- deseq2_res[paste0("gene-", 1:p), "pvalue"]
 deseq2_roc <- compute_roc(estimated_teststat_vec = -log10(deseq_pvalue),
                           true_de_idx = true_de_idx)
 deseq2_roc <- smooth_roc(tpr = deseq2_roc$tpr,
                          fpr = deseq2_roc$fpr)
+deseq2_point <- roc_fdr_point(pvalue_vec = deseq_pvalue,
+                              true_de_idx = true_de_idx,
+                              fdr_threshold = 0.1)
+deseq2_point <- search_for_point_on_curve(fpr = deseq2_point["fpr"],
+                                          fpr_curve = deseq2_roc$fpr,
+                                          tpr = deseq2_point["tpr"],
+                                          tpr_curve = deseq2_roc$tpr)
+deseq2_point
 
 sctransform_pvalue <- de_result[paste0("gene-", 1:p), "p_val"]
 sctransform_roc <- compute_roc(estimated_teststat_vec = -log10(sctransform_pvalue),
                                true_de_idx = true_de_idx)
 sctransform_roc <- smooth_roc(tpr = sctransform_roc$tpr,
                               fpr = sctransform_roc$fpr)
+sctransform_point <- roc_fdr_point(pvalue_vec = sctransform_pvalue,
+                                   true_de_idx = true_de_idx,
+                                   fdr_threshold = 0.1)
+sctransform_point <- search_for_point_on_curve(fpr = sctransform_point["fpr"],
+                                               fpr_curve = sctransform_roc$fpr,
+                                               tpr = sctransform_point["tpr"],
+                                               tpr_curve = sctransform_roc$tpr)
 
 mast_pvalue <- mast_pval_glmer[paste0("gene-", 1:p)]
 mast_roc <- compute_roc(estimated_teststat_vec = -log10(mast_pval_glmer),
                         true_de_idx = true_de_idx)
 mast_roc <- smooth_roc(tpr = mast_roc$tpr,
                        fpr = mast_roc$fpr)
+mast_point <- roc_fdr_point(pvalue_vec = mast_pval_glmer,
+                            true_de_idx = true_de_idx,
+                            fdr_threshold = 0.1)
+mast_point <- search_for_point_on_curve(fpr = mast_point["fpr"],
+                                        fpr_curve = mast_roc$fpr,
+                                        tpr = mast_point["tpr"],
+                                        tpr_curve = mast_roc$tpr)
 
 ##################
 
@@ -138,11 +194,29 @@ plot(NA, xlim = c(0,1), ylim = c(0,1), asp = T,
      xaxt = "n", yaxt = "n", bty = "n",
      cex.lab = 1.25, type = "n",
      xlab = "", ylab = "")
-points(sctransform_roc$fpr, sctransform_roc$tpr, col = blue_col, pch = 16)
-points(mast_roc$fpr, mast_roc$tpr, col = purple_col, pch = 16)
-points(deseq2_roc$fpr, deseq2_roc$tpr, col = yellow_col, pch = 16)
-points(esvd_roc$fpr, esvd_roc$tpr, col = orange_col, pch = 16)
+lines(sctransform_roc$fpr, sctransform_roc$tpr, col = blue_col, lwd = 4)
+lines(mast_roc$fpr, mast_roc$tpr, col = purple_col, lwd = 4)
+lines(deseq2_roc$fpr, deseq2_roc$tpr, col = yellow_col, lwd = 4)
+lines(esvd_roc$fpr, esvd_roc$tpr, col = orange_col, lwd = 4)
+
 lines(c(0,1), c(0,1), col = 1, lwd = 2, lty = 2)
+
+points(sctransform_point$fpr, sctransform_point$tpr, col = "black", pch = 16, cex = 3)
+points(sctransform_point$fpr, sctransform_point$tpr, col = "white", pch = 16, cex = 2.5)
+points(sctransform_point$fpr, sctransform_point$tpr, col = blue_col, pch = 16, cex = 2)
+
+points(mast_point$fpr, mast_point$tpr, col = "black", pch = 16, cex = 3)
+points(mast_point$fpr, mast_point$tpr, col = "white", pch = 16, cex = 2.5)
+points(mast_point$fpr, mast_point$tpr, col = purple_col, pch = 16, cex = 2)
+
+points(deseq2_point$fpr, deseq2_point$tpr, col = "black", pch = 16, cex = 3)
+points(deseq2_point$fpr, deseq2_point$tpr, col = "white", pch = 16, cex = 2.5)
+points(deseq2_point$fpr, deseq2_point$tpr, col = yellow_col, pch = 16, cex = 2)
+
+points(esvd_point$fpr, esvd_point$tpr, col = "black", pch = 16, cex = 3)
+points(esvd_point$fpr, esvd_point$tpr, col = "white", pch = 16, cex = 2.5)
+points(esvd_point$fpr, esvd_point$tpr, col = orange_col, pch = 16, cex = 2)
+
 axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 graphics.off()

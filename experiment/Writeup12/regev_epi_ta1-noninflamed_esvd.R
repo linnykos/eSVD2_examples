@@ -52,7 +52,7 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates[,-grep("Sample", colnames(covariates))],
+                                    covariates = covariates,
                                     case_control_variable = "Subject_Disease_Colitis",
                                     bool_intercept = T,
                                     k = 15,
@@ -62,10 +62,12 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     verbose = 1)
 time_end1 <- Sys.time()
 
+omitted_variables <- colnames(eSVD_obj$covariates)[c(grep("^Sample_N", colnames(eSVD_obj$covariates)),
+                                                     grep("^Subject_Location", colnames(eSVD_obj$covariates)))]
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   input_obj = eSVD_obj,
   fit_name = "fit_Init",
-  omitted_variables = "Log_UMI"
+  omitted_variables = c("Log_UMI", omitted_variables)
 )
 
 print("First fit")
@@ -83,7 +85,7 @@ time_end2 <- Sys.time()
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   input_obj = eSVD_obj,
   fit_name = "fit_First",
-  omitted_variables = "Log_UMI"
+  omitted_variables = c("Log_UMI", omitted_variables)
 )
 
 print("Second fit")

@@ -1,7 +1,7 @@
 rm(list=ls())
 library(Seurat)
 
-load("../eSVD2_examples/simulation/simulation_1_esvd.RData")
+load("../../out/simulation/simulation_1_esvd.RData")
 
 nat_mat1 <- tcrossprod(eSVD_obj[["fit_Second"]]$x_mat, eSVD_obj[["fit_Second"]]$y_mat)
 nat_mat2 <- tcrossprod(eSVD_obj$covariates[,"cc_1"], eSVD_obj[["fit_Second"]]$z_mat[,"cc_1"])

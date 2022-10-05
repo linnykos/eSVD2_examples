@@ -27,6 +27,8 @@ fdr_vec <- locfdr_res$fdr
 names(fdr_vec) <- names(gaussian_teststat)
 null_mean <- locfdr_res$fp0["mlest", "delta"]
 null_sd <- locfdr_res$fp0["mlest", "sigma"]
+# null_mean <- mean(gaussian_teststat)
+# null_sd <- sd(mean(gaussian_teststat))
 esvd_logpvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {
     Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
