@@ -103,7 +103,7 @@ time_end3 <- Sys.time()
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   input_obj = eSVD_obj,
   fit_name = "fit_Second",
-  omitted_variables = numeric(0)
+  omitted_variables = omitted_variables
 )
 
 print("Nuisance estimation")
