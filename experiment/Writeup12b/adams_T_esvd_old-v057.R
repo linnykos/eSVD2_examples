@@ -25,18 +25,15 @@ time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariates,
                                     case_control_variable = "Disease_Identity_IPF",
-                                    bool_intercept = T,
                                     k = 15,
                                     lambda = 0.1,
-                                    metadata_case_control = covariates[,"Disease_Identity_IPF"],
-                                    metadata_individual = covariate_df[,"Subject_Identity"],
                                     verbose = 1)
 time_end1 <- Sys.time()
 
 
 omitted_variables <- colnames(eSVD_obj$covariates)[grep("Subject_Identity", colnames(eSVD_obj$covariates))]
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  input_obj = eSVD_obj,
+  eSVD_obj = eSVD_obj,
   fit_name = "fit_Init",
   omitted_variables = c("Log_UMI", omitted_variables)
 )
@@ -54,7 +51,7 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end2 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  input_obj = eSVD_obj,
+  eSVD_obj = eSVD_obj,
   fit_name = "fit_First",
   omitted_variables = c("Log_UMI", omitted_variables)
 )
@@ -72,39 +69,47 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end3 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  input_obj = eSVD_obj,
+  eSVD_obj = eSVD_obj,
   fit_name = "fit_Second",
   omitted_variables = omitted_variables
 )
 
 print("Nuisance estimation")
 time_start4 <- Sys.time()
+eSVD_obj2 <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
+                                       bool_covariates_as_library = T,
+                                       bool_library_includes_interept = T,
+                                       bool_use_log = T,
+                                       verbose = 1)
+log_nuisance <- eSVD_obj$fit_Second$nuisance_vec
+time_end4 <- Sys.time()
+
+time_start4b <- Sys.time()
 eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       bool_covariates_as_library = T,
                                       bool_library_includes_interept = T,
                                       bool_use_log = F,
                                       verbose = 1)
-time_end4 <- Sys.time()
+time_end4b <- Sys.time()
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
-                                      alpha_max = NULL,
-                                      bool_covariates_as_library = T,
-                                      bool_stabilize_underdispersion = F,
-                                      library_min = 1,
-                                      pseudocount = 1)
-
+                                      bool_covariates_as_library = T)
+metadata <- adams@meta.data
+metadata[,"Subject_Identity"] <- as.factor(metadata[,"Subject_Identity"])
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
+                                           covariate_individual = "Subject_Identity",
+                                           metadata = metadata,
                                            verbose = 1)
 time_end5 <- Sys.time()
 
 save(date_of_run, session_info, adams,
-     eSVD_obj,
+     eSVD_obj, log_nuisance,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
+     time_start4b, time_end4b,
      time_start5, time_end5,
-     file = "../../../../out/Writeup12b/adams_T_esvd.RData")
-
+     file = "../../../../out/Writeup12b/adams_T_esvd_old-v057.RData")
 
 

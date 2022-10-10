@@ -3,7 +3,7 @@ library(Seurat)
 library(eSVD2)
 library(Rmpfr)
 
-load("../../../../out/Writeup12/adams_T_esvd.RData")
+load("../../../../out/Writeup12b/adams_T_esvd.RData")
 date_of_run
 
 set.seed(10)
@@ -54,10 +54,8 @@ gaussian_teststat <- sapply(1:p, function(j){
 locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
 fdr_vec <- locfdr_res$fdr
 names(fdr_vec) <- names(gaussian_teststat)
-# null_mean <- locfdr_res$fp0["mlest", "delta"]
-# null_sd <- locfdr_res$fp0["mlest", "sigma"]
-null_mean <- mean(gaussian_teststat)
-null_sd <- sd(gaussian_teststat)
+null_mean <- locfdr_res$fp0["mlest", "delta"]
+null_sd <- locfdr_res$fp0["mlest", "sigma"]
 logpvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {
     Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
@@ -100,7 +98,7 @@ purple_col <- rgb(122, 49, 126, maxColorValue = 255)
 green_col <- rgb(70, 177, 70, maxColorValue = 255)
 green_col_trans <- rgb(70, 177, 70, 255*.35, maxColorValue = 255)
 
-png("../../../../out/fig/Writeup12/adams_T_volcano.png",
+png("../../../../out/fig/Writeup12b/adams_T_volcano.png",
     height = 2500, width = 2500,
     units = "px", res = 500)
 par(mar = c(3,3,0.4,0.1))
@@ -130,7 +128,7 @@ axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
 lines(x = rep(0, 2), y = c(-10,100), lwd = 1.5, lty = 3, col = 1)
 graphics.off()
 
-png("../../../../out/fig/Writeup12/adams_T_volcano-stats.png",
+png("../../../../out/fig/Writeup12b/adams_T_volcano-stats.png",
     height = 2500, width = 2500,
     units = "px", res = 500)
 plot(x = 1:10, y = 1:10, type = "n",
