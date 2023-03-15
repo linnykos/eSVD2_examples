@@ -277,7 +277,8 @@ fisher
 
 x_vec <- log2(eSVD_obj_noninflamed$case_mean) - log2(eSVD_obj_noninflamed$control_mean)
 xlim <- range(x_vec) # quantile(x_vec, probs = c(0.01,0.99))
-xlim <- c(-1,1)*max(abs(xlim))
+# xlim <- c(-1,1)*max(abs(xlim))
+xlim <- c(-3.1,3.1)
 y_vec <- abs(eSVD_obj_noninflamed$teststat_vec)
 ylim <- range(y_vec)
 

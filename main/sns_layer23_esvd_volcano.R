@@ -91,14 +91,21 @@ m <- length(sfari_genes)
 n <- length(gaussian_teststat) - m
 k <- length(selected_genes)
 x <- length(intersect(selected_genes, c(sfari_genes)))
-fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
+m;k;x
+fisher <- sum(sapply(x:k, function(i){
+  stats::dhyper(x = i, m = m, n = n, k = k, log = F)
+}))
 fisher
 
 m <- length(bulk_de_genes)
 n <- length(gaussian_teststat) - m
 k <- length(selected_genes)
 x <- length(intersect(selected_genes, c(bulk_de_genes)))
-fisher <- stats::dhyper(x = x, m = m, n = n, k = k, log = F)
+m;k;x
+m*(k/length(gaussian_teststat))
+fisher <- sum(sapply(x:k, function(i){
+  stats::dhyper(x = i, m = m, n = n, k = k, log = F)
+}))
 fisher
 
 quantile(logpvalue_vec[intersect(sfari_genes, colnames(eSVD_obj$dat))])

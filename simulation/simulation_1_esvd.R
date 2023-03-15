@@ -1,7 +1,7 @@
 rm(list=ls())
 library(Seurat)
 
-load("../eSVD2_examples/simulation/simulation_1.RData")
+load("../../out/simulation/simulation_1.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
