@@ -1,7 +1,7 @@
 rm(list=ls())
 
 library(Seurat)
-load("../../../../out/main/habermann_T_preprocessed.RData")
+load("../../../../out/main/habermann_Macrophage_preprocessed.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -103,7 +103,7 @@ save(date_of_run, session_info, habermann,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,
      time_start5, time_end5,
-     file = "../../../../out/Writeup13/habermann_T_esvd.RData")
+     file = "../../../../out/Writeup13/habermann_Macrophage_esvd.RData")
 
 
 
