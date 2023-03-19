@@ -2,7 +2,7 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../../../../out/main/regevImm_macro-inflamed_esvd.RData")
+load("../../../../out/main/regevImm_macro_preprocessed.RData")
 # table(regevImm$Subject, regevImm$Sample_Health)
 # table(regevImm$Subject, regevImm$Subject_Disease)
 

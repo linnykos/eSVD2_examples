@@ -2,7 +2,7 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../../../../out/main/regevEpi_cyclingta-inflamed_esvd.RData")
+load("../../../../out/main/regevEpi_cyclingta_preprocessed.RData")
 # table(regevEpi$Subject, regevEpi$Sample_Health)
 # table(regevEpi$Subject, regevEpi$Subject_Disease)
 
