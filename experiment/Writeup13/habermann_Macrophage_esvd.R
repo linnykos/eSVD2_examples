@@ -7,6 +7,8 @@ set.seed(10)
 date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
+
+Seurat::DefaultAssay(habermann) <- "RNA"
 var_features <- Seurat::VariableFeatures(habermann)
 mat <- Matrix::t(habermann[["RNA"]]@counts[var_features,])
 covariate_dat <- habermann@meta.data[,c("Diagnosis", "Sample_Name", "Gender",
