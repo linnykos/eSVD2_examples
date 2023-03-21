@@ -32,7 +32,6 @@ de_genes_others <- setdiff(de_genes_others, de_genes)
 cycling_genes <- setdiff(cycling_genes, c(de_genes_others, de_genes))
 hk_genes <- setdiff(hk_genes, c(cycling_genes, de_genes_others, de_genes))
 
-# WARNING: SHOULD HAVE CHANGED SO eSVD_obj_habermann AND eSVD_obj_adams HAVE THE SAME GENES
 gene_names <- intersect(names(eSVD_obj_habermann$teststat_vec), names(eSVD_obj_adams$teststat_vec))
 eSVD_obj_adams$teststat_vec <- eSVD_obj_adams$teststat_vec[gene_names]
 eSVD_obj_habermann$teststat_vec <- eSVD_obj_habermann$teststat_vec[gene_names]
