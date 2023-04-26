@@ -2,7 +2,7 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../eSVD2_examples/simulation/simulation_null_5.RData")
+load("../eSVD2_examples/simulation/simulation_null_7.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -23,7 +23,7 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariate[,c("Intercept", "CC", "Log_UMI", "Sex", "Age")],
                                     case_control_variable = "CC",
                                     bool_intercept = T,
-                                    k = 2,
+                                    k = 3,
                                     lambda = 0.1,
                                     metadata_case_control = covariate[,"CC"],
                                     metadata_individual = covariate_df[,"Individual"],
@@ -122,4 +122,4 @@ save(date_of_run, session_info,
      y_mat,
      y_block_assignment,
      z_mat,
-     file = "../eSVD2_examples/simulation/simulation_null_5_esvd.RData")
+     file = "../eSVD2_examples/simulation/simulation_null_7_esvd.RData")
