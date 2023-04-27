@@ -14,17 +14,16 @@ k <- 2
 n <- n_each*s
 
 # form latent variables
-x_mat <- cbind(runif(n, min = -1, max = 1),
-               runif(n, min = -1, max = 1),
-               runif(n, min = -1, max = 1))
+x_mat <- cbind(runif(n, min = -0.1, max = 1),
+               runif(n, min = -0.1, max = 1),
+               runif(n, min = -0.1, max = 1))
 # have a block structure for the y's
 y_block_assignment <- rep(c(1:3), times = ceiling(p/3))[1:p]
-gene_plot_idx <- c(which(y_block_assignment == 1), which(y_block_assignment == 2), which(y_block_assignment == 3))
-
-y_centers <- matrix(c(0.75, 0, 0,
-                      0, 0.75, 0,
-                      0, 0, 0.75), ncol = 3, nrow = 3, byrow = T)
+y_centers <- matrix(c(1.5, 0.1, 0.1,
+                      0.1, 1.5, 0.1,
+                      0.1, 0.1, 1.5), ncol = 3, nrow = 3, byrow = T)
 y_mat <- y_centers[y_block_assignment,] + matrix(rnorm(p*3, mean = 0, sd = 0.1), ncol = 3, nrow = p)
+gene_plot_idx <- c(which(y_block_assignment == 1), which(y_block_assignment == 2), which(y_block_assignment == 3))
 # image(y_mat[gene_plot_idx,])
 
 # form covariates
@@ -43,9 +42,9 @@ covariate <- do.call(rbind, lapply(1:nrow(df), function(i){
 colnames(covariate) <- colnames(df)[1:ncol(df)]
 z_mat <- cbind(rep(0, p), # intercept
                rep(0.1, p), # library
-               c(rep(1,10),rep(0.3, p-10)), # cc
-               rnorm(p, mean = 0.5, sd = 0.2), # sex
-               rnorm(p, mean = 0.5, sd = 0.5)) # age
+               c(rep(1,10),rep(0, p-10)), # cc
+               rnorm(p, mean = 0, sd = 0.2), # sex
+               rnorm(p, mean = 0, sd = 0.5)) # age
 colnames(z_mat) <- colnames(df)[1:(ncol(df)-1)]
 # form nuisance
 set.seed(10)
@@ -88,7 +87,6 @@ for(j in 11:p){
     nat_mat[-case_idx,j] - mean_val_control + mean_val_case
   }
 }
-# image(cor(nat_mat)[gene_plot_idx,gene_plot_idx])
 
 gamma_mat <- matrix(0, nrow = n, ncol = p)
 set.seed(10)
@@ -99,6 +97,7 @@ for(j in 1:p){
     rate = dispersion_vec[j])
 }
 gamma_mat <- pmin(gamma_mat, 50)
+round(quantile(gamma_mat),2)
 
 lib_mat <- tcrossprod(covariate[,c("Intercept", "Log_UMI", "Sex", "Age")], z_mat[,c("Intercept", "Log_UMI", "Sex", "Age")])
 lib_mat <- exp(lib_mat)
@@ -111,7 +110,7 @@ for(j in 1:p){
 }
 covariate[,"Log_UMI"] <- log1p(Matrix::rowSums(obs_mat))
 length(which(obs_mat == 0))/prod(dim(obs_mat))
-# idx <- c(which(y_block_assignment == 1), which(y_block_assignment == 2), which(y_block_assignment == 3)); image(cor(obs_mat)[idx,idx])
+# image(cor(obs_mat)[gene_plot_idx,gene_plot_idx])
 
 rownames(obs_mat) <- paste0("c", 1:nrow(obs_mat))
 colnames(obs_mat) <- paste0("g", 1:ncol(obs_mat))
@@ -142,4 +141,3 @@ Seurat::DimPlot(seurat_obj, reduction = "umap", group.by = "CC")
 Seurat::DimPlot(seurat_obj, reduction = "umap", group.by = "Sex")
 Seurat::DimPlot(seurat_obj, reduction = "umap", group.by = "Individual")
 Seurat::FeaturePlot(seurat_obj, features = "Age")
-
