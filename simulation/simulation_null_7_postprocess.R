@@ -1,8 +1,6 @@
 rm(list=ls())
 load("../eSVD2_examples/simulation/simulation_null_7_esvd.RData")
 
-gene_plot_idx <- c(which(y_block_assignment == 1), which(y_block_assignment == 2), which(y_block_assignment == 3))
-
 plot(eSVD_obj$fit_Second$z_mat[,"CC"])
 plot(eSVD_obj$teststat_vec)
 

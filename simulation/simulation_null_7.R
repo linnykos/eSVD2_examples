@@ -14,16 +14,18 @@ k <- 2
 n <- n_each*s
 
 # form latent variables
-x_mat <- cbind(runif(n, min = -0.1, max = 1),
-               runif(n, min = -0.1, max = 1),
-               runif(n, min = -0.1, max = 1))
+x_mat <- cbind(runif(n, min = -1, max = 1),
+               runif(n, min = -1, max = 1),
+               runif(n, min = -1, max = 1))
 # have a block structure for the y's
 y_block_assignment <- rep(c(1:3), times = ceiling(p/3))[1:p]
-y_centers <- matrix(c(1.5, 0.1, 0.1,
-                      0.1, 1.5, 0.1,
-                      0.1, 0.1, 1.5), ncol = 3, nrow = 3, byrow = T)
+gene_plot_idx <- c(which(y_block_assignment == 1), which(y_block_assignment == 2), which(y_block_assignment == 3))
+
+y_centers <- matrix(c(0.75, 0, 0,
+                      0, 0.75, 0,
+                      0, 0, 0.75), ncol = 3, nrow = 3, byrow = T)
 y_mat <- y_centers[y_block_assignment,] + matrix(rnorm(p*3, mean = 0, sd = 0.1), ncol = 3, nrow = p)
-# image(y_mat[c(which(y_block_assignment == 1), which(y_block_assignment == 2), which(y_block_assignment == 3)),])
+# image(y_mat[gene_plot_idx,])
 
 # form covariates
 # first form the table
@@ -41,9 +43,9 @@ covariate <- do.call(rbind, lapply(1:nrow(df), function(i){
 colnames(covariate) <- colnames(df)[1:ncol(df)]
 z_mat <- cbind(rep(0, p), # intercept
                rep(0.1, p), # library
-               c(rep(1,10),rep(0, p-10)), # cc
-               rnorm(p, mean = 0, sd = 0.2), # sex
-               rnorm(p, mean = 0, sd = 0.5)) # age
+               c(rep(1,10),rep(0.3, p-10)), # cc
+               rnorm(p, mean = 0.5, sd = 0.2), # sex
+               rnorm(p, mean = 0.5, sd = 0.5)) # age
 colnames(z_mat) <- colnames(df)[1:(ncol(df)-1)]
 # form nuisance
 set.seed(10)
@@ -51,7 +53,7 @@ dispersion_vec <- sample(rep(c(0.1, 1, 10), each = ceiling(p/3))[1:p])
 
 # generate data
 nat_mat <- tcrossprod(x_mat, y_mat) + tcrossprod(covariate[,"CC"], z_mat[,"CC"])
-# idx <- c(which(y_block_assignment == 1), which(y_block_assignment == 2), which(y_block_assignment == 3)); image(cor(nat_mat)[idx,idx])
+# image(cor(nat_mat)[gene_plot_idx,gene_plot_idx])
 
 # for each gene, shrink all the cells in an individual to its mean
 cell_individual_list <- lapply(1:s, function(i){which(covariate[,"Individual"] == i)})
@@ -86,6 +88,7 @@ for(j in 11:p){
     nat_mat[-case_idx,j] - mean_val_control + mean_val_case
   }
 }
+# image(cor(nat_mat)[gene_plot_idx,gene_plot_idx])
 
 gamma_mat <- matrix(0, nrow = n, ncol = p)
 set.seed(10)
@@ -96,7 +99,6 @@ for(j in 1:p){
     rate = dispersion_vec[j])
 }
 gamma_mat <- pmin(gamma_mat, 50)
-round(quantile(gamma_mat),2)
 
 lib_mat <- tcrossprod(covariate[,c("Intercept", "Log_UMI", "Sex", "Age")], z_mat[,c("Intercept", "Log_UMI", "Sex", "Age")])
 lib_mat <- exp(lib_mat)
@@ -127,6 +129,7 @@ seurat_obj <- Seurat::RunUMAP(seurat_obj, dims = 1:5)
 save(seurat_obj,
      covariate,
      df,
+     gene_plot_idx,
      obs_mat,
      x_mat,
      y_mat,
