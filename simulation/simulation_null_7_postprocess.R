@@ -4,6 +4,31 @@ load("../eSVD2_examples/simulation/simulation_null_7_esvd.RData")
 plot(eSVD_obj$fit_Second$z_mat[,"CC"])
 plot(eSVD_obj$teststat_vec)
 
+plot(sort(multtest_res$pvalue_vec[-c(1:10)]),
+     seq(0,1,length.out = length(multtest_res$pvalue_vec[-c(1:10)])), asp = T)
+lines(c(0,1), c(0,1), col = 2, lty = 2)
+
+# plot the "naive" p-values
+df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj)
+teststat_vec <- eSVD_obj$teststat_vec
+p <- length(teststat_vec)
+gaussian_teststat <- sapply(1:p, function(j){
+  qnorm(pt(teststat_vec[j], df = df_vec[j]))
+})
+null_mean <- 0; null_sd <- 1
+pvalue_vec <- sapply(gaussian_teststat, function(x){
+  if(x < null_mean) {
+    2*Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = F)
+  } else {
+    2*Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = F)
+  }
+})
+plot(sort(pvalue_vec[-c(1:10)]),
+     seq(0,1,length.out = length(pvalue_vec[-c(1:10)])), asp = T,
+     main = "Mixture-Gaussian Pseudobulk")
+lines(c(0,1), c(0,1), col = 2, lty = 2)
+
+
 # let's see what the heatmap looks like without posterior
 denoised_mat <- tcrossprod(eSVD_obj$fit_Second$x_mat,
                            eSVD_obj$fit_Second$y_mat) +
