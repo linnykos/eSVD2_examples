@@ -25,7 +25,7 @@ control_df_idx <- which(df[,"CC"] == 0)
                                 var_vec){
   perm_mat1 <- cbind(rep(1:length(case_idx), each = length(control_idx)),
                      rep(1:length(control_idx), times = length(case_idx)))
-  dist_vec1 <- sapply(1:nrow(perm_mat), function(j){
+  dist_vec1 <- sapply(1:nrow(perm_mat1), function(j){
     i1 <- case_idx[perm_mat1[j,1]]; i2 <- control_idx[perm_mat1[j,2]]
 
     m1 <- mean_vec[i1]; m2 <- mean_vec[i2]
@@ -87,7 +87,7 @@ control_gaussian_var <- eSVD2:::.compute_mixture_gaussian_variance(
   avg_posterior_mean_mat = avg_posterior_mean_mat[control_df_idx,],
   avg_posterior_var_mat = avg_posterior_var_mat[control_df_idx,]
 )
-# j <- 2; plot(avg_posterior_mean_mat[,j], sqrt(avg_posterior_var_mat[,j]), col = c(rep(1,10),rep(2,10)), pch = 16, asp = T)
+# j <- 264; plot(avg_posterior_mean_mat[,j], sqrt(avg_posterior_var_mat[,j]), col = c(rep(1,10),rep(2,10)), pch = 16, asp = T)
 
 dist_vec2 <- sapply(1:p, function(j){
   .gaussian_distances(case_idx = case_df_idx,

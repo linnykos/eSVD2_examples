@@ -48,7 +48,8 @@ z_mat <- cbind(rep(0, p), # intercept
 colnames(z_mat) <- colnames(df)[1:(ncol(df)-1)]
 # form nuisance
 set.seed(10)
-dispersion_vec <- sample(rep(c(0.1, 1, 10), each = ceiling(p/3))[1:p])
+dispersion_vec <- sample(rep(c(0.5, 1, 10), each = ceiling(p/3))[1:p])
+dispersion_vec[1:10] <- 10
 
 # generate data
 nat_mat <- tcrossprod(x_mat, y_mat) + tcrossprod(covariate[,"CC"], z_mat[,"CC"])
@@ -66,7 +67,7 @@ for(j in 1:p){
 
 # manually force more correlation
 set.seed(10)
-shrink_percentage <- 0.7 # higher means we shrink more. 0.4 "works" but then there is no difference visible
+shrink_percentage <- 0.6 # higher means we shrink more. 0.4 "works" but then there is no difference visible
 for(j in 11:p){
   target_idx <- sample(intersect(1:10, which(y_block_assignment == y_block_assignment[j])),1)
   tmp_df <- data.frame(x = nat_mat[,target_idx], y = nat_mat[,j])
