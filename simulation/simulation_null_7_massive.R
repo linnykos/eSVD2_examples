@@ -9,7 +9,7 @@ date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
 trials <- 1000
-result_list <- rep(NA, trials)
+result_list <- vector("list", trials)
 
 for(i in 1:trials){
   print(i)
