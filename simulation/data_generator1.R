@@ -128,12 +128,11 @@ data_signal_enhancer <- function(input_obj,
   size_addition <- runif(length(subset_case_indivuals), min = 0, max = 2)
   size_multiplier1 <- runif(length(subset_case_indivuals), min = 0, max = 1.5)
 
-  # start be exaggerating the strong signals
   subset_control_indivuals <- sample(control_individuals, round(length(control_individuals)/4))
   size_subtraction <- runif(length(subset_control_indivuals), min = 0, max = 2)
   size_multiplier2 <- runif(length(subset_control_indivuals), min = 0, max = 1.5)
 
-  # start be exaggerating the strong signals
+  # start by exaggerating the strong signals
   gene_idx <- which(gene_labeling2 == "strong-positive")
   for(j in gene_idx){
     for(kk in 1:length(subset_case_indivuals)){

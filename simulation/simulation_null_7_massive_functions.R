@@ -101,12 +101,14 @@ simulation_generate_data <- function(seed){
                                            meta.data = as.data.frame(covariate[,c("CC", "Sex", "Age", "Individual")]))
 
   list(covariate = covariate,
+       df = df,
        seurat_obj = seurat_obj)
 }
 
 ###########################
 
 simulation_run_esvd <- function(covariate,
+                                df,
                                 seurat_obj){
   set.seed(10)
   mat <- Matrix::t(seurat_obj[["RNA"]]@counts)
@@ -191,7 +193,9 @@ simulation_run_esvd <- function(covariate,
   multtest_res <- eSVD2:::multtest(gaussian_teststat)
 
   eSVD_obj$dat <- NULL
-  list(eSVD_obj = eSVD_obj,
+  list(covariate = covariate,
+       df = df,
+       eSVD_obj = eSVD_obj,
        gaussian_teststat = gaussian_teststat,
        multtest_res = multtest_res)
 }
