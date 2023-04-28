@@ -10,8 +10,7 @@ denoised_mat <- tcrossprod(eSVD_obj$fit_Second$x_mat,
   tcrossprod(eSVD_obj$covariates[,"CC"], eSVD_obj$fit_Second$z_mat[,"CC"])
 denoised_mat <- exp(denoised_mat)
 
-par(mfrow = c(1,2)); plot(denoised_mat[,1]); plot(denoised_mat[,11])
-
+par(mfrow = c(1,3)); plot(denoised_mat[,1]); plot(denoised_mat[,11]); plot(denoised_mat[,500])
 
 # plot the "naive" p-values
 null_mean <- 0; null_sd <- 1
