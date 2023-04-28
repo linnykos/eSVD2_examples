@@ -10,16 +10,10 @@ denoised_mat <- tcrossprod(eSVD_obj$fit_Second$x_mat,
   tcrossprod(eSVD_obj$covariates[,"CC"], eSVD_obj$fit_Second$z_mat[,"CC"])
 denoised_mat <- exp(denoised_mat)
 
-# plot(denoised_mat[,1])
+par(mfrow = c(1,2)); plot(denoised_mat[,1]); plot(denoised_mat[,11])
 
 
 # plot the "naive" p-values
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj)
-teststat_vec <- eSVD_obj$teststat_vec
-p <- length(teststat_vec)
-gaussian_teststat <- sapply(1:p, function(j){
-  qnorm(pt(teststat_vec[j], df = df_vec[j]))
-})
 null_mean <- 0; null_sd <- 1
 pvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {
@@ -71,6 +65,7 @@ p <- ncol(mean_denoised)
 gaussian_teststat <- sapply(1:p, function(j){
   qnorm(pt(teststat_vec[j], df = df_vec[j]))
 })
+par(mfrow=c(1,1)); hist(gaussian_teststat)
 null_mean <- 0; null_sd <- 1
 pvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {

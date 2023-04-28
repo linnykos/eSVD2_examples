@@ -43,7 +43,7 @@ covariate <- do.call(rbind, lapply(1:nrow(df), function(i){
 colnames(covariate) <- colnames(df)[1:ncol(df)]
 z_mat <- cbind(rep(0, p), # intercept
                rep(0.1, p), # library
-               c(rep(0.6,10),rep(0, p-10)), # cc
+               c(rep(1,10),rep(0, p-10)), # cc
                rnorm(p, mean = 0, sd = 0.2), # sex
                rnorm(p, mean = 0, sd = 0.5)) # age
 colnames(z_mat) <- colnames(df)[1:(ncol(df)-1)]
@@ -68,7 +68,7 @@ for(j in 1:p){
 
 # add even more variation in the true DE genes that's not explained by the case-control
 nat_mat <- pmin(nat_mat + 1, 5)
-max_add <- 0.5
+max_add <- .75
 case_df_idx <- which(df[,"CC"] == 1)
 control_df_idx <- which(df[,"CC"] == 0)
 cell_individual_list <- lapply(1:max(covariate[,"Individual"]), function(i){which(covariate[,"Individual"] == i)})
@@ -90,15 +90,15 @@ for(j in 1:10){
 }
 
 # manually force more correlation
-set.seed(10)
-shrink_percentage <- 0.8 # higher means we shrink more. 0.4 "works" but then there is no difference visible
-for(j in 11:round(p/2)){
-  target_idx <- sample(intersect(1:10, which(y_block_assignment == y_block_assignment[j])),1)
-  tmp_df <- data.frame(x = nat_mat[,target_idx], y = nat_mat[,j])
-  lm_res <- stats::lm(y ~ x - 1, data = tmp_df)
-  pred_y <- lm_res$fitted.values
-  nat_mat[,j] <- pred_y*shrink_percentage + nat_mat[,j]*(1-shrink_percentage)
-}
+# set.seed(10)
+# shrink_percentage <- 0.8 # higher means we shrink more. 0.4 "works" but then there is no difference visible
+# for(j in 11:round(p/2)){
+#   target_idx <- sample(intersect(1:10, which(y_block_assignment == y_block_assignment[j])),1)
+#   tmp_df <- data.frame(x = nat_mat[,target_idx], y = nat_mat[,j])
+#   lm_res <- stats::lm(y ~ x - 1, data = tmp_df)
+#   pred_y <- lm_res$fitted.values
+#   nat_mat[,j] <- pred_y*shrink_percentage + nat_mat[,j]*(1-shrink_percentage)
+# }
 
 # manually force the off-genes to have no DE
 case_idx <- which(covariate[,"CC"] == 1)
@@ -114,7 +114,7 @@ for(j in 11:p){
 }
 
 # some global shifting and shrinking
-nat_mat <- nat_mat - 1
+nat_mat <- (nat_mat - 0.5)*.6
 
 gamma_mat <- matrix(0, nrow = n, ncol = p)
 set.seed(10)
