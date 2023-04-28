@@ -91,13 +91,16 @@ for(j in 1:10){
 
 # manually force more correlation
 set.seed(10)
-shrink_percentage <- 0.9 # higher means we shrink more. 0.4 "works" but then there is no difference visible
+shrink_percentage <- 0.95 # higher means we shrink more. 0.4 "works" but then there is no difference visible
 for(j in 11:round(p*.3)){
   target_idx <- sample(intersect(1:10, which(y_block_assignment == y_block_assignment[j])),1)
   tmp_df <- data.frame(x = nat_mat[,target_idx], y = nat_mat[,j])
   lm_res <- stats::lm(y ~ x - 1, data = tmp_df)
-  pred_y <- lm_res$fitted.values
-  nat_mat[,j] <- pred_y*shrink_percentage + nat_mat[,j]*(1-shrink_percentage)
+  new_y <- lm_res$fitted.values
+  nat_mat[,j] <- new_y*shrink_percentage + nat_mat[,j]*(1-shrink_percentage)
+}
+for(j in round(p*.3):p){
+  nat_mat[,j] <- runif(n, min = -.1, max = .1)
 }
 
 # manually force the off-genes to have no DE
