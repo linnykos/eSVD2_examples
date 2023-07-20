@@ -23,7 +23,7 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariate[,c("Intercept", "CC", "Log_UMI", "Sex", "Age")],
                                     case_control_variable = "CC",
                                     bool_intercept = T,
-                                    k = 5,
+                                    k = 10,
                                     lambda = 0.1,
                                     metadata_case_control = covariate[,"CC"],
                                     metadata_individual = covariate_df[,"Individual"],
@@ -83,16 +83,16 @@ eSVD_obj <- eSVD2:::estimate_nuisance(input_obj = eSVD_obj,
                                       min_val = 1e-4,
                                       verbose = 1)
 time_end4 <- Sys.time()
-eSVD_obj$fit_Second$nuisance_vec[is.na(eSVD_obj$fit_Second$nuisance_vec)] <- 0
-eSVD_obj$fit_Second$nuisance_vec[eSVD_obj$fit_Second$nuisance_vec > 1000] <- 0
+eSVD_obj$fit_Second$nuisance_vec[is.na(eSVD_obj$fit_Second$nuisance_vec)] <- 1e-4
+eSVD_obj$fit_Second$nuisance_vec[eSVD_obj$fit_Second$nuisance_vec > 1000] <- 1e-4
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
                                       alpha_max = 200,
                                       bool_covariates_as_library = T,
                                       bool_stabilize_underdispersion = T,
-                                      library_min = 0.1,
-                                      pseudocount = 1)
+                                      library_min = 1,
+                                      pseudocount = 0)
 
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
