@@ -48,20 +48,18 @@ plot(dat[,950], ylim = c(0,5))
 #############################
 
 bool_adjust_covariates = F
-alpha_max = 200
+alpha_max = 100
 bool_covariates_as_library = T
 bool_stabilize_underdispersion = T
-library_min = 0.1
-pseudocount = 1
+bool_library_includes_interept = T
+library_min = 1
+pseudocount = 0
 
 input_obj <- eSVD_obj$dat
 input_obj <- pmax(input_obj, 1)
 case_control_variable <- .get_object(eSVD_obj = eSVD_obj, which_fit = "param", what_obj = "init_case_control_variable")
 library_size_variable <- .get_object(eSVD_obj = eSVD_obj, which_fit = "param", what_obj = "init_library_size_variable")
 bool_library_includes_interept <- .get_object(eSVD_obj = eSVD_obj, which_fit = "param", what_obj = "nuisance_bool_library_includes_interept")
-
-bool_covariates_as_library = T
-bool_library_includes_interept = T
 
 covariates <- eSVD_obj$covariates
 case_control_idx <- which(colnames(covariates) == case_control_variable)
@@ -85,7 +83,6 @@ library_mat <- exp(tcrossprod(
 if(!is.null(library_min)) library_mat <- pmax(library_mat, library_min)
 
 nuisance_vec <- eSVD_obj$fit_Second$nuisance_vec
-nuisance_vec[901:1000] <- 0
 nuisance_lower_quantile = 0.01
 nuisance_vec <- pmax(nuisance_vec,
                      stats::quantile(nuisance_vec, probs = nuisance_lower_quantile))
@@ -94,24 +91,26 @@ if(bool_stabilize_underdispersion & mean(log10(nuisance_vec)) > 0) {
   nuisance_vec <- 10^(scale(log10(nuisance_vec), center = T, scale = F))
 }
 
+mean_mat_nolib <- pmin(mean_mat_nolib, alpha_max)
 Alpha <- sweep(mean_mat_nolib, MARGIN = 2,
                STATS = nuisance_vec, FUN = "*")
-quantile(Alpha[,950])
-plot(Alpha[,950], ylim = c(0,10))
-plot(mean_mat_nolib[,950], ylim = c(0,1e4))
-Alpha <- pmin(Alpha, 200)
+j <- 916
+quantile(Alpha[,j])
+plot(Alpha[,j])
+plot(mean_mat_nolib[,j])
 AplusAlpha <- input_obj + Alpha
-quantile(AplusAlpha[,950])
+quantile(AplusAlpha[,j])
+plot(AplusAlpha[,j])
 
 if(!is.null(alpha_max)) AplusAlpha <- pmin(AplusAlpha, alpha_max)
 
 SplusBeta <- sweep(library_mat, MARGIN = 2,
                    STATS = nuisance_vec, FUN = "+")
-quantile(SplusBeta[,950])
+quantile(SplusBeta[,j])
 posterior_mean_mat <- AplusAlpha/SplusBeta
 posterior_var_mat <- AplusAlpha/SplusBeta^2
 
-j <- 950
+j <- 916
 quantile(AplusAlpha[,j])
 quantile(SplusBeta[,j])
 
@@ -167,5 +166,6 @@ n2 <- length(control_individuals)
 teststat_vec <- (case_gaussian_mean - control_gaussian_mean) /
   (sqrt(case_gaussian_var/n1 + control_gaussian_var/n2))
 names(teststat_vec) <- colnames(posterior_mean_mat)
+j <- 916
 teststat_vec[j]
 

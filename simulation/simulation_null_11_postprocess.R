@@ -4,29 +4,27 @@ load("../eSVD2_examples/simulation/simulation_null_11_esvd.RData")
 plot(eSVD_obj$fit_Second$z_mat[,"CC"])
 plot(eSVD_obj$teststat_vec)
 
+eSVD_obj$fit_Second$z_mat[30,"CC"]
+eSVD_obj$fit_Second$z_mat[30,]
+table(eSVD_obj$covariates[,"CC"])
+
 # let's see what the heatmap looks like without posterior
 denoised_mat <- tcrossprod(eSVD_obj$fit_Second$x_mat,
                            eSVD_obj$fit_Second$y_mat) +
   tcrossprod(eSVD_obj$covariates[,"CC"], eSVD_obj$fit_Second$z_mat[,"CC"])
 denoised_mat <- exp(denoised_mat)
+par(mfrow = c(1,3)); plot(denoised_mat[,1]); plot(denoised_mat[,12]); plot(denoised_mat[,916])
 
-par(mfrow = c(1,3)); plot(denoised_mat[,1]); plot(denoised_mat[,30]); plot(denoised_mat[,500])
+full_mat <- tcrossprod(eSVD_obj$fit_Second$x_mat,
+                           eSVD_obj$fit_Second$y_mat) +
+  tcrossprod(eSVD_obj$covariates, eSVD_obj$fit_Second$z_mat)
+full_mat <- exp(full_mat)
+par(mfrow = c(1,3)); plot(full_mat[,1]); plot(full_mat[,30]); plot(full_mat[,500])
 
-# plot the "naive" p-values
-null_mean <- 0; null_sd <- 1
-pvalue_vec <- sapply(gaussian_teststat, function(x){
-  if(x < null_mean) {
-    2*Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = F)
-  } else {
-    2*Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = F)
-  }
-})
-plot(sort(pvalue_vec[-c(1:10)]),
-     seq(0,1,length.out = length(pvalue_vec[-c(1:10)])), asp = T,
-     main = "eSVD pvalues without correction")
-lines(c(0,1), c(0,1), col = 2, lty = 2)
-
-hist(pvalue_vec[-c(1:10)], breaks = 50)
+residual_mat <- tcrossprod(eSVD_obj$fit_Second$x_mat,
+                           eSVD_obj$fit_Second$y_mat)
+# residual_mat <- exp(residual_mat)
+par(mfrow = c(1,3)); plot(residual_mat[,1]); plot(residual_mat[,30]); plot(residual_mat[,500])
 
 ##################################################################
 ##################################################################
@@ -56,7 +54,7 @@ control_gaussian_var <- eSVD2:::.compute_mixture_gaussian_variance(
 )
 teststat_vec <- (case_gaussian_mean - control_gaussian_mean) /
   (sqrt(case_gaussian_var/n1 + control_gaussian_var/n2))
-plot(teststat_vec)
+# plot(teststat_vec)
 
 numerator_vec <- (case_gaussian_var/n1 + control_gaussian_var/n2)^2
 denominator_vec <- (case_gaussian_var/n1)^2/(n1-1) + (control_gaussian_var/n2)^2/(n2-1)
@@ -65,7 +63,7 @@ p <- ncol(mean_denoised)
 gaussian_teststat <- sapply(1:p, function(j){
   qnorm(pt(teststat_vec[j], df = df_vec[j]))
 })
-par(mfrow=c(1,1)); hist(gaussian_teststat)
+# par(mfrow=c(1,1)); hist(gaussian_teststat)
 null_mean <- 0; null_sd <- 1
 pvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {
@@ -88,5 +86,29 @@ plot(sort(res2$pvalue_vec[-c(1:10)]),
      main = "Mixture-Gaussian Pseudobulk, Multtest")
 lines(c(0,1), c(0,1), col = 2, lty = 2)
 
+plot(-log10(res2$pvalue_vec+1e-6))
 hist(res2$pvalue_vec[-c(1:10)], breaks = 50)
 hist(multtest_res$pvalue_vec[-c(1:10)], breaks = 50)
+
+plot(multtest_res$pvalue_vec[-c(1:10)],
+     res2$pvalue_vec[-c(1:10)],
+     pch = 16,
+     col = grDevices::colorRampPalette(c("red", "blue"))(990))
+
+plot(multtest_res$pvalue_vec[11:50],
+     res2$pvalue_vec[11:50],
+     pch = 16,
+     col = grDevices::colorRampPalette(c("red", "blue"))(40))
+
+plot(multtest_res$pvalue_vec[901:1000],
+     res2$pvalue_vec[901:1000],
+     pch = 16,
+     col = grDevices::colorRampPalette(c("red", "blue"))(100),
+     xlim = c(0,1), ylim = c(0,1))
+
+plot(eSVD_obj$teststat_vec[-c(1:10)],
+     gaussian_teststat[-c(1:10)],
+     pch = 16,
+     col = grDevices::colorRampPalette(c("red", "blue"))(990),
+     xlim = c(0,1), ylim = c(0,1))
+

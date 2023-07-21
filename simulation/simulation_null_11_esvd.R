@@ -23,7 +23,7 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     covariates = covariate[,c("Intercept", "CC", "Log_UMI", "Sex", "Age")],
                                     case_control_variable = "CC",
                                     bool_intercept = T,
-                                    k = 10,
+                                    k = 2,
                                     lambda = 0.1,
                                     metadata_case_control = covariate[,"CC"],
                                     metadata_individual = covariate_df[,"Individual"],
@@ -88,7 +88,7 @@ eSVD_obj$fit_Second$nuisance_vec[eSVD_obj$fit_Second$nuisance_vec > 1000] <- 1e-
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
-                                      alpha_max = 200,
+                                      alpha_max = 100,
                                       bool_covariates_as_library = T,
                                       bool_stabilize_underdispersion = T,
                                       library_min = 1,
@@ -108,21 +108,6 @@ gaussian_teststat <- sapply(1:p, function(j){
 
 multtest_res <- eSVD2:::multtest(gaussian_teststat)
 
-multtest_res$method
-c(multtest_res$null_mean, multtest_res$null_sd)
-hist(gaussian_teststat[-c(1:10)], breaks = 50)
-# quantile(gaussian_teststat[1:10])
-
-eSVD_obj$fit_Second$nuisance_vec[901:1000]
-plot(gaussian_teststat[-c(1:10)])
-
-plot(sort(multtest_res$pvalue_vec[-c(1:10)]),
-     seq(0,1,length.out = length(multtest_res$pvalue_vec[-c(1:10)])), asp = T)
-lines(c(0,1), c(0,1), col = 2, lty = 2)
-
-# image(eSVD_obj$fit_Second$y_mat[gene_plot_idx,])
-plot(jitter(dispersion_vec), eSVD_obj$fit_Second$nuisance_vec, col = rgb(0.5,0.5,0.5,0.5), pch = 16)
-
 save(date_of_run, session_info,
      seurat_obj, eSVD_obj,
      gaussian_teststat, multtest_res,
@@ -135,3 +120,32 @@ save(date_of_run, session_info,
      y_block_assignment,
      z_mat,
      file = "../eSVD2_examples/simulation/simulation_null_11_esvd.RData")
+
+##########################
+
+multtest_res$method
+c(multtest_res$null_mean, multtest_res$null_sd)
+hist(gaussian_teststat[-c(1:10)], breaks = 50)
+# quantile(gaussian_teststat[1:10])
+gaussian_teststat[916]
+multtest_res$pvalue_vec[916]
+
+eSVD_obj$fit_Second$nuisance_vec[901:1000]
+eSVD_obj$fit_Second$nuisance_vec[916]
+plot(eSVD_obj$dat[,916])
+plot(gaussian_teststat[-c(1:10)])
+plot(multtest_res$pvalue_vec[-c(1:10)])
+hist(multtest_res$pvalue_vec[-c(1:10)], breaks = 50)
+
+plot(-log10(multtest_res$pvalue_vec[-c(1:10)]),
+     eSVD_obj$fit_Second$nuisance_vec[-c(1:10)])
+
+plot(sort(multtest_res$pvalue_vec[-c(1:10)]),
+     seq(0,1,length.out = length(multtest_res$pvalue_vec[-c(1:10)])), asp = T)
+lines(c(0,1), c(0,1), col = 2, lty = 2)
+
+multtest_res$pvalue_vec[30]
+plot(-log10(multtest_res$pvalue_vec+1e-6))
+
+# image(eSVD_obj$fit_Second$y_mat[gene_plot_idx,])
+plot(jitter(dispersion_vec), eSVD_obj$fit_Second$nuisance_vec, col = rgb(0.5,0.5,0.5,0.5), pch = 16)

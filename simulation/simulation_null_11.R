@@ -120,6 +120,7 @@ for(j in 11:p){
 
 # some global shifting and shrinking
 nat_mat[,(round(p*.3)+1):p] <- (nat_mat[,(round(p*.3)+1):p] - 0.5)*.6
+nat_mat <- nat_mat - 1
 
 gamma_mat <- matrix(0, nrow = n, ncol = p)
 set.seed(10)
@@ -141,6 +142,7 @@ for(j in 1:p){
                               lambda = lib_mat[,j]*gamma_mat[,j])
 }
 covariate[,"Log_UMI"] <- log1p(Matrix::rowSums(obs_mat))
+obs_mat[,901:1000] <- pmin(obs_mat[,901:1000], 10)
 length(which(obs_mat == 0))/prod(dim(obs_mat))
 # image(cor(obs_mat)[gene_plot_idx,gene_plot_idx])
 
