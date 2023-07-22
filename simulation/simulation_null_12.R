@@ -27,16 +27,16 @@ covariate <- do.call(rbind, lapply(1:nrow(df), function(i){
   matrix(rep(df[i,], each = n_each), nrow = n_each, ncol = ncol(df))
 }))
 colnames(covariate) <- colnames(df)[1:ncol(df)]
-# z_mat <- cbind(rep(0, p), # intercept
-#                rep(0.1, p), # library
-#                c(rep(0.8,10),rep(0, p-10)), # cc
-#                rnorm(p, mean = 0, sd = 0.2), # sex
-#                rnorm(p, mean = 0, sd = 0.5)) # age
 z_mat <- cbind(rep(0, p), # intercept
-               rep(0, p), # library
-               rep(0, p), # cc
-               rep(0, p), # sex
-               rep(0, p)) # age
+               rep(0.1, p), # library
+               c(rep(0.8,10),rep(0, p-10)), # cc
+               rnorm(p, mean = 0, sd = 0.2), # sex
+               rnorm(p, mean = 0, sd = 0.5)) # age
+# z_mat <- cbind(rep(0, p), # intercept
+#                rep(0, p), # library
+#                rep(0, p), # cc
+#                rep(0, p), # sex
+#                rep(0, p)) # age
 colnames(z_mat) <- colnames(df)[1:(ncol(df)-1)]
 
 # form nuisance
@@ -94,8 +94,8 @@ for(j in gene_idx){
 # set null large variance
 set.seed(10)
 gene_idx <- which(gene_type == "null_large_var")
-cc_diff <- 0.5
-indiv_sd <- 1
+cc_diff <- 0.2
+indiv_sd <- 1.5
 group_sd <- 0.01
 min_mean <- 0
 max_mean <- 2
@@ -106,18 +106,20 @@ for(j in gene_idx){
   control_mean <- case_mean + sign_val*cc_diff
 
   for(indiv in case_indiv){
-    tmp <- abs(stats::rnorm(1, mean = 0, sd = group_sd))
-    mean_val <- case_mean - tmp
-    print(paste0("Case mean: ", round(mean_val, 2)))
+    mean_val <- stats::rnorm(1, mean = case_mean, sd = group_sd)
+    # tmp <- abs(stats::rnorm(1, mean = 0, sd = group_sd))
+    # mean_val <- case_mean - tmp
+    # print(paste0("Case mean: ", round(mean_val, 2)))
     nat_mat[ind_idx[[indiv]],j] <- stats::rnorm(length(ind_idx[[indiv]]),
                                                 mean = mean_val,
                                                 sd = indiv_sd)
   }
 
   for(indiv in control_indiv){
-    tmp <- abs(stats::rnorm(1, mean = 0, sd = group_sd))
-    mean_val <- control_mean + tmp
-    print(paste0("Control mean: ", round(mean_val, 2)))
+    mean_val <- stats::rnorm(1, mean = control_mean, sd = group_sd)
+    # tmp <- abs(stats::rnorm(1, mean = 0, sd = group_sd))
+    # mean_val <- control_mean + tmp
+    # print(paste0("Control mean: ", round(mean_val, 2)))
     nat_mat[ind_idx[[indiv]],j] <- stats::rnorm(length(ind_idx[[indiv]]),
                                                 mean = mean_val,
                                                 sd = indiv_sd)

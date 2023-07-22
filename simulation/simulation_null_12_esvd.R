@@ -113,7 +113,6 @@ save(date_of_run, session_info,
      gaussian_teststat, multtest_res,
      covariate,
      df,
-     dispersion_vec,
      file = "../eSVD2_examples/simulation/simulation_null_12_esvd.RData")
 
 ##########################

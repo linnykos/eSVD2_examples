@@ -10,7 +10,6 @@ date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
 mat <- as.matrix(seurat_obj[["RNA"]]@counts)
-# mat <- t(exp(nat_mat))
 categorical_var <- c("Sex", "Individual", "CC")
 numerical_var <- c("Age")
 metadata <- seurat_obj@meta.data[,c(categorical_var, numerical_var)]
@@ -35,7 +34,6 @@ rownames(metadata_pseudobulk) <- unique_superstring
 for(superstring in unique_superstring){
   idx <- which(superstring_vec == superstring)
   mat_pseudobulk[,superstring] <- Matrix::rowSums(mat[,idx])
-  # mat_pseudobulk[,superstring] <- round(1000*Matrix::rowMeans(mat[,idx]))
 
   for(vr in categorical_var){
     metadata_pseudobulk[superstring, vr] <- as.character(unique(metadata[idx,vr]))
@@ -72,6 +70,9 @@ names(pvalue_vec) <- rownames(deseq2_res)
 plot(sort(pvalue_vec[-c(1:10)]),
      seq(0,1,length.out = length(pvalue_vec[-c(1:10)])), asp = T)
 lines(c(0,1), c(0,1), col = 2, lty = 2)
+
+hist(pvalue_vec[seq(11,1000,by=2)])
+hist(pvalue_vec[seq(12,1000,by=2)])
 
 save(deseq2_res,
      pvalue_vec,
