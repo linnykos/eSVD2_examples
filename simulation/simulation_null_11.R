@@ -18,14 +18,9 @@ x_mat <- cbind(runif(n, min = 0, max = 1),
                runif(n, min = 0, max = 1))
 # have a block structure for the y's
 y_block_assignment <- rep(c(1:3), times = ceiling(p/3))[1:p]
-# y_centers <- matrix(c(1, 0.9, 0.9,
-#                       0.9, 1, 0.9,
-#                       0.9, 0.9, 1), ncol = 3, nrow = 3, byrow = T)
-# y_mat <- y_centers[y_block_assignment,] + matrix(rnorm(p*3, mean = 0, sd = 0.1), ncol = 3, nrow = p)
 y_mat <- cbind(runif(p, min = 0, max = 1),
                runif(p, min = 0, max = 1))
 gene_plot_idx <- c(which(y_block_assignment == 1), which(y_block_assignment == 2), which(y_block_assignment == 3))
-# image(y_mat[gene_plot_idx,])
 
 # form covariates
 # first form the table
@@ -51,12 +46,9 @@ colnames(z_mat) <- colnames(df)[1:(ncol(df)-1)]
 set.seed(10)
 dispersion_vec <- sample(rep(c(10, 1, 0.1), each = ceiling(p/3))[1:p])
 dispersion_vec[1:10] <- 1
-target_null_genes <- (round(p*.9)+1):p
-dispersion_vec[target_null_genes] <- 0.001
 
 # generate data
 nat_mat <- tcrossprod(x_mat, y_mat) + tcrossprod(covariate[,"CC"], z_mat[,"CC"])
-# image(cor(nat_mat)[gene_plot_idx,gene_plot_idx])
 
 # for each gene, shrink all the cells in an individual to its mean
 cell_individual_list <- lapply(1:s, function(i){which(covariate[,"Individual"] == i)})
@@ -142,18 +134,7 @@ for(j in 1:p){
                               lambda = lib_mat[,j]*gamma_mat[,j])
 }
 covariate[,"Log_UMI"] <- log1p(Matrix::rowSums(obs_mat))
-obs_mat[,901:1000] <- pmin(obs_mat[,901:1000], 10)
 length(which(obs_mat == 0))/prod(dim(obs_mat))
-# image(cor(obs_mat)[gene_plot_idx,gene_plot_idx])
-
-# randomly downsample some of the null genes
-# n <- nrow(obs_mat)
-# set.seed(10)
-# for(j in target_null_genes){
-#   cell_idx <- sample(1:n, round(.5*n))
-#   obs_mat[cell_idx,j] <- 0
-# }
-# length(which(obs_mat == 0))/prod(dim(obs_mat))
 
 rownames(obs_mat) <- paste0("c", 1:nrow(obs_mat))
 colnames(obs_mat) <- paste0("g", 1:ncol(obs_mat))
@@ -178,7 +159,6 @@ save(seurat_obj,
      y_mat,
      z_mat,
      y_block_assignment,
-     target_null_genes,
      date_of_run, session_info,
      file = "../eSVD2_examples/simulation/simulation_null_11.RData")
 
