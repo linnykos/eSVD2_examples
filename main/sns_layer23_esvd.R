@@ -96,8 +96,8 @@ eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       alpha_max = NULL,
                                       bool_covariates_as_library = T,
                                       bool_stabilize_underdispersion = T,
-                                      library_min = 1,
-                                      pseudocount = 1)
+                                      library_min = 0.1,
+                                      pseudocount = 0)
 
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,

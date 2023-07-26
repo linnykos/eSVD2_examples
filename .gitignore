@@ -1,4 +1,6 @@
 error_reports/2021-12-05_nuisance.RData
+*.RData
+.RData
 *verbose*.txt
 *.tar.gz
 *.Rproj.user*

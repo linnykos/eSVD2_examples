@@ -28,8 +28,8 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates[,-which(colnames(covariates) == "diagnosis_ASD")],
-                                    case_control_variable = NULL,
+                                    covariates = covariates[,-grep("individual", colnames(covariates))],
+                                    case_control_variable = "diagnosis_ASD",
                                     bool_intercept = T,
                                     k = 30,
                                     lambda = 0.1,
@@ -38,11 +38,10 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     verbose = 1)
 time_end1 <- Sys.time()
 
-omitted_variables <- colnames(eSVD_obj$covariates)[c(grep("individual", colnames(eSVD_obj$covariates)),
-                                                     grep("Seqbatch", colnames(eSVD_obj$covariates)),
+omitted_variables <- colnames(eSVD_obj$covariates)[c(grep("Seqbatch", colnames(eSVD_obj$covariates)),
                                                      grep("Capbatch", colnames(eSVD_obj$covariates)))]
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  eSVD_obj = eSVD_obj,
+  input_obj = eSVD_obj,
   fit_name = "fit_Init",
   omitted_variables = c("Log_UMI", omitted_variables)
 )
@@ -60,7 +59,7 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end2 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  eSVD_obj = eSVD_obj,
+  input_obj = eSVD_obj,
   fit_name = "fit_First",
   omitted_variables = c("Log_UMI", omitted_variables)
 )
@@ -78,7 +77,7 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end3 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  eSVD_obj = eSVD_obj,
+  input_obj = eSVD_obj,
   fit_name = "fit_Second",
   omitted_variables = omitted_variables
 )
@@ -97,8 +96,8 @@ eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       alpha_max = NULL,
                                       bool_covariates_as_library = T,
                                       bool_stabilize_underdispersion = T,
-                                      library_min = 1,
-                                      pseudocount = 1)
+                                      library_min = 0.1,
+                                      pseudocount = 0)
 
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
