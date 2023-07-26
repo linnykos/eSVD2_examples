@@ -93,7 +93,7 @@ time_end4 <- Sys.time()
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
-                                      alpha_max = NULL,
+                                      alpha_max = 2*max(mat@x),
                                       bool_covariates_as_library = T,
                                       bool_stabilize_underdispersion = T,
                                       library_min = 0.1,
