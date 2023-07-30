@@ -49,10 +49,11 @@ covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
                                         rescale_numeric_variables = c("percent.mt"))
 
+
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates,
+                                    covariates = covariates[,-grep("Sample", colnames(covariates))],
                                     case_control_variable = "Subject_Disease_Colitis",
                                     bool_intercept = T,
                                     k = 15,
@@ -62,10 +63,9 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     verbose = 1)
 time_end1 <- Sys.time()
 
-omitted_variables <- colnames(eSVD_obj$covariates)[c(grep("^Sample_N", colnames(eSVD_obj$covariates)),
-                                                     grep("^Subject_Location", colnames(eSVD_obj$covariates)))]
+omitted_variables <- colnames(eSVD_obj$covariates)[grep("^Subject_Location", colnames(eSVD_obj$covariates))]
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  input_obj = eSVD_obj,
+  eSVD_obj = eSVD_obj,
   fit_name = "fit_Init",
   omitted_variables = c("Log_UMI", omitted_variables)
 )
@@ -83,7 +83,7 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end2 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  input_obj = eSVD_obj,
+  eSVD_obj = eSVD_obj,
   fit_name = "fit_First",
   omitted_variables = c("Log_UMI", omitted_variables)
 )
@@ -101,7 +101,7 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end3 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  input_obj = eSVD_obj,
+  eSVD_obj = eSVD_obj,
   fit_name = "fit_Second",
   omitted_variables = omitted_variables
 )
@@ -117,16 +117,20 @@ time_end4 <- Sys.time()
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
-                                      alpha_max = NULL,
+                                      alpha_max = 2*max(mat@x),
                                       bool_covariates_as_library = T,
                                       bool_stabilize_underdispersion = T,
-                                      library_min = 1,
-                                      pseudocount = 1)
+                                      library_min = 0.1,
+                                      pseudocount = 0)
 
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
                                            verbose = 1)
+eSVD_obj <- eSVD2:::compute_pvalue(input_obj = eSVD_obj)
 time_end5 <- Sys.time()
+
+##########################
+
 
 save(date_of_run, session_info, regevEpi,
      eSVD_obj,

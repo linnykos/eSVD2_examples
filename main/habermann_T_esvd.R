@@ -23,7 +23,7 @@ covariates <- eSVD2:::format_covariates(dat = mat,
 print("Initialization")
 time_start1 <- Sys.time()
 eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
-                                    covariates = covariates,
+                                    covariates = covariates[,-grep("Sample_Name", colnames(covariates))],
                                     case_control_variable = "Diagnosis_IPF",
                                     bool_intercept = T,
                                     k = 15,
@@ -33,11 +33,10 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
                                     verbose = 1)
 time_end1 <- Sys.time()
 
-omitted_variables <- colnames(eSVD_obj$covariates)[grep("Sample_Name", colnames(eSVD_obj$covariates))]
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_Init",
-  omitted_variables = c("Log_UMI", omitted_variables)
+  omitted_variables = "Log_UMI"
 )
 
 print("First fit")
@@ -55,7 +54,7 @@ time_end2 <- Sys.time()
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_First",
-  omitted_variables = c("Log_UMI", omitted_variables)
+  omitted_variables = "Log_UMI"
 )
 
 print("Second fit")
@@ -73,8 +72,9 @@ time_end3 <- Sys.time()
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
   eSVD_obj = eSVD_obj,
   fit_name = "fit_Second",
-  omitted_variables = omitted_variables
+  omitted_variables = NA
 )
+
 
 print("Nuisance estimation")
 time_start4 <- Sys.time()
@@ -87,18 +87,21 @@ time_end4 <- Sys.time()
 
 eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
                                       bool_adjust_covariates = F,
-                                      alpha_max = NULL,
+                                      alpha_max = 2*max(mat@x),
                                       bool_covariates_as_library = T,
                                       bool_stabilize_underdispersion = T,
-                                      library_min = 1,
-                                      pseudocount = 1)
+                                      library_min = 0.1,
+                                      pseudocount = 0)
 
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
                                            verbose = 1)
+eSVD_obj <- eSVD2:::compute_pvalue(input_obj = eSVD_obj)
 time_end5 <- Sys.time()
 
-save(date_of_run, session_info, habermann,
+##########################
+
+save(date_of_run, session_info, adams,
      eSVD_obj,
      time_start1, time_end1, time_start2, time_end2,
      time_start3, time_end3, time_start4, time_end4,

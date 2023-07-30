@@ -2,8 +2,8 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-# load("../../../out/main/sns_layer23_esvd.RData")
-load("../../../out/Writeup12/Writeup12_sns_layer23_esvd3.RData")
+load("../../../out/main/sns_layer23_esvd.RData")
+# load("../../../out/Writeup12/Writeup12_sns_layer23_esvd3.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -33,7 +33,7 @@ logpvalue_vec <- sapply(gaussian_teststat, function(x){
 logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
 logpvalue_vec <- pmin(logpvalue_vec, 15)
 
-selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.0001)]
+selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.05)]
 
 ############
 
@@ -83,21 +83,20 @@ length(intersect(selected_genes, hk_genes))
 length(intersect(selected_genes, sfari_genes))
 length(intersect(selected_genes, cycling_genes))
 length(intersect(selected_genes, bulk_de_genes))
-length(intersect(selected_genes, bulk_de_genes2))
-
 
 ## https://www.pathwaycommons.org/guide/primers/statistics/fishers_exact_test/
-m <- length(sfari_genes)
+m <- length(intersect(sfari_genes, names(gaussian_teststat)))
 n <- length(gaussian_teststat) - m
 k <- length(selected_genes)
 x <- length(intersect(selected_genes, c(sfari_genes)))
 m;k;x
+k*(m/ length(gaussian_teststat))
 fisher <- sum(sapply(x:k, function(i){
   stats::dhyper(x = i, m = m, n = n, k = k, log = F)
 }))
 fisher
 
-m <- length(bulk_de_genes)
+m <- length(intersect(bulk_de_genes, names(gaussian_teststat)))
 n <- length(gaussian_teststat) - m
 k <- length(selected_genes)
 x <- length(intersect(selected_genes, c(bulk_de_genes)))
@@ -110,6 +109,41 @@ fisher
 
 quantile(logpvalue_vec[intersect(sfari_genes, colnames(eSVD_obj$dat))])
 quantile(logpvalue_vec[intersect(deg_df[,"external_gene_name"], colnames(eSVD_obj$dat))])
+
+
+m <- length(intersect(de_gene_specific, names(gaussian_teststat)))
+n <- length(gaussian_teststat) - m
+k <- length(selected_genes)
+x <- length(intersect(selected_genes, c(de_gene_specific)))
+m;k;x
+m*(k/length(gaussian_teststat))
+fisher <- sum(sapply(x:k, function(i){
+  stats::dhyper(x = i, m = m, n = n, k = k, log = F)
+}))
+fisher
+
+
+m <- length(intersect(de_genes, names(gaussian_teststat)))
+n <- length(gaussian_teststat) - m
+k <- length(selected_genes)
+x <- length(intersect(selected_genes, c(de_genes)))
+m;k;x
+m*(k/length(gaussian_teststat))
+fisher <- sum(sapply(x:k, function(i){
+  stats::dhyper(x = i, m = m, n = n, k = k, log = F)
+}))
+fisher
+
+m <- length(intersect(hk_genes, names(gaussian_teststat)))
+n <- length(gaussian_teststat) - m
+k <- length(selected_genes)
+x <- length(intersect(selected_genes, c(hk_genes)))
+m;k;x
+m*(k/length(gaussian_teststat))
+fisher <- sum(sapply(x:k, function(i){
+  stats::dhyper(x = i, m = m, n = n, k = k, log = F)
+}))
+fisher
 
 #######
 
