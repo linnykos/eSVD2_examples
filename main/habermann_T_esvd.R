@@ -34,7 +34,7 @@ eSVD_obj <- eSVD2:::initialize_esvd(dat = mat,
 time_end1 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  eSVD_obj = eSVD_obj,
+  input_obj = eSVD_obj,
   fit_name = "fit_Init",
   omitted_variables = "Log_UMI"
 )
@@ -52,7 +52,7 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end2 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  eSVD_obj = eSVD_obj,
+  input_obj = eSVD_obj,
   fit_name = "fit_First",
   omitted_variables = "Log_UMI"
 )
@@ -70,7 +70,7 @@ eSVD_obj <- eSVD2:::opt_esvd(input_obj = eSVD_obj,
 time_end3 <- Sys.time()
 
 eSVD_obj <- eSVD2:::.reparameterization_esvd_covariates(
-  eSVD_obj = eSVD_obj,
+  input_obj = eSVD_obj,
   fit_name = "fit_Second",
   omitted_variables = NA
 )
