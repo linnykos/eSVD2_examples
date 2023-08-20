@@ -281,8 +281,10 @@ order_idx <- c(which(df$transparent == T),
 df <- df[order_idx,]
 
 # Create the scatterplot using ggplot2
-plot1 <- ggplot2::ggplot(df, ggplot2::aes(x = lfc, y = log10pvalue)) +
-  ggplot2::geom_point(ggplot2::aes(color = col, alpha = ifelse(transparent, 0, 1)), show.legend = FALSE)
+plot1 <- ggplot2::ggplot(df, ggplot2::aes(x = lfc, y = log10pvalue))
+plot1 <- plot1 + ggplot2::geom_hline(yintercept = min_pthres, color = "white", size = 2)
+plot1 <- plot1 + ggplot2::geom_hline(yintercept = min_pthres, linetype = "dashed", color = orange_col, size = 1.5)
+plot1 <- plot1 + ggplot2::geom_point(ggplot2::aes(color = col, alpha = ifelse(transparent, 0, 1)), show.legend = FALSE)
 plot1 <- plot1 + ggplot2::scale_alpha_continuous(range = c(0.3, 1))
 plot1 <- plot1 + ggplot2::scale_color_identity()
 plot1 <- plot1 + ggplot2::geom_point(data = subset(df, circled == TRUE & sfari == TRUE), color = purple_col, size = 3, shape = 1)
