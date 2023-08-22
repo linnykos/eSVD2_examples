@@ -2,9 +2,9 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../../../out/main/regevEpi_entprog-inflamed_esvd.RData")
+load("../../../out/main/regevImm_macro-inflamed_esvd.RData")
 eSVD_obj_inflamed <- eSVD_obj
-load("../../../out/main/regevEpi_entprog-noninflamed_esvd.RData")
+load("../../../out/main/regevImm_macro-noninflamed_esvd.RData")
 eSVD_obj_noninflamed <- eSVD_obj
 
 set.seed(10)
@@ -12,13 +12,13 @@ date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
 sheet1 <- as.data.frame(readxl::read_xlsx("~/nzhanglab/data/SCP259_regev_colitis/NIHMS1532849-supplement-11.xlsx",
-                                          sheet = "Epithelial (Non-Inflamed vs. He"))
+                                          sheet = "Innate (Non-Inflamed vs. Health"))
 sheet2 <- as.data.frame(readxl::read_xlsx("~/nzhanglab/data/SCP259_regev_colitis/NIHMS1532849-supplement-11.xlsx",
-                                          sheet = "Epithelial (Inflamed vs. Health"))
+                                          sheet = "Innate (Inflamed vs. Healthy)"))
 sheet3 <- as.data.frame(readxl::read_xlsx("~/nzhanglab/data/SCP259_regev_colitis/NIHMS1532849-supplement-11.xlsx",
-                                          sheet = "Epithelial (Inflamed vs. Non-In"))
-noninf_de_genes <- sheet1[sheet1$ident == "Enterocyte Progenitors","gene"]
-inf_de_genes <- sheet2[sheet2$ident == "Enterocyte Progenitors","gene"]
+                                          sheet = "Innate (Inflamed vs. Non-Inflam"))
+noninf_de_genes <- sheet1[sheet1$ident == "Macrophages","gene"]
+inf_de_genes <- sheet2[sheet2$ident == "Macrophages","gene"]
 hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
 
 gene_names <- names(eSVD_obj$teststat_vec)
@@ -34,7 +34,7 @@ gaussian_teststat_inflamed <- eSVD_obj_inflamed$teststat_vec
 
 #####################
 
-png("../../../out/fig/main/regevEpi_entprog-agreement_de-genes.png",
+png("../../../out/fig/main/regevImm_macro-agreement_de-genes.png",
     height = 1750, width = 1750,
     units = "px", res = 500)
 y1 <- gaussian_teststat_noninflamed[unique(c(inf_de_idx, noninf_de_idx))]
@@ -49,7 +49,7 @@ hexbin::plot(bin, colramp=my_colors , legend=F,
 graphics.off()
 stats::cor(y1, y2, method = "spearman")
 
-png("../../../out/fig/main/regevEpi_entprog-agreement_hk-genes.png",
+png("../../../out/fig/main/regevImm_macro-agreement_hk-genes.png",
     height = 1750, width = 1750,
     units = "px", res = 500)
 par(mar = c(3,3,0.1,0.1))

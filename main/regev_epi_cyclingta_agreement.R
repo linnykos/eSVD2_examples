@@ -2,9 +2,11 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../../../out/main/regevEpi_entprog-inflamed_esvd.RData")
+load("../../../out/main/regevEpi_cyclingta-inflamed_esvd.RData")
+regevEpi_inflamed <- regevEpi
 eSVD_obj_inflamed <- eSVD_obj
-load("../../../out/main/regevEpi_entprog-noninflamed_esvd.RData")
+load("../../../out/main/regevEpi_cyclingta-noninflamed_esvd.RData")
+regevEpi_noninflamed <- regevEpi
 eSVD_obj_noninflamed <- eSVD_obj
 
 set.seed(10)
@@ -17,8 +19,8 @@ sheet2 <- as.data.frame(readxl::read_xlsx("~/nzhanglab/data/SCP259_regev_colitis
                                           sheet = "Epithelial (Inflamed vs. Health"))
 sheet3 <- as.data.frame(readxl::read_xlsx("~/nzhanglab/data/SCP259_regev_colitis/NIHMS1532849-supplement-11.xlsx",
                                           sheet = "Epithelial (Inflamed vs. Non-In"))
-noninf_de_genes <- sheet1[sheet1$ident == "Enterocyte Progenitors","gene"]
-inf_de_genes <- sheet2[sheet2$ident == "Enterocyte Progenitors","gene"]
+noninf_de_genes <- sheet1[sheet1$ident == "Cycling TA","gene"]
+inf_de_genes <- sheet2[sheet2$ident == "Cycling TA","gene"]
 hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
 
 gene_names <- names(eSVD_obj$teststat_vec)
@@ -34,7 +36,7 @@ gaussian_teststat_inflamed <- eSVD_obj_inflamed$teststat_vec
 
 #####################
 
-png("../../../out/fig/main/regevEpi_entprog-agreement_de-genes.png",
+png("../../../out/fig/main/regevEpi_cyclingta-agreement_de-genes.png",
     height = 1750, width = 1750,
     units = "px", res = 500)
 y1 <- gaussian_teststat_noninflamed[unique(c(inf_de_idx, noninf_de_idx))]
@@ -49,7 +51,7 @@ hexbin::plot(bin, colramp=my_colors , legend=F,
 graphics.off()
 stats::cor(y1, y2, method = "spearman")
 
-png("../../../out/fig/main/regevEpi_entprog-agreement_hk-genes.png",
+png("../../../out/fig/main/regevEpi_cyclingta-agreement_hk-genes.png",
     height = 1750, width = 1750,
     units = "px", res = 500)
 par(mar = c(3,3,0.1,0.1))
