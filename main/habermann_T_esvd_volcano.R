@@ -25,18 +25,12 @@ habermann_df_genes_others <- unique(unlist(lapply(file_vec, function(file_suffix
 })))
 adams_df_genes <- setdiff(adams_df_genes, habermann_df_genes)
 de_genes <- unique(c(adams_df_genes, habermann_df_genes))
-de_genes_others <- unique(c(adams_df_genes_others, habermann_df_genes_others))
-cycling_genes <- c(cc.genes$s.genes, cc.genes$g2m.genes)
 hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
-de_genes_others <- setdiff(de_genes_others, de_genes)
-cycling_genes <- setdiff(cycling_genes, c(de_genes_others, de_genes))
-hk_genes <- setdiff(hk_genes, c(cycling_genes, de_genes_others, de_genes))
+hk_genes <- setdiff(hk_genes, de_genes)
 
 gene_names <- names(eSVD_obj$teststat_vec)
 adam_idx <- which(gene_names %in% adams_df_genes)
 habermann_idx <- which(gene_names %in% habermann_df_genes)
-de_other_idx <- which(gene_names %in% de_genes_others)
-cycling_idx <- which(gene_names %in% cycling_genes)
 hk_idx <- which(gene_names %in% hk_genes)
 
 ################
@@ -58,14 +52,22 @@ purple_col <- rgb(122, 49, 126, maxColorValue = 255)
 green_col <- rgb(70, 177, 70, maxColorValue = 255)
 
 p <- length(logpvalue_vec)
+lfc_vec <- log2(eSVD_obj$case_mean) - log2(eSVD_obj$control)
+
 col_vec <- rep(rgb(0.6, 0.6, 0.6), p)
 names(col_vec) <- gene_names
 col_vec[selected_genes2] <- orange_col
 col_vec[setdiff(habermann_df_genes, selected_genes2)] <- purple_col
 
+xval <- quantile(lfc_vec, probs = c(0.01,0.99))
+xval <- max(abs(xval))
+
 labeled_vec <- rep(FALSE, p)
 names(labeled_vec) <- gene_names
-labeled_vec[intersect(habermann_df_genes,selected_genes)] <- TRUE
+labeled_vec[intersect(
+  intersect(habermann_df_genes, selected_genes),
+  names(lfc_vec)[which(abs(lfc_vec) <= xval)]
+)] <- TRUE
 
 transparent_vec <- rep(TRUE, p)
 names(transparent_vec) <- gene_names
@@ -109,7 +111,7 @@ plot1 <- plot1 + ggplot2::scale_color_identity()
 plot1 <- plot1 + ggplot2::geom_point(data = subset(df, circled == TRUE & habermann == TRUE), color = purple_col, size = 3, shape = 1)
 plot1 <- plot1 + ggplot2::geom_point(data = subset(df, hk == TRUE), color = "white", size = 0.5)
 plot1 <- plot1 + ggplot2::geom_point(data = subset(df, hk == TRUE), color = green_col, size = 0.5, alpha = .35)
-plot1 <- plot1 + ggplot2::coord_cartesian(xlim = c(-max(abs(df$lfc)), max(abs(df$lfc))))
+plot1 <- plot1 + ggplot2::coord_cartesian(xlim = c(-xval, xval))
 plot1 <- plot1 + ggplot2::labs(x = "", y = "", title = "")
 
 # Add labels for genes where "label" is TRUE using ggrepel
@@ -126,5 +128,18 @@ plot1 <- plot1 + ggrepel::geom_text_repel(
 )
 
 ggplot2::ggsave(filename = paste0("../../../out/fig/main/habermann_T_volcano_ggrepel.png"),
-                plot1, device = "png", width = 5*.75, height = 7*.75, units = "in")
+                plot1, device = "png", width = 3, height = 3, units = "in",
+                dpi = 600)
 
+###############################
+
+## https://www.pathwaycommons.org/guide/primers/statistics/fishers_exact_test/
+m <- length(habermann_df_genes)
+n <- length(logpvalue_vec) - m
+k <- length(selected_genes2)
+x <- length(intersect(selected_genes2, c(habermann_df_genes)))
+fisher <- sum(sapply(x:k, function(i){
+  stats::dhyper(x = i, m = m, n = n, k = k, log = F)
+}))
+fisher
+paste0("#Author: ", m, ", #Bg: ", n, ", #Select: ", k, ", #Intersect: ", x)

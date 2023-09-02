@@ -2,9 +2,9 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-load("../../../out/main/regevEpi_ta1-inflamed_esvd.RData")
+load("../../../out/main/regevImm_macro-inflamed_esvd.RData")
 eSVD_obj_inflamed <- eSVD_obj
-load("../../../out/main/regevEpi_ta1-noninflamed_esvd.RData")
+load("../../../out/main/regevImm_macro-noninflamed_esvd.RData")
 eSVD_obj_noninflamed <- eSVD_obj
 
 set.seed(10)
@@ -12,13 +12,13 @@ date_of_run <- Sys.time()
 session_info <- devtools::session_info()
 
 sheet1 <- as.data.frame(readxl::read_xlsx("~/nzhanglab/data/SCP259_regev_colitis/NIHMS1532849-supplement-11.xlsx",
-                                          sheet = "Epithelial (Non-Inflamed vs. He"))
+                                          sheet = "Innate (Non-Inflamed vs. Health"))
 sheet2 <- as.data.frame(readxl::read_xlsx("~/nzhanglab/data/SCP259_regev_colitis/NIHMS1532849-supplement-11.xlsx",
-                                          sheet = "Epithelial (Inflamed vs. Health"))
+                                          sheet = "Innate (Inflamed vs. Healthy)"))
 sheet3 <- as.data.frame(readxl::read_xlsx("~/nzhanglab/data/SCP259_regev_colitis/NIHMS1532849-supplement-11.xlsx",
-                                          sheet = "Epithelial (Inflamed vs. Non-In"))
-noninf_de_genes <- sheet1[sheet1$ident == "TA 1","gene"]
-inf_de_genes <- sheet2[sheet2$ident == "TA 1","gene"]
+                                          sheet = "Innate (Inflamed vs. Non-Inflam"))
+noninf_de_genes <- sheet1[sheet1$ident == "Plasma","gene"]
+inf_de_genes <- sheet2[sheet2$ident == "Plasma","gene"]
 hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
 
 gene_names <- names(eSVD_obj$teststat_vec)
@@ -26,11 +26,6 @@ inf_de_idx <- which(gene_names %in% inf_de_genes)
 noninf_de_idx <- which(gene_names %in% noninf_de_genes)
 hk_idx <- which(gene_names %in% hk_genes)
 hk_idx <- setdiff(hk_idx, c(inf_de_idx, noninf_de_idx))
-
-orange_col <- rgb(235, 134, 47, maxColorValue = 255)
-purple_col <- rgb(122, 49, 126, maxColorValue = 255)
-green_col <- rgb(70, 177, 70, maxColorValue = 255)
-green_col_trans <- rgb(70, 177, 70, 255*.35, maxColorValue = 255)
 
 ######################
 
@@ -126,9 +121,8 @@ plot1 <- plot1 + ggrepel::geom_text_repel(
   segment.size = 0.5  # Thickness of the connecting line
 )
 
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_ta1-inflamed_volcano_ggrepel.png"),
-                plot1, device = "png", width = 3, height = 3, units = "in",
-                dpi = 600)
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevImm_plasma-inflamed_volcano_ggrepel.png"),
+                plot1, device = "png", width = 5*.75, height = 7*.75, units = "in")
 
 #####################
 
@@ -224,7 +218,6 @@ plot1 <- plot1 + ggrepel::geom_text_repel(
   segment.size = 0.5  # Thickness of the connecting line
 )
 
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_ta1-noninflamed_volcano_ggrepel.png"),
-                plot1, device = "png", width = 3, height = 3, units = "in",
-                dpi = 600)
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevImm_plasma-noninflamed_volcano_ggrepel.png"),
+                plot1, device = "png", width = 5*.75, height = 7*.75, units = "in")
 
