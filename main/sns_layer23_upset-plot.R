@@ -19,7 +19,6 @@ de_genes <- sort(unique(c(de_genes1, de_genes2)))
 de_genes <- de_genes[!de_genes %in% de_gene_specific]
 hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
 sfari_genes <- read.csv("../../../data/SFARI/SFARI-Gene_genes_09-02-2021release_01-06-2022export.csv", header = T)[,2]
-cycling_genes <- c(cc.genes$s.genes, cc.genes$g2m.genes)
 deg_df <- readxl::read_xlsx(
   path = "../../../data/bulkRNA-DEG-autism/SupplementaryTable3.xlsx",
   sheet = "DEGene_Statistics"
@@ -32,6 +31,7 @@ candidate_genes <- sort(unique(c(sfari_genes, bulk_de_genes)))
 ###############
 
 load("../../../out/Writeup12/Writeup12_sns_layer23_esvd3.RData")
+
 df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj)
 teststat_vec <- eSVD_obj$teststat_vec
 p <- length(teststat_vec)
@@ -44,47 +44,36 @@ fdr_vec <- locfdr_res$fdr
 names(fdr_vec) <- names(gaussian_teststat)
 null_mean <- locfdr_res$fp0["mlest", "delta"]
 null_sd <- locfdr_res$fp0["mlest", "sigma"]
-esvd_logpvalue_vec <- sapply(gaussian_teststat, function(x){
+logpvalue_vec <- sapply(gaussian_teststat, function(x){
   if(x < null_mean) {
     Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
   } else {
     Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
   }
 })
+logpvalue_vec <- -(logpvalue_vec/log(10) + log10(2))
+logpvalue_vec <- pmin(logpvalue_vec, 15)
+
+num_genes <- 300
+esvd_selected_genes <- names(logpvalue_vec)[order(logpvalue_vec, decreasing = F)[1:num_genes]]
 
 load("../../../out/main/sns_layer23_deseq2.RData")
 load("../../../out/main/sns_layer23_sctransform.RData")
 load("../../../out/main/sns_layer23_mast.RData")
 
-num_genes <- 300
-esvd_logpvalue_vec <- -(esvd_logpvalue_vec/log(10) + log10(2))
-esvd_selected_genes1 <- names(fdr_vec)[which(fdr_vec <= 0.05)]
-esvd_selected_genes2 <- names(esvd_logpvalue_vec)[order(fdr_vec, decreasing = F)[1:num_genes]]
-# esvd_selected_genes <- intersect(esvd_selected_genes1, esvd_selected_genes2)
-esvd_selected_genes <- esvd_selected_genes2
-
 deseq_fdr_val <- stats::p.adjust(deseq2_res$pvalue, method = "BH")
 names(deseq_fdr_val) <- rownames(deseq2_res)
-deseq_selected_genes1 <- names(deseq_fdr_val)[which(deseq_fdr_val <= 0.05)]
-deseq_selected_genes2 <- names(deseq_fdr_val)[order(deseq_fdr_val, decreasing = F)[1:num_genes]]
-# deseq_selected_genes <- intersect(deseq_selected_genes1, deseq_selected_genes2)
-deseq_selected_genes <- deseq_selected_genes2
+deseq_selected_genes <- names(deseq_fdr_val)[order(deseq_fdr_val, decreasing = F)[1:num_genes]]
 
 sct_fdr_val <- stats::p.adjust(de_result$p_val, method = "BH")
 names(sct_fdr_val) <- rownames(de_result)
-sct_selected_genes1 <- names(sct_fdr_val)[which(sct_fdr_val <= 0.05)]
-sct_selected_genes2 <- names(sct_fdr_val)[order(sct_fdr_val, decreasing = F)[1:num_genes]]
-# sct_selected_genes <- intersect(sct_selected_genes1, sct_selected_genes2)
-sct_selected_genes <- sct_selected_genes2
+sct_selected_genes <- names(sct_fdr_val)[order(sct_fdr_val, decreasing = F)[1:num_genes]]
 
 mast_fdr_val <- stats::p.adjust(mast_pval_glmer, method = "BH")
 names(mast_fdr_val) <- names(mast_pval_glmer)
-mast_selected_genes1 <- names(mast_fdr_val)[which(sct_fdr_val <= 0.05)]
-mast_selected_genes2 <- names(mast_fdr_val)[order(mast_fdr_val, decreasing = F)[1:num_genes]]
-# mast_selected_genes <- intersect(mast_selected_genes1, mast_selected_genes2)
-mast_selected_genes <- mast_selected_genes2
+mast_selected_genes <- names(mast_fdr_val)[order(mast_fdr_val, decreasing = F)[1:num_genes]]
 
-###################
+#################
 
 length(intersect(esvd_selected_genes, sfari_genes))
 length(intersect(esvd_selected_genes, bulk_de_genes))

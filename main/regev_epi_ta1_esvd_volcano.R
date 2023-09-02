@@ -57,8 +57,7 @@ names(col_vec) <- gene_names
 col_vec[selected_genes2] <- orange_col
 col_vec[setdiff(author_genes, selected_genes2)] <- purple_col
 
-xval <- quantile(lfc_vec, probs = c(0.01,0.99))
-xval <- max(abs(xval))
+xval <- max(abs(lfc_vec))
 
 labeled_vec <- rep(FALSE, p)
 names(labeled_vec) <- gene_names
@@ -155,8 +154,7 @@ names(col_vec) <- gene_names
 col_vec[selected_genes2] <- orange_col
 col_vec[setdiff(author_genes, selected_genes2)] <- purple_col
 
-xval <- quantile(lfc_vec, probs = c(0.01,0.99))
-xval <- max(abs(xval))
+xval <- max(abs(lfc_vec))
 
 labeled_vec <- rep(FALSE, p)
 names(labeled_vec) <- gene_names
@@ -227,4 +225,50 @@ plot1 <- plot1 + ggrepel::geom_text_repel(
 ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_ta1-noninflamed_volcano_ggrepel.png"),
                 plot1, device = "png", width = 3, height = 3, units = "in",
                 dpi = 600)
+
+###################################
+
+eSVD_obj <- eSVD_obj_inflamed  ## change this line
+logpvalue_vec <- eSVD_obj$pvalue_list$log10pvalue
+gene_names <- names(logpvalue_vec)
+noninf_de_genes <- intersect(noninf_de_genes, gene_names)
+inf_de_genes <- intersect(inf_de_genes, gene_names)
+author_genes <- inf_de_genes ## change this line
+selected_genes <- names(logpvalue_vec)[order(logpvalue_vec, decreasing = T)[1:length(author_genes)]]
+min_pthres <- min(logpvalue_vec[selected_genes])
+selected_genes2 <- names(logpvalue_vec)[logpvalue_vec >= min_pthres]
+
+## https://www.pathwaycommons.org/guide/primers/statistics/fishers_exact_test/
+m <- length(author_genes)
+n <- length(logpvalue_vec) - m
+k <- length(selected_genes2)
+x <- length(intersect(selected_genes2, author_genes))
+fisher <- sum(sapply(x:k, function(i){
+  stats::dhyper(x = i, m = m, n = n, k = k, log = F)
+}))
+fisher
+paste0("#Author: ", m, ", #Bg: ", n, ", #Select: ", k, ", #Intersect: ", x)
+
+####
+
+eSVD_obj <- eSVD_obj_noninflamed  ## change this line
+logpvalue_vec <- eSVD_obj$pvalue_list$log10pvalue
+gene_names <- names(logpvalue_vec)
+noninf_de_genes <- intersect(noninf_de_genes, gene_names)
+inf_de_genes <- intersect(inf_de_genes, gene_names)
+author_genes <- noninf_de_genes ## change this line
+selected_genes <- names(logpvalue_vec)[order(logpvalue_vec, decreasing = T)[1:length(author_genes)]]
+min_pthres <- min(logpvalue_vec[selected_genes])
+selected_genes2 <- names(logpvalue_vec)[logpvalue_vec >= min_pthres]
+
+## https://www.pathwaycommons.org/guide/primers/statistics/fishers_exact_test/
+m <- length(author_genes)
+n <- length(logpvalue_vec) - m
+k <- length(selected_genes2)
+x <- length(intersect(selected_genes2, author_genes))
+fisher <- sum(sapply(x:k, function(i){
+  stats::dhyper(x = i, m = m, n = n, k = k, log = F)
+}))
+fisher
+paste0("#Author: ", m, ", #Bg: ", n, ", #Select: ", k, ", #Intersect: ", x)
 

@@ -15,37 +15,9 @@ load("../../../out/main/habermann_T_deseq2.RData")
 habermann_deseq2 <- deseq2_res
 
 load("../../../out/main/habermann_T_esvd.RData")
-eSVD_obj$fit_Second$posterior_mean_mat <- NULL
-eSVD_obj$fit_Second$posterior_var_mat <- NULL
-eSVD_obj$teststat_vec <- NULL
-eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
-                                      bool_adjust_covariates = F,
-                                      alpha_max = NULL,
-                                      bool_covariates_as_library = T,
-                                      library_min = 1e-4)
-metadata <- habermann@meta.data
-metadata[,"Sample_Name"] <- as.factor(metadata[,"Sample_Name"])
-eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                           covariate_individual = "Sample_Name",
-                                           metadata = metadata,
-                                           verbose = 1)
 eSVD_obj_habermann <- eSVD_obj
 
 load("../../../out/main/adams_T_esvd.RData")
-eSVD_obj$fit_Second$posterior_mean_mat <- NULL
-eSVD_obj$fit_Second$posterior_var_mat <- NULL
-eSVD_obj$teststat_vec <- NULL
-eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
-                                      bool_adjust_covariates = F,
-                                      alpha_max = NULL,
-                                      bool_covariates_as_library = T,
-                                      library_min = 1e-4)
-metadata <- adams@meta.data
-metadata[,"Subject_Identity"] <- as.factor(metadata[,"Subject_Identity"])
-eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
-                                           covariate_individual = "Subject_Identity",
-                                           metadata = metadata,
-                                           verbose = 1)
 eSVD_obj_adams <- eSVD_obj
 
 ############
@@ -65,67 +37,20 @@ habermann_df_genes_others <- unique(unlist(lapply(file_vec, function(file_suffix
   df_mat$X
 })))
 de_genes <- unique(c(adams_df_genes, habermann_df_genes))
-de_genes_others <- unique(c(adams_df_genes_others, habermann_df_genes_others))
-cycling_genes <- c(cc.genes$s.genes, cc.genes$g2m.genes)
 hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
-de_genes_others <- setdiff(de_genes_others, de_genes)
-cycling_genes <- setdiff(cycling_genes, c(de_genes_others, de_genes))
-hk_genes <- setdiff(hk_genes, c(cycling_genes, de_genes_others, de_genes))
+hk_genes <- setdiff(hk_genes, de_genes)
 
 target_length <- length(unique(c(adams_df_genes, habermann_df_genes)))
+
 #####################
 
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_adams,
-                             metadata = adams@meta.data,
-                             covariate_individual = "Subject_Identity")
-teststat_vec <- eSVD_obj_adams$teststat_vec
-p <- length(teststat_vec)
-gaussian_teststat_adams <- sapply(1:p, function(j){
-  qnorm(pt(teststat_vec[j], df = df_vec[j]))
-})
-
-locfdr_res_adams <- locfdr::locfdr(gaussian_teststat_adams, plot = 0)
-fdr_vec <- locfdr_res_adams$fdr
-names(fdr_vec) <- names(gaussian_teststat_adams)
-null_mean <- locfdr_res_adams$fp0["mlest", "delta"]
-null_sd <- locfdr_res_adams$fp0["mlest", "sigma"]
-logpvalue_vec <- sapply(gaussian_teststat_adams, function(x){
-  if(x < null_mean) {
-    Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
-  } else {
-    Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
-  }
-})
-logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
+logpvalue_vec <- eSVD_obj_adams$pvalue_list$log10pvalue
 idx_adams <- order(logpvalue_vec, decreasing = T)[1:target_length]
-eSVD_adams_de <- names(teststat_vec)[idx_adams]
+eSVD_adams_de <- sort(names(logpvalue_vec)[idx_adams])
 
-####
-
-df_vec <- eSVD2:::compute_df(input_obj = eSVD_obj_habermann,
-                             metadata = habermann@meta.data,
-                             covariate_individual = "Sample_Name")
-teststat_vec <- eSVD_obj_habermann$teststat_vec
-p <- length(teststat_vec)
-gaussian_teststat_habermann <- sapply(1:p, function(j){
-  qnorm(pt(teststat_vec[j], df = df_vec[j]))
-})
-
-locfdr_res_habermann <- locfdr::locfdr(gaussian_teststat_habermann, plot = 0)
-fdr_vec <- locfdr_res_habermann$fdr
-names(fdr_vec) <- names(gaussian_teststat_habermann)
-null_mean <- locfdr_res_habermann$fp0["mlest", "delta"]
-null_sd <- locfdr_res_habermann$fp0["mlest", "sigma"]
-logpvalue_vec <- sapply(gaussian_teststat_habermann, function(x){
-  if(x < null_mean) {
-    Rmpfr::pnorm(x, mean = null_mean, sd = null_sd, log.p = T)
-  } else {
-    Rmpfr::pnorm(null_mean - (x-null_mean), mean = null_mean, sd = null_sd, log.p = T)
-  }
-})
-logpvalue_vec <- -(logpvalue_vec/log10(exp(1)) + log10(2))
+logpvalue_vec <- eSVD_obj_habermann$pvalue_list$log10pvalue
 idx_habermann <- order(logpvalue_vec, decreasing = T)[1:target_length]
-eSVD_habermann_de <- names(teststat_vec)[idx_habermann]
+eSVD_habermann_de <- sort(names(logpvalue_vec)[idx_habermann])
 
 ###############################
 
@@ -143,6 +68,7 @@ length(habermann_df_genes)
 length(intersect(adams_df_genes, habermann_df_genes))
 
 ##
+
 length(eSVD_adams_de)
 length(intersect(eSVD_adams_de, habermann_df_genes))
 length(intersect(eSVD_adams_de, adams_df_genes))

@@ -28,10 +28,10 @@ de_result <- Seurat::FindMarkers(sns, ident.1 = "ASD", ident.2 = "Control",
                                  verbose = T)
 
 
-
 case_idx <- which(Seurat::Idents(sns) == "ASD")
 control_idx <- which(Seurat::Idents(sns) == "Control")
 n1 <- length(case_idx); n2 <- length(control_idx)
+# see https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test#Normal_approximation_and_tie_correction
 null_mean <- n1*n2/2
 null_sd <- sqrt(n1*n2*(n1+n2+1)/12)
 
