@@ -10,9 +10,11 @@ session_info <- devtools::session_info()
 
 ##########
 
-mat <- Matrix::t(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,])
-covariate_dat <- sns@meta.data[,c("percent.mt", "individual", "region", "age", "sex",
-                                  "RNA.Integrity.Number", "post.mortem.hours",
+gene_vec <- sns[["RNA"]]@var.features
+rm_idx <- grep("^MT", gene_vec)
+if(length(rm_idx) > 0) gene_vec <- gene_vec[-rm_idx]
+mat <- Matrix::t(sns[["RNA"]]@counts[gene_vec,])
+covariate_dat <- sns@meta.data[,c("individual", "region", "age", "sex",
                                   "diagnosis", "Seqbatch", "Capbatch")]
 covariate_df <- data.frame(covariate_dat)
 covariate_df[,"individual"] <- factor(covariate_df[,"individual"], levels = names(sort(table(covariate_df[,"individual"]), decreasing = T)))
@@ -23,7 +25,7 @@ covariate_df[,"Seqbatch"] <- factor(covariate_df[,"Seqbatch"], levels = names(so
 covariate_df[,"Capbatch"] <- factor(covariate_df[,"Capbatch"], levels = names(sort(table(covariate_df[,"Capbatch"]), decreasing = T)))
 covariates <- eSVD2:::format_covariates(dat = mat,
                                         covariate_df = covariate_df,
-                                        rescale_numeric_variables = c("percent.mt", "age", "RNA.Integrity.Number", "post.mortem.hours"))
+                                        rescale_numeric_variables = "age")
 
 print("Initialization")
 time_start1 <- Sys.time()
@@ -102,6 +104,7 @@ eSVD_obj <- eSVD2:::compute_posterior(input_obj = eSVD_obj,
 time_start5 <- Sys.time()
 eSVD_obj <- eSVD2:::compute_test_statistic(input_obj = eSVD_obj,
                                            verbose = 1)
+eSVD_obj <- eSVD2:::compute_pvalue(input_obj = eSVD_obj)
 time_end5 <- Sys.time()
 
 save(date_of_run, session_info, sns,
