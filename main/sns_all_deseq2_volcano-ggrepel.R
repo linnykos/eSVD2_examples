@@ -50,10 +50,12 @@ for(kk in 1:length(file_vec)){
 
   load(deseq2_file_vec[[kk]])
   load(esvd_file_vec[[kk]])
+  celltype <- names(esvd_file_vec)[kk]
 
   fdr_vec <- eSVD_obj$pvalue_list$fdr_vec
   esvd_selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.05)]
-  esvd_pthres <- min(eSVD_obj$pvalue_list$log10pvalue[esvd_selected_genes])
+  esvd_logpvalue_vec <- eSVD_obj$pvalue_list$log10pvalue
+  esvd_pthres <- min(esvd_logpvalue_vec[esvd_selected_genes])
 
   #####
 
@@ -74,7 +76,7 @@ for(kk in 1:length(file_vec)){
   blue_col <- rgb(129, 139, 191, maxColorValue = 255)
   green_col <- rgb(70, 177, 70, maxColorValue = 255)
 
-  p <- length(eSVD_obj$teststat_vec)
+  p <- length(gene_names)
   col_vec <- rep(rgb(0.6, 0.6, 0.6), p)
   names(col_vec) <- gene_names
   col_vec[esvd_selected_genes] <- orange_col
@@ -154,7 +156,7 @@ for(kk in 1:length(file_vec)){
     segment.size = 0.5  # Thickness of the connecting line
   )
 
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_layer23_volcano_cross-comparison_deseq_ggrepel.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_volcano_cross-comparison_deseq_ggrepel.png"),
                   plot1, device = "png", width = 5*.75, height = 7*.75, units = "in")
 
 }
