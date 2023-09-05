@@ -18,18 +18,18 @@ names(deseq2_file_vec) <- c("astpp", "endothelial", "insst", "invip", "layer4", 
                             "layer56", "layer56cc", "microglia", "oligo", "opc")
 
 esvd_file_vec <- c("../../../out/main/sns_astpp_esvd.RData",
-                     "../../../out/main/sns_endothelial_esvd.RData",
-                     "../../../out/main/sns_insst_esvd.RData",
-                     "../../../out/main/sns_invip_esvd.RData",
-                     "../../../out/main/sns_layer4_esvd.RData",
-                     "../../../out/main/sns_layer23_esvd.RData",
-                     "../../../out/main/sns_layer56_esvd.RData",
-                     "../../../out/main/sns_layer56cc_esvd.RData",
-                     "../../../out/main/sns_microglia_esvd.RData",
-                     "../../../out/main/sns_oligo_esvd.RData",
-                     "../../../out/main/sns_opc_esvd.RData")
+                   "../../../out/main/sns_endothelial_esvd.RData",
+                   "../../../out/main/sns_insst_esvd.RData",
+                   "../../../out/main/sns_invip_esvd.RData",
+                   "../../../out/main/sns_layer4_esvd.RData",
+                   "../../../out/main/sns_layer23_esvd.RData",
+                   "../../../out/main/sns_layer56_esvd.RData",
+                   "../../../out/main/sns_layer56cc_esvd.RData",
+                   "../../../out/main/sns_microglia_esvd.RData",
+                   "../../../out/main/sns_oligo_esvd.RData",
+                   "../../../out/main/sns_opc_esvd.RData")
 names(esvd_file_vec) <- c("astpp", "endothelial", "insst", "invip", "layer4", "layer23",
-                            "layer56", "layer56cc", "microglia", "oligo", "opc")
+                          "layer56", "layer56cc", "microglia", "oligo", "opc")
 
 load(esvd_file_vec[[1]])
 
@@ -41,16 +41,18 @@ deg_df <- readxl::read_xlsx(
 )
 deg_df <- as.data.frame(deg_df)
 bulk_de_genes <- deg_df[which(deg_df[,"WholeCortex_ASD_FDR"]<=0.05),"external_gene_name"]
-gene_names <- names(eSVD_obj$case_mean)
-hk_genes <- hk_genes[hk_genes %in% gene_names]
-sfari_genes <- sfari_genes[sfari_genes %in% gene_names]
-bulk_de_genes <- bulk_de_genes[bulk_de_genes %in% gene_names]
 
 for(kk in 1:length(deseq2_file_vec)){
 
   load(deseq2_file_vec[[kk]])
   load(esvd_file_vec[[kk]])
   celltype <- names(esvd_file_vec)[kk]
+  print(celltype)
+
+  gene_names <- names(eSVD_obj$case_mean)
+  hk_genes2 <- hk_genes[hk_genes %in% gene_names]
+  sfari_genes2 <- sfari_genes[sfari_genes %in% gene_names]
+  bulk_de_genes2 <- bulk_de_genes[bulk_de_genes %in% gene_names]
 
   fdr_vec <- eSVD_obj$pvalue_list$fdr_vec
   esvd_selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.05)]
@@ -81,35 +83,34 @@ for(kk in 1:length(deseq2_file_vec)){
   names(col_vec) <- gene_names
   col_vec[esvd_selected_genes] <- orange_col
   col_vec[deseq_selected_genes] <- yellow_col
-  col_vec[setdiff(bulk_de_genes, selected_genes)] <- blue_col
-  col_vec[setdiff(sfari_genes, selected_genes)] <- purple_col
-
+  col_vec[setdiff(bulk_de_genes2, selected_genes)] <- blue_col
+  col_vec[setdiff(sfari_genes2, selected_genes)] <- purple_col
 
   labeled_vec <- rep(FALSE, p)
   names(labeled_vec) <- gene_names
-  labeled_vec[intersect(bulk_de_genes, selected_genes)] <- TRUE
-  labeled_vec[intersect(sfari_genes, selected_genes)] <- TRUE
+  labeled_vec[intersect(bulk_de_genes2, selected_genes)] <- TRUE
+  labeled_vec[intersect(sfari_genes2, selected_genes)] <- TRUE
 
   transparent_vec <- rep(TRUE, p)
   names(transparent_vec) <- gene_names
-  transparent_vec[c(selected_genes, bulk_de_genes, sfari_genes, hk_genes)] <- FALSE
+  transparent_vec[c(selected_genes, bulk_de_genes2, sfari_genes2, hk_genes2)] <- FALSE
 
   circle_vec <- rep(FALSE, p)
   names(circle_vec) <- gene_names
-  circle_vec[intersect(bulk_de_genes, selected_genes)] <- TRUE
-  circle_vec[intersect(sfari_genes, selected_genes)] <- TRUE
+  circle_vec[intersect(bulk_de_genes2, selected_genes)] <- TRUE
+  circle_vec[intersect(sfari_genes2, selected_genes)] <- TRUE
 
   hk_vec <- rep(FALSE, p)
-  names(hk_vec) <- names(eSVD_obj$teststat_vec)
-  hk_vec[hk_genes] <- TRUE
+  names(hk_vec) <- gene_names
+  hk_vec[hk_genes2] <- TRUE
 
   bulk_vec <- rep(FALSE, p)
-  names(bulk_vec) <- names(eSVD_obj$teststat_vec)
-  bulk_vec[bulk_de_genes] <- TRUE
+  names(bulk_vec) <- gene_names
+  bulk_vec[bulk_de_genes2] <- TRUE
 
   sfari_vec <- rep(FALSE, p)
-  names(sfari_vec) <- names(eSVD_obj$teststat_vec)
-  sfari_vec[sfari_genes] <- TRUE
+  names(sfari_vec) <- gene_names
+  sfari_vec[sfari_genes2] <- TRUE
 
   df <- data.frame(
     name = gene_names,
