@@ -28,7 +28,7 @@ for(kk in 1:length(file_vec)){
   celltype <- names(file_vec)[kk]
 
   mat <- as.matrix(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,])
-  categorical_var <- c("diagnosis", "individual", "sex", "region", "Seqbatch", "Capbatch")
+  categorical_var <- c("diagnosis", "individual", "sex", "region", "Seqbatch")
   numerical_var <- c("age")
   metadata <- sns@meta.data[,c(categorical_var, numerical_var)]
   for(var in categorical_var){
@@ -72,7 +72,7 @@ for(kk in 1:length(file_vec)){
 
   dds <- DESeq2::DESeqDataSetFromMatrix(countData = mat_pseudobulk,
                                         colData = metadata_pseudobulk,
-                                        design = ~ sex + region + Seqbatch + Capbatch + age + diagnosis)
+                                        design = ~ sex + region + Seqbatch + age + diagnosis)
 
   dds <- DESeq2::DESeq(dds)
   nms <- DESeq2::resultsNames(dds)
