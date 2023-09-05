@@ -1,6 +1,7 @@
 rm(list=ls())
 library(Seurat)
 library(eSVD2)
+library(dimRed)
 
 file_vec <- c("../../../out/main/sns_astpp_esvd.RData",
               "../../../out/main/sns_endothelial_esvd.RData",
@@ -28,12 +29,28 @@ for(kk in 1:length(file_vec)){
   sns <- Seurat::ScaleData(sns, verbose = F)
   set.seed(10)
   sns <- Seurat::RunPCA(sns, verbose = F)
-  sns <- Seurat::RunUMAP(sns, dims = 1:30,
-                         verbose = F)
 
-  score_mat <- scale(eSVD_obj$fit_Second$x_mat)
-  sns[["esvdumap"]] <- Seurat::RunUMAP(score_mat,
-                                       verbose = F)
+  # https://rdrr.io/cran/dimRed/man/Isomap-class.html
+  set.seed(10)
+  pca_mat <- scale(sns[["pca"]]@cell.embeddings[,1:30])
+  isomap_original <- dimRed::embed(pca_mat, "Isomap", knn = 30)
+  isomap_original_mat <- isomap_original@data@data
+  rownames(isomap_original_mat) <- colnames(sns)
+  colnames(isomap_original_mat) <- paste0("Isomap_", 1:2)
+
+  #####################
+
+  x <- scale(eSVD_obj$fit_Second$x_mat)
+  set.seed(10)
+  isomap_esvd <- dimRed::embed(x, "Isomap", knn = 30)
+  isomap_esvd_mat <- isomap_esvd@data@data
+  rownames(isomap_esvd_mat) <- colnames(sns)
+  colnames(isomap_esvd_mat) <- paste0("eSVDIsomap_", 1:2)
+
+  #####################
+
+  sns[["isomap"]] <- Seurat::CreateDimReducObject(isomap_original_mat)
+  sns[["esvd"]] <- Seurat::CreateDimReducObject(isomap_esvd_mat)
 
   ##########################
 
@@ -62,101 +79,115 @@ for(kk in 1:length(file_vec)){
 
 
   # now plot original
-  plot1 <- Seurat::DimPlot(sns, reduction = "umap",
+  plot1 <- Seurat::DimPlot(sns, reduction = "isomap",
                            group.by = "individual",
                            cols = col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle("")
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-umap_cleaned.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_cleaned.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
 
-  plot1 <- Seurat::DimPlot(sns, reduction = "umap",
+  df <- data.frame(pred =  factor(sns$sex)); df <- cbind(df, sns[["pca"]]@cell.embeddings[,1:30])
+  fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
+  null_model <- stats::glm(pred ~ 1, data = df, family = binomial)
+  deviance_current <- stats::deviance(fitted_model)
+  deviance_null <- stats::deviance(null_model)
+  r2 <- 1 - deviance_current/deviance_null
+  r2
+
+  plot1 <- Seurat::DimPlot(sns, reduction = "isomap",
                            group.by = "sex",
                            cols = gender_col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
-  plot1 <- plot1 + ggplot2::ggtitle("")
+  plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-umap_cleaned_by-gender.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_cleaned_by-gender.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
 
-  plot1 <- Seurat::DimPlot(sns, reduction = "umap",
+  plot1 <- Seurat::DimPlot(sns, reduction = "isomap",
                            group.by = "Seqbatch")
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle("")
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-umap_cleaned_by-seqbatch.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_cleaned_by-seqbatch.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
 
-  plot1 <- Seurat::DimPlot(sns, reduction = "umap",
+  df <- data.frame(pred =  factor(sns$region)); df <- cbind(df, sns[["pca"]]@cell.embeddings[,1:30])
+  fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
+  null_model <- stats::glm(pred ~ 1, data = df, family = binomial)
+  deviance_current <- stats::deviance(fitted_model)
+  deviance_null <- stats::deviance(null_model)
+  r2 <- 1 - deviance_current/deviance_null
+  r2
+
+  plot1 <- Seurat::DimPlot(sns, reduction = "isomap",
                            group.by = "region",
                            cols = region_col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
-  plot1 <- plot1 + ggplot2::ggtitle("")
+  plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-umap_cleaned_by-region.png"),
-                  plot1, device = "png", width = 4, height = 4, units = "in",
-                  dpi = 300)
-
-  plot1 <- Seurat::FeaturePlot(sns, reduction = "umap",
-                               features = "age")
-  plot1 <- plot1 + Seurat::NoLegend()
-  plot1 <- plot1 + ggplot2::ggtitle("")
-  plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-umap_cleaned_by-age.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_cleaned_by-region.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
 
   ########################
   # now plot esvd
-  plot1 <- Seurat::DimPlot(sns, reduction = "esvdumap",
+  plot1 <- Seurat::DimPlot(sns, reduction = "esvd",
                            group.by = "individual",
                            cols = col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle("")
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-umap_cleaned.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_cleaned.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
 
-  plot1 <- Seurat::DimPlot(sns, reduction = "esvdumap",
+  df <- data.frame(pred =  factor(sns$sex)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:30])
+  fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
+  null_model <- stats::glm(pred ~ 1, data = df, family = binomial)
+  deviance_current <- stats::deviance(fitted_model)
+  deviance_null <- stats::deviance(null_model)
+  r2 <- 1 - deviance_current/deviance_null
+  r2
+
+  plot1 <- Seurat::DimPlot(sns, reduction = "esvd",
                            group.by = "sex",
                            cols = gender_col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
-  plot1 <- plot1 + ggplot2::ggtitle("")
+  plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-umap_cleaned_by-gender.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_cleaned_by-gender.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
 
-  plot1 <- Seurat::DimPlot(sns, reduction = "esvdumap",
+  plot1 <- Seurat::DimPlot(sns, reduction = "esvd",
                            group.by = "Seqbatch")
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle("")
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-umap_cleaned_by-seqbatch.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_cleaned_by-seqbatch.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
 
-  plot1 <- Seurat::DimPlot(sns, reduction = "esvdumap",
+  df <- data.frame(pred =  factor(sns$region)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:30])
+  fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
+  null_model <- stats::glm(pred ~ 1, data = df, family = binomial)
+  deviance_current <- stats::deviance(fitted_model)
+  deviance_null <- stats::deviance(null_model)
+  r2 <- 1 - deviance_current/deviance_null
+  r2
+
+  plot1 <- Seurat::DimPlot(sns, reduction = "esvd",
                            group.by = "region",
                            cols = region_col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
-  plot1 <- plot1 + ggplot2::ggtitle("")
+  plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-umap_cleaned_by-region.png"),
-                  plot1, device = "png", width = 4, height = 4, units = "in",
-                  dpi = 300)
-
-  plot1 <- Seurat::FeaturePlot(sns, reduction = "esvdumap",
-                               features = "age")
-  plot1 <- plot1 + Seurat::NoLegend()
-  plot1 <- plot1 + ggplot2::ggtitle("")
-  plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-umap_cleaned_by-age.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_cleaned_by-region.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
 
