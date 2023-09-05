@@ -77,12 +77,14 @@ for(kk in 1:length(deseq2_file_vec)){
   purple_col <- rgb(122, 49, 126, maxColorValue = 255)
   blue_col <- rgb(129, 139, 191, maxColorValue = 255)
   green_col <- rgb(70, 177, 70, maxColorValue = 255)
+  red_col <- rgb(255, 90, 90, maxColorValue = 255)
 
   p <- length(gene_names)
   col_vec <- rep(rgb(0.6, 0.6, 0.6), p)
   names(col_vec) <- gene_names
   col_vec[esvd_selected_genes] <- orange_col
   col_vec[deseq_selected_genes] <- yellow_col
+  col_vec[intersect(deseq_selected_genes, esvd_selected_genes)] <- red_col
   col_vec[setdiff(bulk_de_genes2, selected_genes)] <- blue_col
   col_vec[setdiff(sfari_genes2, selected_genes)] <- purple_col
 
