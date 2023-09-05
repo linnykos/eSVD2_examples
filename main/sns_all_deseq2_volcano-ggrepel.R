@@ -46,7 +46,7 @@ hk_genes <- hk_genes[hk_genes %in% gene_names]
 sfari_genes <- sfari_genes[sfari_genes %in% gene_names]
 bulk_de_genes <- bulk_de_genes[bulk_de_genes %in% gene_names]
 
-for(kk in 1:length(file_vec)){
+for(kk in 1:length(deseq2_file_vec)){
 
   load(deseq2_file_vec[[kk]])
   load(esvd_file_vec[[kk]])
