@@ -27,7 +27,10 @@ for(kk in 1:length(file_vec)){
   load(file)
   celltype <- names(file_vec)[kk]
 
-  mat <- as.matrix(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,])
+  gene_vec <- sns[["RNA"]]@var.features
+  rm_idx <- grep("^MT", gene_vec)
+  if(length(rm_idx) > 0) gene_vec <- gene_vec[-rm_idx]
+  mat <- as.matrix(sns[["RNA"]]@counts[gene_vec,])
   categorical_var <- c("diagnosis", "individual", "sex", "region", "Seqbatch")
   numerical_var <- c("age")
   metadata <- sns@meta.data[,c(categorical_var, numerical_var)]
