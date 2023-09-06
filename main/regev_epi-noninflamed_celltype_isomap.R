@@ -84,7 +84,7 @@ for(celltype in celltype_names){
 
   plot1 <- Seurat::DimPlot(regevEpi, reduction = "isomap",
                            group.by = "Subject_Gender",
-                           cols = col_palette)
+                           cols = gender_col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
@@ -101,7 +101,7 @@ for(celltype in celltype_names){
 
   plot1 <- Seurat::DimPlot(regevEpi, reduction = "isomap",
                            group.by = "Subject_Smoking",
-                           cols = col_palette)
+                           cols = smoking_col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
@@ -132,7 +132,7 @@ for(celltype in celltype_names){
 
   plot1 <- Seurat::DimPlot(regevEpi, reduction = "esvd",
                            group.by = "Subject_Gender",
-                           cols = col_palette)
+                           cols = gender_col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
@@ -149,7 +149,7 @@ for(celltype in celltype_names){
 
   plot1 <- Seurat::DimPlot(regevEpi, reduction = "esvd",
                            group.by = "Subject_Smoking",
-                           cols = col_palette)
+                           cols = smoking_col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
