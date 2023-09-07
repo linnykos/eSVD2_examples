@@ -90,6 +90,7 @@ esvd_ego <- clusterProfiler::enrichGO(gene          = esvd_genes,
                                       readable      = TRUE)
 zz <- esvd_ego@result
 esvd_terms <- zz[which(zz$qvalue <= 0.05),"ID"]
+# zz[which(zz$ID %in% esvd_terms),"Description"]
 
 deseq_ego <- clusterProfiler::enrichGO(gene          = deseq_genes,
                                        universe      = gene_names,
@@ -124,3 +125,47 @@ esvd_better <- all_terms[zz[all_terms,"qvalue"] < zz2[all_terms,"qvalue"]]
 velmeshev_better <- all_terms[zz[all_terms,"qvalue"] > zz2[all_terms,"qvalue"]]
 deseq_better <- all_terms[zz[all_terms,"qvalue"] > zz3[all_terms,"qvalue"]]
 
+###############
+
+go_vec <- esvd_terms[c(1,5,6,25)]
+esvd_pvalue <- sapply(go_vec, function(x){
+  -log10(zz[x, "pvalue"])
+})
+velmeshev_pvalue <- sapply(go_vec, function(x){
+  -log10(zz2[x, "pvalue"])
+})
+deseq_pvalue <- sapply(go_vec, function(x){
+  -log10(zz3[x, "pvalue"])
+})
+
+
+spacing <- .5
+width <- 1
+len <- length(esvd_pvalue)
+total_len <- 3*width*len + spacing*(len-1)
+
+orange_col <- rgb(235, 134, 47, maxColorValue = 255)
+brown_col <- rgb(144, 100, 43, maxColorValue = 255)
+yellow_col <- rgb(255, 205, 114, maxColorValue = 255)
+
+png("../../../out/fig/main/sns_layer23_gsea.png",
+    height = 880, width = 1500,
+    units = "px", res = 500)
+par(mar = c(0.1,2,0.1,0.1))
+plot(NA, xlim = c(0, total_len),
+     ylim = c(0, max(c(esvd_pvalue, velmeshev_pvalue, deseq_pvalue))),
+     xlab = "", ylab = "", xaxt = "n", yaxt = "n", bty = "n")
+for(i in 1:len){
+  x_left <- (3*width+spacing)*(i-1)
+  polygon(x = c(x_left, x_left+width, x_left+width, x_left),
+          y = c(0, 0, esvd_pvalue[i], esvd_pvalue[i]),
+          col = orange_col, border = "black")
+  polygon(x = c(x_left, x_left+width, x_left+width, x_left)+width,
+          y = c(0, 0, velmeshev_pvalue[i], velmeshev_pvalue[i]),
+          col = brown_col, border = "black")
+  polygon(x = c(x_left, x_left+width, x_left+width, x_left)+2*width,
+          y = c(0, 0, deseq_pvalue[i], deseq_pvalue[i]),
+          col = yellow_col, border = "black")
+}
+axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+graphics.off()
