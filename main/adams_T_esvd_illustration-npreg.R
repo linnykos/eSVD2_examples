@@ -1,6 +1,7 @@
 rm(list=ls())
 library(Seurat)
 library(eSVD2)
+library(npregfast)
 
 load("../../../out/main/adams_T_esvd.RData")
 
