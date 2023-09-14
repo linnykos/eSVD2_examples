@@ -101,20 +101,21 @@ for(kk in 1:length(file_vec)){
                            group.by = "sex",
                            cols = gender_col_palette)
   plot1 <- plot1 + Seurat::NoLegend()
-  plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
+  plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_cleaned_by-gender.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_by-gender.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
-
+  
   plot1 <- Seurat::DimPlot(sns, reduction = "isomap",
-                           group.by = "Seqbatch")
-  plot1 <- plot1 + Seurat::NoLegend()
+                           group.by = "sex",
+                           cols = gender_col_palette,
+                           pt.size = 1.25)
+  plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
   plot1 <- plot1 + ggplot2::ggtitle("")
-  plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_cleaned_by-seqbatch.png"),
-                  plot1, device = "png", width = 4, height = 4, units = "in",
-                  dpi = 300)
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_cleaned_by-gender.png"),
+                  plot1, device = "png", width = 2, height = 2, units = "in",
+                  dpi = 500)
 
   df <- data.frame(pred =  factor(sns$region)); df <- cbind(df, sns[["pca"]]@cell.embeddings[,1:30])
   fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -130,9 +131,19 @@ for(kk in 1:length(file_vec)){
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_cleaned_by-region.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_by-region.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
+  
+  plot1 <- Seurat::DimPlot(sns, reduction = "isomap",
+                           group.by = "region",
+                           cols = region_col_palette,
+                           pt.size = 1.25)
+  plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
+  plot1 <- plot1 + ggplot2::ggtitle("")
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_original-isomap_cleaned_by-region.png"),
+                  plot1, device = "png", width = 2, height = 2, units = "in",
+                  dpi = 500)
 
   ########################
   # now plot esvd
@@ -160,18 +171,19 @@ for(kk in 1:length(file_vec)){
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_cleaned_by-gender.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_by-gender.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
-
+  
   plot1 <- Seurat::DimPlot(sns, reduction = "esvd",
-                           group.by = "Seqbatch")
-  plot1 <- plot1 + Seurat::NoLegend()
+                           group.by = "sex",
+                           cols = gender_col_palette,
+                           pt.size = 1.25)
+  plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
   plot1 <- plot1 + ggplot2::ggtitle("")
-  plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_cleaned_by-seqbatch.png"),
-                  plot1, device = "png", width = 4, height = 4, units = "in",
-                  dpi = 300)
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_cleaned_by-gender.png"),
+                  plot1, device = "png", width = 2, height = 2, units = "in",
+                  dpi = 500)
 
   df <- data.frame(pred =  factor(sns$region)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:30])
   fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -187,9 +199,19 @@ for(kk in 1:length(file_vec)){
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_cleaned_by-region.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_by-region.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
+  
+  plot1 <- Seurat::DimPlot(sns, reduction = "esvd",
+                           group.by = "region",
+                           cols = region_col_palette,
+                           pt.size = 1.25)
+  plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
+  plot1 <- plot1 + ggplot2::ggtitle("")
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_esvd-isomap_cleaned_by-region.png"),
+                  plot1, device = "png", width = 2, height = 2, units = "in",
+                  dpi = 500)
 
 }
 
