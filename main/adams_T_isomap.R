@@ -84,9 +84,19 @@ plot1 <- Seurat::DimPlot(adams, reduction = "isomap",
 plot1 <- plot1 + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
 plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap_cleaned_by-gender.png"),
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap_by-gender.png"),
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
+
+plot1 <- Seurat::DimPlot(adams, reduction = "isomap",
+                         group.by = "Gender",
+                         cols = gender_col_palette,
+                         pt.size = 1.25)
+plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
+plot1 <- plot1 + ggplot2::ggtitle("")
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap_cleaned_by-gender.png"),
+                plot1, device = "png", width = 2, height = 2, units = "in",
+                dpi = 500)
 
 df <- data.frame(pred =  factor(adams$Tobacco)); df <- cbind(df, adams[["pca"]]@cell.embeddings[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -102,9 +112,20 @@ plot1 <- Seurat::DimPlot(adams, reduction = "isomap",
 plot1 <- plot1 + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
 plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap_cleaned_by-smoking.png"),
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap_by-smoking.png"),
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
+
+
+plot1 <- Seurat::DimPlot(adams, reduction = "isomap",
+                         group.by = "Tobacco",
+                         cols = smoking_col_palette,
+                         pt.size = 1.25)
+plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
+plot1 <- plot1 + ggplot2::ggtitle("")
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap_cleaned_by-smoking.png"),
+                plot1, device = "png", width = 2, height = 2, units = "in",
+                dpi = 500)
 
 ########################
 # now plot esvd
@@ -132,9 +153,19 @@ plot1 <- Seurat::DimPlot(adams, reduction = "esvd",
 plot1 <- plot1 + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
 plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_cleaned_by-gender.png"),
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_by-gender.png"),
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
+
+plot1 <- Seurat::DimPlot(adams, reduction = "esvd",
+                         group.by = "Gender",
+                         cols = gender_col_palette,
+                         pt.size = 1.25)
+plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
+plot1 <- plot1 + ggplot2::ggtitle("")
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_cleaned_by-gender.png"),
+                plot1, device = "png", width = 2, height = 2, units = "in",
+                dpi = 500)
 
 df <- data.frame(pred =  factor(adams$Tobacco)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -150,10 +181,19 @@ plot1 <- Seurat::DimPlot(adams, reduction = "esvd",
 plot1 <- plot1 + Seurat::NoLegend()
 plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2,2)))
 plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_cleaned_by-smoking.png"),
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_by-smoking.png"),
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
 
+plot1 <- Seurat::DimPlot(adams, reduction = "esvd",
+                         group.by = "Tobacco",
+                         cols = smoking_col_palette,
+                         pt.size = 1.25)
+plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes() 
+plot1 <- plot1 + ggplot2::ggtitle("")
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_cleaned_by-smoking.png"),
+                plot1, device = "png", width = 2, height = 2, units = "in",
+                dpi = 500)
 
 print("Done! :)")
 
