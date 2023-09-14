@@ -5,7 +5,6 @@ library(Rmpfr)
 library(locfdr)
 
 load("../../../out/main/adams_T_esvd.RData")
-date_of_run
 
 set.seed(10)
 date_of_run <- Sys.time()
