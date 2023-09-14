@@ -88,9 +88,20 @@ for(celltype in celltype_names){
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_original-isomap_cleaned_by-gender.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_original-isomap_by-gender.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
+  
+  
+  plot1 <- Seurat::DimPlot(regevEpi, reduction = "isomap",
+                           group.by = "Subject_Gender",
+                           cols = gender_col_palette,
+                           pt.size = 1.25)
+  plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
+  plot1 <- plot1 + ggplot2::ggtitle("")
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_original-isomap_cleaned_by-gender.png"),
+                  plot1, device = "png", width = 2, height = 2, units = "in",
+                  dpi = 500)
 
   df <- data.frame(pred =  factor(regevEpi$Subject_Smoking)); df <- cbind(df, regevEpi[["pca"]]@cell.embeddings[,1:15])
   fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -105,9 +116,19 @@ for(celltype in celltype_names){
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_original-isomap_cleaned_by-smoking.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_original-isomap_by-smoking.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
+  
+  plot1 <- Seurat::DimPlot(regevEpi, reduction = "isomap",
+                           group.by = "Subject_Smoking",
+                           cols = smoking_col_palette,
+                           pt.size = 1.25)
+  plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
+  plot1 <- plot1 + ggplot2::ggtitle("")
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_original-isomap_cleaned_by-smoking.png"),
+                  plot1, device = "png", width = 2, height = 2, units = "in",
+                  dpi = 500)
 
   ##################################
   ##################################
@@ -136,9 +157,20 @@ for(celltype in celltype_names){
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_esvd-isomap_cleaned_by-gender.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_esvd-isomap_by-gender.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
+  
+  
+  plot1 <- Seurat::DimPlot(regevEpi, reduction = "esvd",
+                           group.by = "Subject_Gender",
+                           cols = gender_col_palette,
+                           pt.size = 1.25)
+  plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
+  plot1 <- plot1 + ggplot2::ggtitle("")
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_esvd-isomap_cleaned_by-gender.png"),
+                  plot1, device = "png", width = 2, height = 2, units = "in",
+                  dpi = 500)
 
   df <- data.frame(pred =  factor(regevEpi$Subject_Smoking)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:15])
   fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -153,9 +185,20 @@ for(celltype in celltype_names){
   plot1 <- plot1 + Seurat::NoLegend()
   plot1 <- plot1 + ggplot2::ggtitle(paste0("R2: ", round(r2, 2)))
   plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_esvd-isomap_cleaned_by-smoking.png"),
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_esvd-isomap_by-smoking.png"),
                   plot1, device = "png", width = 4, height = 4, units = "in",
                   dpi = 300)
+  
+  
+  plot1 <- Seurat::DimPlot(regevEpi, reduction = "esvd",
+                           group.by = "Subject_Smoking",
+                           cols = smoking_col_palette,
+                           pt.size = 1.25)
+  plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
+  plot1 <- plot1 + ggplot2::ggtitle("")
+  ggplot2::ggsave(filename = paste0("../../../out/fig/main/regevEpi_", celltype, "_", status, "_esvd-isomap_cleaned_by-smoking.png"),
+                  plot1, device = "png", width = 2, height = 2, units = "in",
+                  dpi = 500)
 
 }
 
