@@ -14,7 +14,7 @@ adams <- Seurat::RunPCA(adams, verbose = F)
 
 # https://rdrr.io/cran/dimRed/man/Isomap-class.html
 set.seed(10)
-pca_mat <- scale(adams[["pca"]]@cell.embeddings[,1:30])
+pca_mat <- scale(adams[["pca"]]@cell.embeddings[,1:15])
 isomap_original <- dimRed::embed(pca_mat, "Isomap", knn = 30)
 isomap_original_mat <- isomap_original@data@data
 rownames(isomap_original_mat) <- colnames(adams)
@@ -70,7 +70,7 @@ ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
 
-df <- data.frame(pred =  factor(adams$Gender)); df <- cbind(df, adams[["pca"]]@cell.embeddings[,1:30])
+df <- data.frame(pred =  factor(adams$Gender)); df <- cbind(df, adams[["pca"]]@cell.embeddings[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
 null_model <- stats::glm(pred ~ 1, data = df, family = binomial)
 deviance_current <- stats::deviance(fitted_model)
@@ -88,7 +88,7 @@ ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
 
-df <- data.frame(pred =  factor(adams$Tobacco)); df <- cbind(df, adams[["pca"]]@cell.embeddings[,1:30])
+df <- data.frame(pred =  factor(adams$Tobacco)); df <- cbind(df, adams[["pca"]]@cell.embeddings[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
 null_model <- stats::glm(pred ~ 1, data = df, family = binomial)
 deviance_current <- stats::deviance(fitted_model)
@@ -118,7 +118,7 @@ ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_cle
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
 
-df <- data.frame(pred =  factor(adams$Gender)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:30])
+df <- data.frame(pred =  factor(adams$Gender)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
 null_model <- stats::glm(pred ~ 1, data = df, family = binomial)
 deviance_current <- stats::deviance(fitted_model)
@@ -136,7 +136,7 @@ ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_cle
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
 
-df <- data.frame(pred =  factor(adams$Tobacco)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:30])
+df <- data.frame(pred =  factor(adams$Tobacco)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
 null_model <- stats::glm(pred ~ 1, data = df, family = binomial)
 deviance_current <- stats::deviance(fitted_model)
