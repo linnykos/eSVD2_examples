@@ -3,19 +3,19 @@ library(Seurat)
 library(eSVD2)
 library(dimRed)
 
-file_vec <- c("../../../out/main/sns_astpp_esvd.RData",
-              "../../../out/main/sns_endothelial_esvd.RData",
-              "../../../out/main/sns_insst_esvd.RData",
-              "../../../out/main/sns_invip_esvd.RData",
-              "../../../out/main/sns_layer4_esvd.RData",
-              "../../../out/main/sns_layer23_esvd.RData",
-              "../../../out/main/sns_layer56_esvd.RData",
+file_vec <- c(#"../../../out/main/sns_astpp_esvd.RData",
+              # "../../../out/main/sns_endothelial_esvd.RData",
+              # "../../../out/main/sns_insst_esvd.RData",
+              # "../../../out/main/sns_invip_esvd.RData",
+              # "../../../out/main/sns_layer4_esvd.RData",
+              # "../../../out/main/sns_layer23_esvd.RData",
+              # "../../../out/main/sns_layer56_esvd.RData",
               "../../../out/main/sns_layer56cc_esvd.RData",
               "../../../out/main/sns_microglia_esvd.RData",
               "../../../out/main/sns_oligo_esvd.RData",
               "../../../out/main/sns_opc_esvd.RData")
-names(file_vec) <- c("astpp", "endothelial", "insst", "invip", "layer4", "layer23",
-                     "layer56", "layer56cc", "microglia", "oligo", "opc")
+names(file_vec) <- c(#"astpp", "endothelial", "insst", "invip", "layer4", "layer23", "layer56", 
+  "layer56cc", "microglia", "oligo", "opc")
 
 for(kk in 1:length(file_vec)){
   file <- file_vec[kk]
