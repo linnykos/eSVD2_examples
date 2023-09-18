@@ -3,18 +3,18 @@ library(Seurat)
 library(eSVD2)
 library(dimRed)
 
-file_vec <- c(#"../../../out/main/sns_astpp_esvd.RData",
-              # "../../../out/main/sns_endothelial_esvd.RData",
-              # "../../../out/main/sns_insst_esvd.RData",
-              # "../../../out/main/sns_invip_esvd.RData",
-              # "../../../out/main/sns_layer4_esvd.RData",
-              # "../../../out/main/sns_layer23_esvd.RData",
-              # "../../../out/main/sns_layer56_esvd.RData",
+file_vec <- c("../../../out/main/sns_astpp_esvd.RData",
+              "../../../out/main/sns_endothelial_esvd.RData",
+              "../../../out/main/sns_insst_esvd.RData",
+              "../../../out/main/sns_invip_esvd.RData",
+              "../../../out/main/sns_layer4_esvd.RData",
+              "../../../out/main/sns_layer23_esvd.RData",
+              "../../../out/main/sns_layer56_esvd.RData",
               "../../../out/main/sns_layer56cc_esvd.RData",
               "../../../out/main/sns_microglia_esvd.RData",
               "../../../out/main/sns_oligo_esvd.RData",
               "../../../out/main/sns_opc_esvd.RData")
-names(file_vec) <- c(#"astpp", "endothelial", "insst", "invip", "layer4", "layer23", "layer56", 
+names(file_vec) <- c("astpp", "endothelial", "insst", "invip", "layer4", "layer23", "layer56", 
   "layer56cc", "microglia", "oligo", "opc")
 
 for(kk in 1:length(file_vec)){
@@ -53,19 +53,19 @@ for(kk in 1:length(file_vec)){
   sns[["esvd"]] <- Seurat::CreateDimReducObject(isomap_esvd_mat)
 
   ##########################
+  
+  base_palette <- RColorBrewer::brewer.pal(11, name = "RdYlBu")
 
   # now plot inflamed
   tab_mat <- table(sns$individual, sns$diagnosis)
   case_indiv <- rownames(tab_mat)[which(tab_mat[,"ASD"] > 0)]
   num_cases <- length(case_indiv)
-  case_color_palette <- grDevices::colorRampPalette(c(rgb(140, 0, 0, maxColorValue = 255),
-                                                      rgb(244, 84, 84, maxColorValue = 255)))(num_cases)
+  case_color_palette <- grDevices::colorRampPalette(base_palette[1:4])(num_cases)
   names(case_color_palette) <- case_indiv
 
   control_indiv <- rownames(tab_mat)[which(tab_mat[,"Control"] > 0)]
   num_controls <- length(control_indiv)
-  control_color_palette <- grDevices::colorRampPalette(c(rgb(47, 60, 190, maxColorValue = 255),
-                                                         rgb(27, 198, 245, maxColorValue = 255)))(num_controls)
+  control_color_palette <- grDevices::colorRampPalette(base_palette[8:11])(num_controls)
   names(control_color_palette) <- control_indiv
   col_palette <- c(case_color_palette, control_color_palette)
 

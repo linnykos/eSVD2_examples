@@ -36,18 +36,18 @@ habermann[["esvd"]] <- Seurat::CreateDimReducObject(isomap_esvd_mat)
 
 ##########################
 
+base_palette <- RColorBrewer::brewer.pal(11, name = "RdYlBu")
+
 # now plot inflamed
 tab_mat <- table(habermann$Sample_Name, habermann$Diagnosis)
 case_indiv <- rownames(tab_mat)[which(tab_mat[,"IPF"] > 0)]
 num_cases <- length(case_indiv)
-case_color_palette <- grDevices::colorRampPalette(c(rgb(140, 0, 0, maxColorValue = 255),
-                                                    rgb(244, 84, 84, maxColorValue = 255)))(num_cases)
+case_color_palette <- grDevices::colorRampPalette(base_palette[1:4])(num_cases)
 names(case_color_palette) <- case_indiv
 
 control_indiv <- rownames(tab_mat)[which(tab_mat[,"Control"] > 0)]
 num_controls <- length(control_indiv)
-control_color_palette <- grDevices::colorRampPalette(c(rgb(47, 60, 190, maxColorValue = 255),
-                                                       rgb(27, 198, 245, maxColorValue = 255)))(num_controls)
+control_color_palette <- grDevices::colorRampPalette(base_palette[8:11])(num_controls)
 names(control_color_palette) <- control_indiv
 col_palette <- c(case_color_palette, control_color_palette)
 

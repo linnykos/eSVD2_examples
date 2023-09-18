@@ -36,18 +36,18 @@ adams[["esvd"]] <- Seurat::CreateDimReducObject(isomap_esvd_mat)
 
 ##########################
 
+base_palette <- RColorBrewer::brewer.pal(11, name = "RdYlBu")
+
 # now plot inflamed
 tab_mat <- table(adams$Subject_Identity, adams$Disease_Identity)
 case_indiv <- rownames(tab_mat)[which(tab_mat[,"IPF"] > 0)]
 num_cases <- length(case_indiv)
-case_color_palette <- grDevices::colorRampPalette(c(rgb(140, 0, 0, maxColorValue = 255),
-                                                    rgb(244, 84, 84, maxColorValue = 255)))(num_cases)
+case_color_palette <- grDevices::colorRampPalette(base_palette[1:4])(num_cases)
 names(case_color_palette) <- case_indiv
 
 control_indiv <- rownames(tab_mat)[which(tab_mat[,"Control"] > 0)]
 num_controls <- length(control_indiv)
-control_color_palette <- grDevices::colorRampPalette(c(rgb(47, 60, 190, maxColorValue = 255),
-                                                       rgb(27, 198, 245, maxColorValue = 255)))(num_controls)
+control_color_palette <- grDevices::colorRampPalette(base_palette[8:11])(num_controls)
 names(control_color_palette) <- control_indiv
 col_palette <- c(case_color_palette, control_color_palette)
 
@@ -60,15 +60,25 @@ smoking_col_palette <- c(rgb(214, 55, 55, maxColorValue = 255),
 names(smoking_col_palette) <- c("Yes", "No")
 
 # now plot original
-plot1 <- Seurat::DimPlot(adams, reduction = "isomap",
-                         group.by = "Subject_Identity",
-                         cols = col_palette)
-plot1 <- plot1 + Seurat::NoLegend()
-plot1 <- plot1 + ggplot2::ggtitle("")
-plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap_cleaned.png"),
-                plot1, device = "png", width = 4, height = 4, units = "in",
-                dpi = 300)
+isomap_mat <- adams[["isomap"]]@cell.embeddings
+n <- nrow(isomap_mat)
+color_vec <- rep(NA, n)
+for(i in 1:length(case_indiv)){
+  color_vec[adams$Subject_Identity == case_indiv[i]] <- case_color_palette[i]
+}
+for(i in 1:length(control_indiv)){
+  color_vec[adams$Subject_Identity == control_indiv[i]] <- control_color_palette[i]
+}
+png("../../../out/fig/main/adams_T_original-isomap_cleaned.png",
+    height = 3000, width = 3000,
+    units = "px", res = 500)
+par(mar = c(3,3,0.1,0.1))
+plot(isomap_mat[,1], isomap_mat[,2], col = color_vec,
+     xaxt = "n", yaxt = "n", bty = "n", pch = 16)
+title(xlab="Isomap 1", ylab="Isomap 2")
+axis(1, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+axis(2, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+graphics.off()
 
 df <- data.frame(pred =  factor(adams$Gender)); df <- cbind(df, adams[["pca"]]@cell.embeddings[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -88,15 +98,18 @@ ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
 
-plot1 <- Seurat::DimPlot(adams, reduction = "isomap",
-                         group.by = "Gender",
-                         cols = gender_col_palette,
-                         pt.size = 1.25)
-plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
-plot1 <- plot1 + ggplot2::ggtitle("")
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap_cleaned_by-gender.png"),
-                plot1, device = "png", width = 2, height = 2, units = "in",
-                dpi = 500)
+color_vec <- rep(NA, n)
+color_vec[adams$Gender == "Female"] <- rgb(235, 134, 47, maxColorValue = 255)
+color_vec[adams$Gender == "Male"] <- rgb(184, 54, 220, maxColorValue = 255)
+png("../../../out/fig/main/adams_T_original-isomap_cleaned_by-gender.png",
+    height = 1500, width = 1500,
+    units = "px", res = 500)
+par(mar = c(3,3,0.1,0.1))
+plot(isomap_mat[,1], isomap_mat[,2], col = color_vec,
+     xaxt = "n", yaxt = "n", bty = "n", pch = 16, cex = 0.5)
+axis(1, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+axis(2, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+graphics.off()
 
 df <- data.frame(pred =  factor(adams$Tobacco)); df <- cbind(df, adams[["pca"]]@cell.embeddings[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -116,28 +129,40 @@ ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
 
-
-plot1 <- Seurat::DimPlot(adams, reduction = "isomap",
-                         group.by = "Tobacco",
-                         cols = smoking_col_palette,
-                         pt.size = 1.25)
-plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
-plot1 <- plot1 + ggplot2::ggtitle("")
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_original-isomap_cleaned_by-smoking.png"),
-                plot1, device = "png", width = 2, height = 2, units = "in",
-                dpi = 500)
+color_vec <- rep(NA, n)
+color_vec[adams$Tobacco == "Yes"] <- rgb(214, 55, 55, maxColorValue = 255)
+color_vec[adams$Tobacco == "No"] <- rgb(146, 146, 146, maxColorValue = 255)
+png("../../../out/fig/main/adams_T_original-isomap_cleaned_by-smoking.png",
+    height = 1500, width = 1500,
+    units = "px", res = 500)
+par(mar = c(3,3,0.1,0.1))
+plot(isomap_mat[,1], isomap_mat[,2], col = color_vec,
+     xaxt = "n", yaxt = "n", bty = "n", pch = 16, cex = 0.5)
+axis(1, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+axis(2, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+graphics.off()
 
 ########################
 # now plot esvd
-plot1 <- Seurat::DimPlot(adams, reduction = "esvd",
-                         group.by = "Subject_Identity",
-                         cols = col_palette)
-plot1 <- plot1 + Seurat::NoLegend()
-plot1 <- plot1 + ggplot2::ggtitle("")
-plot1 <- plot1 + ggplot2::theme(legend.text = ggplot2::element_text(size = 5))
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_cleaned.png"),
-                plot1, device = "png", width = 4, height = 4, units = "in",
-                dpi = 300)
+isomap_mat <- adams[["esvd"]]@cell.embeddings
+n <- nrow(isomap_mat)
+color_vec <- rep(NA, n)
+for(i in 1:length(case_indiv)){
+  color_vec[adams$Subject_Identity == case_indiv[i]] <- case_color_palette[i]
+}
+for(i in 1:length(control_indiv)){
+  color_vec[adams$Subject_Identity == control_indiv[i]] <- control_color_palette[i]
+}
+png("../../../out/fig/main/adams_T_esvd-isomap_cleaned.png",
+    height = 3000, width = 3000,
+    units = "px", res = 500)
+par(mar = c(3,3,0.1,0.1))
+plot(isomap_mat[,1], isomap_mat[,2], col = color_vec,
+     xaxt = "n", yaxt = "n", bty = "n", pch = 16)
+title(xlab="Isomap 1", ylab="Isomap 2")
+axis(1, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+axis(2, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+graphics.off()
 
 df <- data.frame(pred =  factor(adams$Gender)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -157,15 +182,18 @@ ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_by-
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
 
-plot1 <- Seurat::DimPlot(adams, reduction = "esvd",
-                         group.by = "Gender",
-                         cols = gender_col_palette,
-                         pt.size = 1.25)
-plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes()
-plot1 <- plot1 + ggplot2::ggtitle("")
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_cleaned_by-gender.png"),
-                plot1, device = "png", width = 2, height = 2, units = "in",
-                dpi = 500)
+color_vec <- rep(NA, n)
+color_vec[adams$Gender == "Female"] <- rgb(235, 134, 47, maxColorValue = 255)
+color_vec[adams$Gender == "Male"] <- rgb(184, 54, 220, maxColorValue = 255)
+png("../../../out/fig/main/adams_T_esvd-isomap_cleaned_by-gender.png",
+    height = 1500, width = 1500,
+    units = "px", res = 500)
+par(mar = c(3,3,0.1,0.1))
+plot(isomap_mat[,1], isomap_mat[,2], col = color_vec,
+     xaxt = "n", yaxt = "n", bty = "n", pch = 16, cex = 0.5)
+axis(1, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+axis(2, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+graphics.off()
 
 df <- data.frame(pred =  factor(adams$Tobacco)); df <- cbind(df, eSVD_obj$fit_Second$x_mat[,1:15])
 fitted_model <- stats::glm(pred ~ ., data = df, family = binomial)
@@ -185,15 +213,18 @@ ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_by-
                 plot1, device = "png", width = 4, height = 4, units = "in",
                 dpi = 300)
 
-plot1 <- Seurat::DimPlot(adams, reduction = "esvd",
-                         group.by = "Tobacco",
-                         cols = smoking_col_palette,
-                         pt.size = 1.25)
-plot1 <- plot1 + Seurat::NoLegend() + Seurat::NoAxes() 
-plot1 <- plot1 + ggplot2::ggtitle("")
-ggplot2::ggsave(filename = paste0("../../../out/fig/main/adams_T_esvd-isomap_cleaned_by-smoking.png"),
-                plot1, device = "png", width = 2, height = 2, units = "in",
-                dpi = 500)
+color_vec <- rep(NA, n)
+color_vec[adams$Tobacco == "Yes"] <- rgb(214, 55, 55, maxColorValue = 255)
+color_vec[adams$Tobacco == "No"] <- rgb(146, 146, 146, maxColorValue = 255)
+png("../../../out/fig/main/adams_T_esvd-isomap_cleaned_by-smoking.png",
+    height = 1500, width = 1500,
+    units = "px", res = 500)
+par(mar = c(3,3,0.1,0.1))
+plot(isomap_mat[,1], isomap_mat[,2], col = color_vec,
+     xaxt = "n", yaxt = "n", bty = "n", pch = 16, cex = 0.5)
+axis(1, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+axis(2, label = F, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
+graphics.off()
 
 print("Done! :)")
 
