@@ -22,7 +22,7 @@ for(kk in 1:length(celltypes)){
 
   celltype <- celltypes[kk]
   load(paste0(file_prefix, celltype, deseq_suffix))
-  load(paste0(file_prefix, celltype, deseq_suffix))
+  load(paste0(file_prefix, celltype, esvd_suffix))
   print(celltype)
 
   source("../experiment/Writeup13b/multtest_custom.R")
