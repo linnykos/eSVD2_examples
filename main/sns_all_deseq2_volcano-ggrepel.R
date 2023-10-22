@@ -27,6 +27,7 @@ for(kk in 1:length(celltypes)){
 
   source("../experiment/Writeup13b/multtest_custom.R")
   eSVD_obj <- multtest_custom(eSVD_obj)
+  print("Finished fixing p-values")
 
   gene_names <- names(eSVD_obj$case_mean)
   hk_genes2 <- hk_genes[hk_genes %in% gene_names]
