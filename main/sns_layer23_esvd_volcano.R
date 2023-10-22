@@ -11,9 +11,14 @@ session_info <- devtools::session_info()
 
 #################
 
+source("../experiment/Writeup13b/multtest_custom.R")
+eSVD_obj <- multtest_custom(eSVD_obj)
 fdr_vec <- eSVD_obj$pvalue_list$fdr_vec
 selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.05)]
 gene_names <- names(fdr_vec)
+
+length(selected_genes)
+length(gene_names)
 
 ############
 
@@ -29,6 +34,11 @@ bulk_de_genes <- deg_df[which(deg_df[,"WholeCortex_ASD_FDR"]<=0.05),"external_ge
 hk_genes <- hk_genes[hk_genes %in% gene_names]
 sfari_genes <- sfari_genes[sfari_genes %in% gene_names]
 bulk_de_genes <- bulk_de_genes[bulk_de_genes %in% gene_names]
+
+length(sfari_genes)
+length(bulk_de_genes)
+length(intersect(selected_genes, bulk_de_genes))
+length(intersect(selected_genes, sfari_genes))
 
 ###############
 
@@ -137,3 +147,22 @@ plot1 <- plot1 + ggrepel::geom_text_repel(
 
 ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_layer23_volcano_ggrepel.png"),
                 plot1, device = "png", width = 5*.75, height = 7*.75, units = "in")
+
+ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_layer23_volcano_ggrepel_smaller.png"),
+                plot1, device = "png", width = 5*.65, height = 7*.65, units = "in")
+
+########################
+
+load("../../../out/main/sns_layer23_deseq2.RData")
+
+deseq_fdr_val <- stats::p.adjust(deseq2_res$pvalue, method = "BH")
+names(deseq_fdr_val) <- rownames(deseq2_res)
+deseq_selected_genes <- names(deseq_fdr_val)[which(deseq_fdr_val <= 0.05)]
+
+length(deseq_selected_genes)
+length(intersect(deseq_selected_genes, bulk_de_genes))
+length(intersect(deseq_selected_genes, sfari_genes))
+
+
+
+

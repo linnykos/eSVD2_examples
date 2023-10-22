@@ -3,35 +3,11 @@ library(Seurat)
 library(SummarizedExperiment)
 library(DESeq2)
 
-deseq2_file_vec <- c("../../../out/main/sns_astpp_deseq2.RData",
-                     "../../../out/main/sns_endothelial_deseq2.RData",
-                     "../../../out/main/sns_insst_deseq2.RData",
-                     "../../../out/main/sns_invip_deseq2.RData",
-                     "../../../out/main/sns_layer4_deseq2.RData",
-                     "../../../out/main/sns_layer23_deseq2.RData",
-                     "../../../out/main/sns_layer56_deseq2.RData",
-                     "../../../out/main/sns_layer56cc_deseq2.RData",
-                     "../../../out/main/sns_microglia_deseq2.RData",
-                     "../../../out/main/sns_oligo_deseq2.RData",
-                     "../../../out/main/sns_opc_deseq2.RData")
-names(deseq2_file_vec) <- c("astpp", "endothelial", "insst", "invip", "layer4", "layer23",
-                            "layer56", "layer56cc", "microglia", "oligo", "opc")
-
-esvd_file_vec <- c("../../../out/main/sns_astpp_esvd.RData",
-                   "../../../out/main/sns_endothelial_esvd.RData",
-                   "../../../out/main/sns_insst_esvd.RData",
-                   "../../../out/main/sns_invip_esvd.RData",
-                   "../../../out/main/sns_layer4_esvd.RData",
-                   "../../../out/main/sns_layer23_esvd.RData",
-                   "../../../out/main/sns_layer56_esvd.RData",
-                   "../../../out/main/sns_layer56cc_esvd.RData",
-                   "../../../out/main/sns_microglia_esvd.RData",
-                   "../../../out/main/sns_oligo_esvd.RData",
-                   "../../../out/main/sns_opc_esvd.RData")
-names(esvd_file_vec) <- c("astpp", "endothelial", "insst", "invip", "layer4", "layer23",
-                          "layer56", "layer56cc", "microglia", "oligo", "opc")
-
-load(esvd_file_vec[[1]])
+file_prefix <- "../../../out/main/sns_"
+deseq_suffix <- "_deseq2.RData"
+esvd_suffix <- "_esvd.RData"
+celltypes <- c("astpp", "endothelial", "insst", "invip", "layer4", "layer23",
+               "layer56", "layer56cc", "microglia", "oligo", "opc")
 
 hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
 sfari_genes <- read.csv("../../../data/SFARI/SFARI-Gene_genes_09-02-2021release_01-06-2022export.csv", header = T)[,2]
@@ -42,24 +18,27 @@ deg_df <- readxl::read_xlsx(
 deg_df <- as.data.frame(deg_df)
 bulk_de_genes <- deg_df[which(deg_df[,"WholeCortex_ASD_FDR"]<=0.05),"external_gene_name"]
 
-for(kk in 1:length(deseq2_file_vec)){
+for(kk in 1:length(celltypes)){
 
-  load(deseq2_file_vec[[kk]])
-  load(esvd_file_vec[[kk]])
-  celltype <- names(esvd_file_vec)[kk]
+  celltype <- celltypes[kk]
+  load(paste0(file_prefix, celltype, deseq_suffix))
+  load(paste0(file_prefix, celltype, deseq_suffix))
   print(celltype)
+
+  source("../experiment/Writeup13b/multtest_custom.R")
+  eSVD_obj <- multtest_custom(eSVD_obj)
 
   gene_names <- names(eSVD_obj$case_mean)
   hk_genes2 <- hk_genes[hk_genes %in% gene_names]
   sfari_genes2 <- sfari_genes[sfari_genes %in% gene_names]
   bulk_de_genes2 <- bulk_de_genes[bulk_de_genes %in% gene_names]
 
+  ####
+
   fdr_vec <- eSVD_obj$pvalue_list$fdr_vec
   esvd_selected_genes <- names(fdr_vec)[which(fdr_vec <= 0.05)]
   esvd_logpvalue_vec <- eSVD_obj$pvalue_list$log10pvalue
   esvd_pthres <- min(esvd_logpvalue_vec[esvd_selected_genes])
-
-  #####
 
   deseq_fdr_val <- stats::p.adjust(deseq2_res$pvalue, method = "BH")
   names(deseq_fdr_val) <- rownames(deseq2_res)
@@ -67,6 +46,10 @@ for(kk in 1:length(deseq2_file_vec)){
   deseq_logpvalue_vec <- -log10(deseq2_res$pvalue)
   names(deseq_logpvalue_vec) <- rownames(deseq2_res)
   deseq_pthres <- min(deseq_logpvalue_vec[deseq_selected_genes])
+
+  # minor adjustments
+  deseq_selected_genes <- names(deseq_logpvalue_vec)[which(deseq_logpvalue_vec >= deseq_pthres)]
+  esvd_selected_genes <- names(esvd_logpvalue_vec)[which(esvd_logpvalue_vec >= esvd_pthres)]
 
   #####
 
@@ -82,11 +65,11 @@ for(kk in 1:length(deseq2_file_vec)){
   p <- length(gene_names)
   col_vec <- rep(rgb(0.6, 0.6, 0.6), p)
   names(col_vec) <- gene_names
+  col_vec[setdiff(bulk_de_genes2, selected_genes)] <- blue_col
+  col_vec[setdiff(sfari_genes2, selected_genes)] <- purple_col
   col_vec[esvd_selected_genes] <- orange_col
   col_vec[deseq_selected_genes] <- yellow_col
   col_vec[intersect(deseq_selected_genes, esvd_selected_genes)] <- red_col
-  col_vec[setdiff(bulk_de_genes2, selected_genes)] <- blue_col
-  col_vec[setdiff(sfari_genes2, selected_genes)] <- purple_col
 
   labeled_vec <- rep(FALSE, p)
   names(labeled_vec) <- gene_names
@@ -162,4 +145,13 @@ for(kk in 1:length(deseq2_file_vec)){
   ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_volcano_cross-comparison_deseq_ggrepel.png"),
                   plot1, device = "png", width = 5*.75, height = 7*.75, units = "in")
 
+  if(celltype == "layer23"){
+    plot1 <- plot1 + ggplot2::labs(title = paste0("Correlation: ", round(stats::cor(esvd_logpvalue_vec, deseq_logpvalue_vec), 2)))
+    ggplot2::ggsave(filename = paste0("../../../out/fig/main/sns_", celltype, "_volcano_cross-comparison_deseq_ggrepel_smaller.png"),
+                    plot1, device = "png", width = 5*.65, height = 7*.65, units = "in")
+  }
+
+  print(paste0("Correlation for ", celltype, " = ", round(stats::cor(esvd_logpvalue_vec, deseq_logpvalue_vec), digits = 3)))
 }
+
+print("Done! :)")

@@ -20,6 +20,9 @@ eSVD_obj_habermann <- eSVD_obj
 load("../../../out/main/adams_T_esvd.RData")
 eSVD_obj_adams <- eSVD_obj
 
+gene_names <- names(eSVD_obj_adams$teststat_vec)
+all(gene_names %in% names(eSVD_obj_habermann$teststat_vec))
+
 ############
 
 df_mat <- read.csv("~/project/eSVD/data/GSE136831_adams_lung/aba1983_Data_S8.txt",
@@ -39,6 +42,9 @@ habermann_df_genes_others <- unique(unlist(lapply(file_vec, function(file_suffix
 de_genes <- unique(c(adams_df_genes, habermann_df_genes))
 hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
 hk_genes <- setdiff(hk_genes, de_genes)
+
+adams_df_genes <- intersect(adams_df_genes, gene_names)
+habermann_df_genes <- intersect(habermann_df_genes, gene_names)
 
 target_length <- length(unique(c(adams_df_genes, habermann_df_genes)))
 
