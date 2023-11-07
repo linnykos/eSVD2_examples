@@ -16,9 +16,11 @@ habermann_deseq2 <- deseq2_res
 
 load("../../../out/main/habermann_T_esvd.RData")
 eSVD_obj_habermann <- eSVD_obj
+eSVD_obj_habermann <- eSVD2:::compute_pvalue(eSVD_obj_habermann)
 
 load("../../../out/main/adams_T_esvd.RData")
 eSVD_obj_adams <- eSVD_obj
+eSVD_obj_adams <- eSVD2:::compute_pvalue(eSVD_obj_adams)
 
 gene_names <- names(eSVD_obj_adams$teststat_vec)
 all(gene_names %in% names(eSVD_obj_habermann$teststat_vec))
@@ -28,17 +30,10 @@ all(gene_names %in% names(eSVD_obj_habermann$teststat_vec))
 df_mat <- read.csv("~/project/eSVD/data/GSE136831_adams_lung/aba1983_Data_S8.txt",
                    sep = "\t")
 adams_df_genes <- df_mat$gene[which(df_mat$cellType == "T")]
-adams_df_genes_others <- unique(df_mat$gene[which(df_mat$cellType %in% c("B", "Macrophage", "Macrophage Alveolar", "NK"))])
 df_mat <- read.csv("~/project/eSVD/data/GSE135893_habermann_lung/Table_S4_DEG_analysis/Disease_vs_Control/T_Cells_disease_vs_control_.csv",
                    sep = ",")
 habermann_df_genes <- df_mat$X
-file_vec <- c("Macrophages_disease_vs_control_.csv", "Monocytes_disease_vs_control_.csv",
-              "B_Cells_disease_vs_control_.csv", "NK_Cells_disease_vs_control_.csv")
-habermann_df_genes_others <- unique(unlist(lapply(file_vec, function(file_suffix){
-  df_mat <- read.csv(paste0("~/project/eSVD/data/GSE135893_habermann_lung/Table_S4_DEG_analysis/Disease_vs_Control/", file_suffix),
-                     sep = ",")
-  df_mat$X
-})))
+
 de_genes <- unique(c(adams_df_genes, habermann_df_genes))
 hk_genes <- read.csv("../../../data/housekeeping/housekeeping.txt", header = F)[,1]
 hk_genes <- setdiff(hk_genes, de_genes)
