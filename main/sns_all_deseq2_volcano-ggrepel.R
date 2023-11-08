@@ -25,8 +25,7 @@ for(kk in 1:length(celltypes)){
   load(paste0(file_prefix, celltype, esvd_suffix))
   print(celltype)
 
-  source("../experiment/Writeup13b/multtest_custom.R")
-  eSVD_obj <- multtest_custom(eSVD_obj)
+  eSVD_obj <- eSVD2:::compute_pvalue(eSVD_obj)
 
   gene_names <- names(eSVD_obj$case_mean)
   hk_genes2 <- hk_genes[hk_genes %in% gene_names]
