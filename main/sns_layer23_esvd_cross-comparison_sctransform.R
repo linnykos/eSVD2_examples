@@ -35,7 +35,7 @@ esvd_pthres <- min(esvd_logpvalue_vec[esvd_selected_genes])
 
 sct_fdr_val <- stats::p.adjust(de_result$p_val, method = "BH")
 names(sct_fdr_val) <- rownames(de_result)
-sct_selected_genes <- names(sct_fdr_val)[which(sct_fdr_val <= 1e-50)]
+sct_selected_genes <- names(sct_fdr_val)[which(sct_fdr_val <= 0.05)]
 length(sct_selected_genes)
 sct_logpvalue_vec <- -log10(de_result$p_val)
 names(sct_logpvalue_vec) <- rownames(de_result)
@@ -46,6 +46,10 @@ sct_logpvalue_vec <- sct_logpvalue_vec[names(esvd_logpvalue_vec)]
 sct_selected_genes <- intersect(sct_selected_genes, names(esvd_logpvalue_vec))
 sct_selected_genes <- names(sct_logpvalue_vec)[which(sct_logpvalue_vec >= sct_pthres)]
 esvd_selected_genes <- names(esvd_logpvalue_vec)[which(esvd_logpvalue_vec >= esvd_pthres)]
+
+length(sct_selected_genes)
+length(esvd_selected_genes)
+length(intersect(sct_selected_genes, esvd_selected_genes))
 
 #####
 

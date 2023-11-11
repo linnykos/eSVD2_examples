@@ -36,7 +36,7 @@ esvd_pthres <- min(esvd_logpvalue_vec[esvd_selected_genes])
 
 mast_fdr_val <- stats::p.adjust(mast_pval_glmer, method = "BH")
 names(mast_fdr_val) <- names(mast_pval_glmer)
-mast_selected_genes <- names(mast_fdr_val)[which(mast_fdr_val <= 0.0025)]
+mast_selected_genes <- names(mast_fdr_val)[which(mast_fdr_val <= 0.05)]
 length(mast_selected_genes)
 mast_logpvalue_vec <- -log10(mast_pval_glmer)
 names(mast_logpvalue_vec) <- names(mast_pval_glmer)
@@ -47,6 +47,11 @@ mast_logpvalue_vec <- mast_logpvalue_vec[names(esvd_logpvalue_vec)]
 mast_selected_genes <- intersect(mast_selected_genes, names(esvd_logpvalue_vec))
 mast_selected_genes <- names(mast_logpvalue_vec)[which(mast_logpvalue_vec >= mast_pthres)]
 esvd_selected_genes <- names(esvd_logpvalue_vec)[which(esvd_logpvalue_vec >= esvd_pthres)]
+
+
+length(mast_selected_genes)
+length(esvd_selected_genes)
+length(intersect(mast_selected_genes, esvd_selected_genes))
 
 #####
 

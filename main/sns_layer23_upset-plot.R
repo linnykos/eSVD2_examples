@@ -7,7 +7,7 @@ library(DESeq2)
 ###############
 
 load("../../../out/main/sns_layer23_esvd.RData")
-
+eSVD_obj <- eSVD2:::compute_pvalue(eSVD_obj)
 logpvalue_vec <- eSVD_obj$pvalue_list$log10pvalue
 num_genes <- 100
 esvd_selected_genes <- names(logpvalue_vec)[order(logpvalue_vec, decreasing = T)[1:num_genes]]
