@@ -354,11 +354,11 @@ data_generator_obs_mat <- function(input_obj){
     qnorm(pt(true_teststat_vec[j], df = df_vec[j]))
   })
 
-  locfdr_res <- locfdr::locfdr(gaussian_teststat, plot = 0)
-  true_fdr_vec <- locfdr_res$fdr
+  fdr_res <- eSVD2:::multtest(gaussian_teststat)
+  true_fdr_vec <- fdr_res$fdr_vec
   names(true_fdr_vec) <- names(gaussian_teststat)
-  true_null_mean <- locfdr_res$fp0["mlest", "delta"]
-  true_null_sd <- locfdr_res$fp0["mlest", "sigma"]
+  true_null_mean <- fdr_res$null_mean
+  true_null_sd <- fdr_res$null_sd
   true_logpvalue_vec <- sapply(gaussian_teststat, function(x){
     if(x < true_null_mean) {
       Rmpfr::pnorm(x, mean = true_null_mean, sd = true_null_sd, log.p = T)
@@ -367,6 +367,7 @@ data_generator_obs_mat <- function(input_obj){
     }
   })
   true_logpvalue_vec <- -(true_logpvalue_vec/log(10) + log10(2))
+  names(true_logpvalue_vec) <- names(gaussian_teststat)
 
   list(true_fdr_vec = true_fdr_vec,
        true_logpvalue_vec = true_logpvalue_vec,
