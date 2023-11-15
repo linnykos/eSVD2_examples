@@ -22,7 +22,7 @@ lognorm_npreg_list <- sapply(1:p, function(j){
   y_vec$Estimation[,"Pred"]
 })
 
-save(before_npreg_list, after_npreg_list, lib_vec,
+save(lognorm_npreg_list, lib_vec,
      date_of_run, session_info,
      file = "../../../out/main/sns_layer23_esvd_illustration-npreg2.RData")
 
