@@ -76,7 +76,7 @@ form_simulation_data <- function(gene_num_mixed_membership = 100,
   tmp <- round(seq(individual_num_cells/individual_cell_size_factor,
                    individual_num_cells*individual_cell_size_factor,
                    length.out = num_indiv/2))
-  individual_num_cell_vec <- c(tmp, tmp)
+  individual_num_cell_vec <- c(sample(tmp), sample(tmp))
 
   #########################
 
@@ -369,7 +369,7 @@ data_signal_enhancer <- function(input_obj,
 
     # denoise the strong genes
     if(length(strong_pos_idx) > 0){
-      pos_nat_mat <- apply(nat_mat[,strong_pos_idx], 2, function(x){
+      pos_nat_mat <- apply(nat_mat[,strong_pos_idx,drop=F], 2, function(x){
         df <- data.frame(cbind(x, covariates))
         colnames(df)[1] <- "y"
         lm_res <- stats::lm(y ~ . - 1, data = df)
@@ -606,8 +606,10 @@ data_generator_obs_mat <- function(input_obj){
 
   gene_latent_embedding_list <- vector("list", length = r + 2)
   for(i in 1:r){
-    mat <- matrix(rep(gene_topic_simplex[,i], each = gene_num_per_topic),
-                  nrow = gene_num_per_topic, ncol = k)
+    mat <- matrix(rep(gene_topic_simplex[,i],
+                      each = gene_num_per_topic),
+                  nrow = gene_num_per_topic,
+                  ncol = k)
     mat <- mat + MASS::mvrnorm(n = gene_num_per_topic,
                                mu = rep(0, k),
                                Sigma = gene_topic_latent_gaussian_noise)
@@ -619,7 +621,8 @@ data_generator_obs_mat <- function(input_obj){
     proportion_vec <- proportion_vec/sum(proportion_vec)
     gene_topic_simplex %*% proportion_vec
   }))
-  mat <- mat + MASS::mvrnorm(n = gene_num_per_topic,
+
+  mat <- mat + MASS::mvrnorm(n = nrow(mat),
                              mu = rep(0, k),
                              Sigma = gene_topic_latent_gaussian_noise)
   gene_latent_embedding_list[[r+1]] <- mat
@@ -742,18 +745,21 @@ data_generator_obs_mat <- function(input_obj){
                                target_mat){
   stopifnot(shrinkage_val >= 0, shrinkage_val <= 1)
 
-  cor_mat <- stats::cor(nat_mat[,shrinkage_idx,drop=F], target_mat)
-  for(j in 1:length(shrinkage_idx)){
-    k <- which.max(cor_mat[j,])
+  if(length(shrinkage_idx) > 0){
+    cor_mat <- stats::cor(nat_mat[,shrinkage_idx,drop=F], target_mat)
 
-    y_vec <- nat_mat[,shrinkage_idx[j]]
-    df <- data.frame(cbind(y_vec, target_mat[,k]))
-    colnames(df)[1] <- "y"
-    lm_res <- stats::lm(y ~ . - 1, data = df)
-    resid_vec <- stats::residuals(lm_res)
+    for(j in 1:length(shrinkage_idx)){
+      k <- which.max(cor_mat[j,])
 
-    y_vec <- (1-shrinkage_val)*y_vec + shrinkage_val*resid_vec
-    nat_mat[,shrinkage_idx[j]] <- y_vec
+      y_vec <- nat_mat[,shrinkage_idx[j]]
+      df <- data.frame(cbind(y_vec, target_mat[,k]))
+      colnames(df)[1] <- "y"
+      lm_res <- stats::lm(y ~ . - 1, data = df)
+      resid_vec <- stats::residuals(lm_res)
+
+      y_vec <- (1-shrinkage_val)*y_vec + shrinkage_val*resid_vec
+      nat_mat[,shrinkage_idx[j]] <- y_vec
+    }
   }
 
   nat_mat
