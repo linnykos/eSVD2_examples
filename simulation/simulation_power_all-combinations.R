@@ -1,12 +1,9 @@
 rm(list=ls())
-set.seed(10)
 library(Seurat)
 library(eSVD2)
-source("../eSVD2_examples/simulation/simulation_power_generator.R")
 
+source("simulation_power_generator.R")
 set.seed(10)
-date_of_run <- Sys.time()
-session_info <- devtools::session_info()
 
 gene_number_list <- list(
   gene100 = list(gene_num_mixed_membership = 100-14*4-28,
@@ -30,7 +27,11 @@ gene_number = gene_number_list[[1]]
 size_factor = individual_list[[1]]
 
 for(ii in 1:length(gene_number_list)){
+  print(paste0("Working on gene setting: ", ii))
+
   for(jj in 1:length(individual_list)){
+
+    print(paste0("Working on size_factor setting: ", jj))
 
     gene_number <- gene_number_list[[ii]]
     size_factor <- individual_list[[jj]]
@@ -87,9 +88,11 @@ for(ii in 1:length(gene_number_list)){
          y_mat,
          z_mat,
          date_of_run, session_info,
-         file = paste0("../eSVD2_examples/simulation/simulation-power_geneSetting",
+         file = paste0("~/kzlinlab/projects/eSVD2/out/simulation/simulation-power_geneSetting",
                        ii, "_individualSetting", jj,
                        ".RData"))
   }
 }
+
+print("Done! :)")
 
