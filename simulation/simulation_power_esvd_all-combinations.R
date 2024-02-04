@@ -13,7 +13,9 @@ load(paste0("~/kzlinlab/projects/eSVD2/out/simulation/simulation-power_geneSetti
 
 set.seed(10)
 
-mat <- Matrix::t(seurat_obj[["RNA"]]@counts)
+mat <- Matrix::t(SeuratObject::LayerData(seurat_obj,
+                                         assay = "RNA",
+                                         layer = "counts"))
 covariate_dat <- seurat_obj@meta.data[,c("cc", "age", "gender", "tobacco", "individual")]
 covariate_df <- data.frame(covariate_dat)
 covariate_df[,"cc"] <- as.factor(covariate_df[,"cc"])
