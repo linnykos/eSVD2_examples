@@ -1,3 +1,187 @@
+form_simulation_data <- function(gene_num_mixed_membership = 100,
+                                 gene_num_null = 200,
+                                 gene_num_per_topic = 100,
+                                 individual_cell_size_factor = 1,
+                                 num_topics = 4){
+  k <- 10
+  cell_latent_gaussian_mean <- rep(0, k)
+  cov_mat <- matrix(0, k, k)
+  cov_mat[1:3,1:3] <- 0.9
+  cov_mat[4:7,4:7] <- 0.8
+  cov_mat[8:10,8:10] <- 0.6
+  diag(cov_mat) <- 1
+  cell_latent_gaussian_covariance <- cov_mat
+
+  gene_null_casecontrol_name <- c("none", "strong-negative", "strong-positive")
+  gene_null_casecontrol_proportion <- c(0.95, 0.03, 0.02)
+  gene_null_casecontrol_size <- c(0, -0.75, 0.75)
+  gene_null_latent_gaussian_noise <- 0.5*diag(k)
+
+  gene_library_repeating_vec <- c(0.8, rep(1, 8), 1.2)
+  gene_nuisance_values<- c(0.1, 1, 100)
+
+  simplex <- matrix(0, nrow = k, ncol = num_topics)
+  for(j in 1:num_topics){
+    idx <- sample(1:k, size = 3)
+    simplex[idx,j] <- runif(length(idx))
+  }
+  for(i in 1:k){
+    idx <- i %% num_topics + 1
+    simplex[i,idx] <- simplex[i,idx] + runif(length(idx))
+  }
+  gene_topic_simplex <- simplex
+  gene_topic_latent_gaussian_noise <- 0.1*diag(k)
+  gene_topic_casecontrol_name <- c("none", "weak-negative", "strong-negative", "weak-positive", "strong-positive")
+  gene_topic_casecontrol_size <- c(0, -0.5, -0.75, 0.5, .75)
+  gene_topic_casecontrol_proportion <- c(0.5, 0.2, 0.05, 0.2, 0.05)
+  mat <- matrix(0, nrow = length(gene_nuisance_values), ncol = length(gene_topic_casecontrol_size))
+  mat[,1] <- c(0.8,0.15,0.05)
+  mat[,2] <- c(0.6,0.35,0.05)
+  mat[,3] <- c(0.1,0.2,0.7)
+  mat[,4] <- c(0.6,0.35,0.05)
+  mat[,5] <- c(0.1,0.2,0.7)
+  colnames(mat) <- paste0("cc_size:", gene_topic_casecontrol_name)
+  rownames(mat) <- paste0("nuisance:", gene_nuisance_values)
+  gene_nuisance_proporition_mat <- mat
+
+  gene_covariate_coefficient_size <- c(-1,-0.5,0,0.5,1,3)
+  mat <- matrix(0, nrow = length(gene_covariate_coefficient_size),
+                ncol = length(gene_topic_casecontrol_name))
+  colnames(mat) <- paste0("cc_size:", gene_topic_casecontrol_name)
+  rownames(mat) <- paste0("coef_size:", gene_covariate_coefficient_size)
+  mat[,1] <- c(0.1, 0.1, 0.6, 0.1, 0.1,   0)
+  mat[,2] <- c(0.6, 0.4,   0,   0,   0,   0)
+  mat[,3] <- c(  0, 0.2, 0.8,   0,   0,   0)
+  mat[,4] <- c(  0,   0,   0,   0, 0.4, 0.6)
+  mat[,5] <- c(  0,   0, 0.8, 0.2,   0,   0)
+  gene_covariate_coefficient_proportion_mat <- mat
+
+  ##############
+
+  num_indiv <- 20
+  stopifnot(num_indiv %% 2 == 0)
+  case_control_vec <- rep(c(0,1), each = num_indiv/2)
+  age_vec <- round(rnorm(num_indiv),2)
+  gender_vec <- rep(c(0,1), times = num_indiv/2)
+  tobacco_vec <- c(sample(c(0,1), size = num_indiv/2, replace = T, prob = c(0.7,0.3)),
+                   sample(c(0,1), size = num_indiv/2, replace = T, prob = c(0.3,0.7)))
+  df <- data.frame(cc = as.numeric(case_control_vec),
+                   age = as.numeric(age_vec),
+                   gender = as.numeric(gender_vec),
+                   tobacco = as.numeric(tobacco_vec))
+  individual_covariates <- df
+  individual_case_control_variable <- "cc"
+  individual_num_cells <- 250
+
+  tmp <- round(seq(individual_num_cells/individual_cell_size_factor,
+                   individual_num_cells*individual_cell_size_factor,
+                   length.out = num_indiv/2))
+  individual_num_cell_vec <- c(tmp, tmp)
+
+  #########################
+
+  set.seed(10)
+  input_obj <- data_generator_nat_mat(
+    cell_latent_gaussian_mean = cell_latent_gaussian_mean,
+    cell_latent_gaussian_covariance = cell_latent_gaussian_covariance,
+    gene_library_repeating_vec = gene_library_repeating_vec,
+    gene_covariate_coefficient_proportion_mat = gene_covariate_coefficient_proportion_mat,
+    gene_covariate_coefficient_size = gene_covariate_coefficient_size,
+    gene_nuisance_values = gene_nuisance_values,
+    gene_nuisance_proporition_mat = gene_nuisance_proporition_mat,
+    gene_null_casecontrol_name = gene_null_casecontrol_name,
+    gene_null_casecontrol_proportion = gene_null_casecontrol_proportion,
+    gene_null_casecontrol_size = gene_null_casecontrol_size,
+    gene_null_latent_gaussian_noise = gene_null_latent_gaussian_noise,
+    gene_null_nuisance_proportion = gene_null_nuisance_proportion,
+    gene_num_mixed_membership = gene_num_mixed_membership,
+    gene_num_null = gene_num_null,
+    gene_num_per_topic = gene_num_per_topic,
+    gene_topic_latent_gaussian_noise = gene_topic_latent_gaussian_noise,
+    gene_topic_simplex = gene_topic_simplex,
+    gene_topic_casecontrol_name = gene_topic_casecontrol_name,
+    gene_topic_casecontrol_proportion = gene_topic_casecontrol_proportion,
+    gene_topic_casecontrol_size = gene_topic_casecontrol_size,
+    individual_covariates = individual_covariates,
+    individual_case_control_variable = individual_case_control_variable,
+    individual_num_cell_vec = individual_num_cell_vec
+  )
+
+  input_obj <- data_signal_enhancer(input_obj,
+                                    global_shift = -1)
+  input_obj2 <- data_generator_obs_mat(input_obj)
+  pop_res <- .compute_population_quantities(input_obj2)
+
+  de_idx <- which(pop_res$true_fdr_vec < 0.01)
+  input_obj$nuisance_vec[de_idx] <- 1e5
+  input_obj$nat_mat[,de_idx] <- input_obj$nat_mat[,de_idx]+1.5
+  input_obj <- data_generator_obs_mat(input_obj)
+  pop_res <- .compute_population_quantities(input_obj)
+
+  #####################################
+
+  case_individuals = input_obj$case_individuals
+  control_individuals = input_obj$control_individuals
+  covariates = input_obj$covariates
+  gene_labeling = input_obj$gene_labeling
+  gene_labeling2 = input_obj$gene_labeling2
+  gene_library_vec = input_obj$gene_library_vec
+  individual_vec = input_obj$individual_vec
+  nuisance_vec = input_obj$nuisance_vec
+  nat_mat = input_obj$nat_mat
+  obs_mat = input_obj$obs_mat
+  x_mat = input_obj$x_mat
+  y_mat = input_obj$y_mat
+  z_mat = input_obj$z_mat
+  true_fdr_vec <- pop_res$true_fdr_vec
+  true_logpvalue_vec <- pop_res$true_logpvalue_vec
+  true_null_mean <- pop_res$true_null_mean
+  true_null_sd <- pop_res$true_null_sd
+  true_teststat_vec <- pop_res$true_teststat_vec
+
+  ####################
+
+  tmp <- data.frame(covariates[,2:5])
+  tmp$individual <- individual_vec
+  seurat_obj <- Seurat::CreateSeuratObject(counts = t(obs_mat),
+                                           meta.data = tmp)
+  Seurat::VariableFeatures(seurat_obj[["RNA"]]) <- rownames(seurat_obj)
+  seurat_obj <- Seurat::NormalizeData(seurat_obj)
+  seurat_obj <- Seurat::ScaleData(seurat_obj)
+  seurat_obj <- Seurat::RunPCA(seurat_obj, verbose = F)
+  seurat_obj <- Seurat::RunUMAP(seurat_obj, dims = 1:15)
+
+  pca_mat <- scale(seurat_obj[["pca"]]@cell.embeddings[,1:5])
+  isomap_original <- dimRed::embed(pca_mat, "Isomap", knn = 10)
+  isomap_original_mat <- isomap_original@data@data
+  rownames(isomap_original_mat) <- colnames(seurat_obj)
+  colnames(isomap_original_mat) <- paste0("Isomap_", 1:2)
+
+  seurat_obj[["isomap"]] <- Seurat::CreateDimReducObject(isomap_original_mat)
+
+  list(seurat_obj = seurat_obj,
+       case_individuals = case_individuals,
+       control_individuals = control_individuals,
+       covariates = covariates,
+       gene_labeling = gene_labeling,
+       gene_labeling2 = gene_labeling2,
+       gene_library_vec = gene_library_vec,
+       individual_vec = individual_vec,
+       nuisance_vec = nuisance_vec,
+       nat_mat = nat_mat,
+       obs_mat = obs_mat,
+       true_fdr_vec = true_fdr_vec,
+       true_logpvalue_vec = true_logpvalue_vec,
+       true_null_mean = true_null_mean,
+       true_null_sd = true_null_sd,
+       true_teststat_vec = true_teststat_vec,
+       x_mat = x_mat,
+       y_mat = y_mat,
+       z_mat = z_mat)
+}
+
+###################################
+
 data_generator_nat_mat <- function(
     cell_latent_gaussian_mean,
     cell_latent_gaussian_covariance,
@@ -21,17 +205,18 @@ data_generator_nat_mat <- function(
     gene_topic_casecontrol_size,
     individual_covariates,
     individual_case_control_variable,
-    individual_num_cells,
+    individual_num_cell_vec,
     gene_intercept_global_shift = 0
 ){
   stopifnot(nrow(gene_topic_simplex) == length(cell_latent_gaussian_mean))
 
   num_indiv <- nrow(individual_covariates)
-  n <- individual_num_cells*num_indiv
+  stopifnot(length(individual_num_cell_vec) == num_indiv)
+  n <- sum(individual_num_cell_vec)
 
   res <- .form_covariate_mat(individual_case_control_variable = individual_case_control_variable,
                              individual_covariates = individual_covariates,
-                             individual_num_cells = individual_num_cells)
+                             individual_num_cell_vec = individual_num_cell_vec)
   covariates <- res$covariates
   case_individuals <- res$case_individuals
   control_individuals <- res$control_individuals
@@ -40,9 +225,6 @@ data_generator_nat_mat <- function(
   x_mat <- .form_x_mat(
     cell_latent_gaussian_covariance = cell_latent_gaussian_covariance,
     cell_latent_gaussian_mean = cell_latent_gaussian_mean,
-    covariates = covariates,
-    individual_case_control_variable = individual_case_control_variable,
-    individual_vec = individual_vec,
     n = n
   )
 
@@ -67,6 +249,7 @@ data_generator_nat_mat <- function(
                      gene_topic_casecontrol_proportion = gene_topic_casecontrol_proportion,
                      gene_topic_casecontrol_size = gene_topic_casecontrol_size,
                      gene_labeling = gene_labeling,
+                     individual_case_control_variable = individual_case_control_variable,
                      p = nrow(y_mat))
   z_mat <- res$z_mat; gene_labeling2 <- res$gene_labeling2
 
@@ -290,6 +473,7 @@ data_generator_obs_mat <- function(input_obj){
        z_mat = input_obj$z_mat)
 }
 
+####################
 
 .compute_population_quantities <- function(input_obj){
   case_individuals <- input_obj$case_individuals
@@ -376,15 +560,15 @@ data_generator_obs_mat <- function(input_obj){
        true_teststat_vec = true_teststat_vec)
 }
 
-####################
-
 .form_covariate_mat <- function(individual_case_control_variable,
                                 individual_covariates,
-                                individual_num_cells){
+                                individual_num_cell_vec){
   num_indiv <- nrow(individual_covariates)
   covariates <- do.call(rbind, lapply(1:num_indiv, function(i){
-    matrix(rep(as.numeric(individual_covariates[i,]), each = individual_num_cells),
-           nrow = individual_num_cells, ncol = ncol(individual_covariates))
+    matrix(rep(as.numeric(individual_covariates[i,]),
+               each = individual_num_cell_vec[i]),
+           nrow = individual_num_cell_vec[i],
+           ncol = ncol(individual_covariates))
   }))
   covariates <- cbind(1, covariates)
   colnames(covariates) <- c("Intercept", colnames(individual_covariates))
@@ -392,7 +576,8 @@ data_generator_obs_mat <- function(input_obj){
   individual_vec <- paste0("indiv_", 1:num_indiv)
   case_individuals <- individual_vec[which(individual_covariates[,individual_case_control_variable] == 1)]
   control_individuals <- individual_vec[which(individual_covariates[,individual_case_control_variable] == 0)]
-  individual_vec_full <- rep(paste0("indiv_", 1:num_indiv), each = individual_num_cells)
+  individual_vec_full <- rep(paste0("indiv_", 1:num_indiv),
+                             times = individual_num_cell_vec)
 
   list(case_individuals = case_individuals,
        control_individuals = control_individuals,
@@ -402,9 +587,6 @@ data_generator_obs_mat <- function(input_obj){
 
 .form_x_mat <- function(cell_latent_gaussian_covariance,
                         cell_latent_gaussian_mean,
-                        covariates,
-                        individual_case_control_variable,
-                        individual_vec,
                         n){
   x_mat <- MASS::mvrnorm(n,
                          mu = cell_latent_gaussian_mean,
@@ -481,6 +663,7 @@ data_generator_obs_mat <- function(input_obj){
                         gene_topic_casecontrol_proportion,
                         gene_topic_casecontrol_size,
                         gene_labeling,
+                        individual_case_control_variable,
                         p){
   r <- length(covariates_colnames)
   z_mat <- matrix(0, nrow = p, ncol = r)
