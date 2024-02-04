@@ -10,4 +10,4 @@
 #SBATCH --error=/home/users/%u/kzlinlab/projects/eSVD2/out/simulation/slurm/slurm_%j.err
 #SBATCH --output=/home/users/%u/kzlinlab/projects/eSVD2/out/simulation/slurm/slurm_%j.out
 
-R CMD BATCH --no-save --no-restore simulation_power_generator.R ../../../out/simulation/slurm/$SLURM_JOB_NAME-$SLURM_JOB_ID.Rout
+R CMD BATCH --no-save --no-restore simulation_power_all-combinations.R ../../../out/simulation/slurm/$SLURM_JOB_NAME-$SLURM_JOB_ID.Rout
