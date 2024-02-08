@@ -2,7 +2,7 @@ rm(list=ls())
 library(Seurat)
 library(eSVD2)
 
-source("simulation_power_generator.R")
+source("simulation_power_generator_functions.R")
 set.seed(10)
 
 gene_number_list <- list(
