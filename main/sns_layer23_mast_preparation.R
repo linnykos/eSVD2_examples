@@ -12,6 +12,10 @@ mat <- SeuratObject::LayerData(sns,
                                features = Seurat::VariableFeatures(sns),
                                layer = "counts")
 
+categorical_var <- c("diagnosis", "individual", "region", "sex", "Seqbatch", "Capbatch")
+numerical_var <- c("age", "percent.mt", "RNA.Integrity.Number", "post.mortem.hours")
+metadata <- sns@meta.data[,c(categorical_var, numerical_var)]
+
 save(date_of_run, session_info,
-     mat,
+     mat, metadata,
      file = "~/Dropbox/Collaboration-and-People/Kathryn Roeder - private/eSVD2/data/sns_layer23_mast-prepared.RData")

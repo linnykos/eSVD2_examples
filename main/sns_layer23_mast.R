@@ -3,7 +3,7 @@ library(SummarizedExperiment)
 library(MAST)
 library(lme4)
 
-load("../../../out/main/sns_layer23_mast-prepared.RData")
+load("../../../out/main/sns_layer23_mast-prepared.RData") # loads mat and metadata
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -19,9 +19,6 @@ med_rds <- median(rds)
 mat <- t(t(mat)/rds)*med_rds
 tpms <- log1p(mat)
 
-categorical_var <- c("diagnosis", "individual", "region", "sex", "Seqbatch", "Capbatch")
-numerical_var <- c("age", "percent.mt", "RNA.Integrity.Number", "post.mortem.hours")
-metadata <- sns@meta.data[,c(categorical_var, numerical_var)]
 for(var in categorical_var){
   metadata[,var] <- as.factor(metadata[,var])
 }
@@ -46,13 +43,13 @@ mast_res <- MAST::zlm(formula = ~ grp.diagnosis + (1 | grp.individual) + cngenes
                       method = "glmer",
                       ebayes = FALSE,
                       silent = T)
-save(sns, sca, mast_res,
+save(mast_res,
      date_of_run, session_info,
      file = "../../../out/main/sns_layer23_mast.RData")
 
 set.seed(10)
 mast_lrt <- MAST::lrTest(mast_res, "grp.diagnosis")
 mast_pval_glmer <- apply(mast_lrt, 1, function(x){x[3,3]})
-save(sns, sca, mast_res, mast_lrt, mast_pval_glmer,
+save(mast_res, mast_lrt, mast_pval_glmer,
      date_of_run, session_info,
      file = "../../../out/main/sns_layer23_mast.RData")
