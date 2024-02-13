@@ -37,7 +37,6 @@ smooth_roc <- function(tpr, fpr){
                                   metric = 2,
                                   unimodal = T)
   mat2[ordering,2] <- res
-  # plot(mat2[,1], mat2_old[,2]); points(mat2[,1], mat2[,2], col = 2)
   mat_new <- mat2 %*% t(rotation_mat)
   tpr <- mat_new[,2]; fpr <- mat_new[,1]
 
@@ -57,18 +56,18 @@ smooth_roc <- function(tpr, fpr){
        fpr = fpr)
 }
 
-roc_fdr_point <- function(pvalue_vec,
-                          true_de_idx,
-                          fdr_threshold = 0.05){
-  n <- length(pvalue_vec)
-  fdr_vec <- stats::p.adjust(pvalue_vec, method = "BH")
-  fdr_idx <- which(fdr_vec <= fdr_threshold)
+compute_auc <- function(tpr, fpr){
+  stopifnot(length(tpr) == length(fpr))
 
-  true_nonde_idx <- setdiff(1:n, true_de_idx)
-  tpr <- length(intersect(true_de_idx,fdr_idx))/length(true_de_idx)
-  fpr <- length(intersect(true_nonde_idx,fdr_idx))/length(true_nonde_idx)
+  # order the fpr (i.e., x axis)
+  fpr_order <- order(fpr, decreasing = F)
+  fpr <- fpr[fpr_order]
+  tpr <- tpr[fpr_order]
 
-  c(tpr = tpr, fpr = fpr,
-    len = length(fdr_idx),
-    intersection = length(intersect(true_de_idx,fdr_idx)))
+  # compute the area based on rectangles
+  len <- length(tpr)
+  width_vec <- diff(fpr)
+  height_vec <- tpr[1:(len-1)] - fpr[1:(len-1)]
+
+  sum(width_vec*height_vec)/0.5
 }

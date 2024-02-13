@@ -39,48 +39,39 @@ for(ii in 1:3){
                             true_de_idx = true_de_idx)
     esvd_roc <- smooth_roc(tpr = esvd_roc$tpr,
                            fpr = esvd_roc$fpr)
+    esvd_auc <- compute_auc(tpr = esvd_roc$tpr,
+                            fpr = esvd_roc$fpr)
 
     deseq_pvalue <- deseq2_res[paste0("gene-", 1:p), "pvalue"]
     deseq2_roc <- compute_roc(estimated_teststat_vec = -log10(deseq_pvalue),
                               true_de_idx = true_de_idx)
     deseq2_roc <- smooth_roc(tpr = deseq2_roc$tpr,
                              fpr = deseq2_roc$fpr)
+    deseq2_auc <- compute_auc(tpr = deseq2_roc$tpr,
+                              fpr = deseq2_roc$fpr)
 
     sctransform_pvalue <- de_result[paste0("gene-", 1:p), "p_val"]
     sctransform_roc <- compute_roc(estimated_teststat_vec = -log10(sctransform_pvalue),
                                    true_de_idx = true_de_idx)
     sctransform_roc <- smooth_roc(tpr = sctransform_roc$tpr,
                                   fpr = sctransform_roc$fpr)
+    sctransform_auc <- compute_auc(tpr = sctransform_roc$tpr,
+                                   fpr = sctransform_roc$fpr)
 
     mast_pvalue <- mast_pval_glmer[paste0("gene-", 1:p)]
     mast_roc <- compute_roc(estimated_teststat_vec = -log10(mast_pval_glmer),
                             true_de_idx = true_de_idx)
     mast_roc <- smooth_roc(tpr = mast_roc$tpr,
                            fpr = mast_roc$fpr)
+    mast_auc <- compute_auc(tpr = mast_roc$tpr,
+                            fpr = mast_roc$fpr)
 
-    orange_col <- rgb(235, 134, 47, maxColorValue = 255)
-    yellow_col <- rgb(255, 205, 114, maxColorValue = 255)
-    blue_col <- rgb(48, 174, 255, maxColorValue = 255)
-    purple_col <- rgb(122, 49, 126, maxColorValue = 255)
+    auc_vec <- c(esvd = esvd_auc,
+                 deseq2 = deseq2_auc,
+                 mast = mast_auc,
+                 sct = sctransform_auc)
 
-    png(paste0("~/kzlinlab/projects/eSVD2/out/fig/simulation_geneSetting",
-               ii, "_individualSetting", jj, "_roc.png"),
-        height = 2000, width = 2000,
-        units = "px", res = 500)
-    par(mar = c(3,3,0.4,0.1))
-    plot(NA, xlim = c(0,1), ylim = c(0,1), asp = T,
-         xaxt = "n", yaxt = "n", bty = "n",
-         cex.lab = 1.25, type = "n",
-         xlab = "", ylab = "")
-    lines(sctransform_roc$fpr, sctransform_roc$tpr, col = blue_col, lwd = 4)
-    lines(mast_roc$fpr, mast_roc$tpr, col = purple_col, lwd = 4)
-    lines(deseq2_roc$fpr, deseq2_roc$tpr, col = yellow_col, lwd = 4)
-    lines(esvd_roc$fpr, esvd_roc$tpr, col = orange_col, lwd = 4)
-
-    lines(c(0,1), c(0,1), col = 1, lwd = 2, lty = 2)
-    axis(1, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
-    axis(2, cex.axis = 1.25, cex.lab = 1.25, lwd = 2)
-    graphics.off()
+    print(round(auc_vec*100, 1))
   }
 }
 

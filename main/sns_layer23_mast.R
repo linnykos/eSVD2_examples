@@ -1,10 +1,9 @@
 rm(list=ls())
-library(Seurat)
 library(SummarizedExperiment)
 library(MAST)
 library(lme4)
 
-load("../../../out/main/sns_layer23_processed.RData")
+load("../../../out/main/sns_layer23_mast-prepared.RData")
 
 set.seed(10)
 date_of_run <- Sys.time()
@@ -14,7 +13,7 @@ session_info <- devtools::session_info()
 # following the analysis in https://github.com/himelmallick/BenchmarkSingleCell/blob/master/Library/run_MAST.R
 # and https://www.bioconductor.org/packages/release/bioc/vignettes/MAST/inst/doc/MAITAnalysis.html
 
-mat <- as.matrix(sns[["RNA"]]@counts[sns[["RNA"]]@var.features,])
+mat <- as.matrix(mat)
 rds <- colSums(mat)
 med_rds <- median(rds)
 mat <- t(t(mat)/rds)*med_rds
