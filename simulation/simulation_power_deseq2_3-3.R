@@ -3,8 +3,8 @@ library(Seurat)
 library(SummarizedExperiment)
 library(DESeq2)
 
-ii <- 1
-jj <- 1
+ii <- 3
+jj <- 3
 print(paste0("Gene setting: ", ii, ", Individual setting: ", jj))
 
 load(paste0("~/kzlinlab/projects/eSVD2/out/simulation/simulation-power_geneSetting",
