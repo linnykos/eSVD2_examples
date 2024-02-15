@@ -3,7 +3,7 @@ library(SummarizedExperiment)
 library(MAST)
 library(lme4)
 
-load("../../../out/main/sns_layer23_mast-prepared.RData") # loads mat and metadata
+load("../../../out/main/sns_layer23_mast-prepared.RData") # loads mat, metadata, categorical_var, numerical_var,
 
 set.seed(10)
 date_of_run <- Sys.time()

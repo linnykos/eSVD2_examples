@@ -764,3 +764,28 @@ data_generator_obs_mat <- function(input_obj){
 
   nat_mat
 }
+
+.compute_true_lfc <- function(case_individuals,
+                              control_individuals,
+                              covariates,
+                              individual_vec,
+                              x_mat,
+                              y_mat,
+                              z_mat,
+                              individual_case_control_variable = "cc"){
+  nat_mat1 <- tcrossprod(x_mat, y_mat)
+  nat_mat2 <- tcrossprod(covariates[,individual_case_control_variable], z_mat[,individual_case_control_variable])
+  nat_mat <- nat_mat1 + nat_mat2
+  mean_mat <- exp(nat_mat)
+
+  case_idx <- which(individual_vec %in% case_individuals)
+  control_idx <- which(individual_vec %in% control_individuals)
+
+  p <- ncol(nat_mat)
+  lfc_vec <- sapply(1:p, function(j){
+    mean(log(mean_mat[case_idx,j])) - mean(log(mean_mat[control_idx,j]))
+  })
+  names(lfc_vec) <- colnames(nat_mat)
+
+  lfc_vec
+}

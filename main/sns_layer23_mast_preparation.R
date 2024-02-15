@@ -17,5 +17,5 @@ numerical_var <- c("age", "percent.mt", "RNA.Integrity.Number", "post.mortem.hou
 metadata <- sns@meta.data[,c(categorical_var, numerical_var)]
 
 save(date_of_run, session_info,
-     mat, metadata,
+     mat, metadata, categorical_var, numerical_var,
      file = "~/Dropbox/Collaboration-and-People/Kathryn Roeder - private/eSVD2/data/sns_layer23_mast-prepared.RData")
